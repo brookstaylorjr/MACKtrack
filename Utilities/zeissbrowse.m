@@ -1,4 +1,5 @@
 function [] = zeissbrowse(start_dir)
+% zeissbrowse look through sequential image set
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % ZEISSBROWSE  look through sequential image set
 %
