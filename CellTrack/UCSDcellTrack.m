@@ -99,17 +99,15 @@ load_listbox(handles.parameters.ImagePath, handles)
 % OSX-specific formatting
 os = computer;
 if strcmp(os(1:4),'MACI')
-a = fieldnames(handles);
-for i = 1:length(a)
-    currentField = a{i};
-    if strcmp(currentField(1:4),'edit')
-        oldPos = get(handles.(currentField),'Position');
-        set(handles.(currentField),'Position', oldPos+[0 -3 0 4]);
+    a = fieldnames(handles);
+    for i = 1:length(a)
+        currentField = a{i};
+        if strcmp(currentField(1:4),'edit')
+            oldPos = get(handles.(currentField),'Position');
+            set(handles.(currentField),'Position', oldPos+[0 -3 0 4]);
+        end
     end
 end
-end
-
-figure(h)
 % ========================================================================================
 
 function varargout = UCSDcellTrack_OutputFcn(hObject, eventdata, handles) 
@@ -202,7 +200,7 @@ function pushbutton1C_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1C: specify new locations
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-h = pecifyLocations;
+h = specifyLocations;
 uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
