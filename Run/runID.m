@@ -14,6 +14,7 @@ function [] = runID(varargin)
 % Specify save directory and load spreadsheet URL
 home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
+home_folder = home_folder(1:slash_idx(end));
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 if ~exist(locations.scope)
     error(['Invalid mount location for images: "',locations.scope,...
