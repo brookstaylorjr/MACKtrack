@@ -40,7 +40,7 @@ end
 for idx = 1:numel(data.dates)
     
     % PARAMETERS
-    load([home_folder,'Parameters',data.parameter_files{idx}])
+    load([home_folder,'Parameters',filesep,data.parameter_files{idx}])
     parameters.ImagePath = data.image_paths{idx};
     parameters.TimeRange = eval(data.time_ranges{idx});
     parameters.XYRange = eval(data.xy_ranges{idx});
