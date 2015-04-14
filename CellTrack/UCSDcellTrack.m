@@ -75,8 +75,8 @@ handles.home_folder = handles.home_folder(1:slash_idx(end-1));
 % Set locations
 load([handles.home_folder, 'locations.mat'],'-mat')
 if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
-    specifyLocations;
-    uiwait;
+    h = specifyLocations;
+    uiwait(h);
     load([handles.home_folder, 'locations.mat'],'-mat')
 end
 handles.locations = locations;
@@ -108,6 +108,8 @@ for i = 1:length(a)
     end
 end
 end
+
+figure(h)
 % ========================================================================================
 
 function varargout = UCSDcellTrack_OutputFcn(hObject, eventdata, handles) 
@@ -200,8 +202,8 @@ function pushbutton1C_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1C: specify new locations
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-specifyLocations;
-uiwait;
+h = pecifyLocations;
+uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
 set(handles.text1A,'String',handles.locations.scope);
@@ -412,8 +414,8 @@ function pushbutton3B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3B: specify new moont points for input/output data
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-locations = specifyLocations;
-uiwait;
+h = specifyLocations;
+uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
 set(handles.text1A,'String',locations.scope);
