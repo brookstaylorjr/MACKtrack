@@ -1,0 +1,5 @@
+# Exclude parameter files (except default)
+$GIT_DIR/Parameters/*
+
+# Exclude locations file
+

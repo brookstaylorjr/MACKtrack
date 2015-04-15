@@ -128,9 +128,20 @@ function edit1A_Callback(hObject, eventdata, handles)
 % eventdata  reserved - to be defined in a future version of MATLAB
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-dataDirectory = get(hObject,'String');
-if exist(dataDirectory,'dir')
-    load_listbox(dataDirectory, handles)
+newfolder = get(hObject,'String');
+if exist([handles.locations.scope,newfolder],'dir')
+    % Remove leading slash, add trailing slash
+    if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+        newfolder = [newfolder,filesep];
+    end
+    if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+        newfolder = newfolder(2:end);
+    end
+    load_listbox(newfolder, handles)
+else
+    disp('- - - - - - - ')
+    warning('Invalid folder entered')
+    disp('- - - - - - - ')
 end
 % ========================================================================================
 
@@ -148,13 +159,15 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
     if handles.is_dir(handles.sorted_index(index_selected))
-        newFolder = get(handles.edit1A,'String');
-        
-        if  ~isempty(newFolder) && ~strcmp(newFolder(end),filesep)
-            newFolder = [newFolder,filesep];
+        newfolder = [get(handles.edit1A,'String'),filename];
+        % Remove leading slash, add trailing slash
+        if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+            newfolder = [newfolder,filesep];
         end
-        newFolder = [newFolder,filename];
-        load_listbox(newFolder,handles)
+        if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+            newfolder = newfolder(2:end);
+        end
+        load_listbox(newfolder,handles)
     
     end
 end
@@ -164,14 +177,21 @@ function pushbutton1A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1A: go up one directory level
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-newFolder = get(handles.edit1A,'String');
+newfolder = get(handles.edit1A,'String');
 
-if ~isempty(newFolder) && strcmp(newFolder(end),filesep)
-    newFolder =newFolder(1:end-1);
+if ~isempty(newfolder) && strcmp(newfolder(end),filesep)
+    newfolder =newfolder(1:end-1);
 end
+newfolder = newfolder(1:max(strfind(newfolder,filesep)));
 
-newFolder = newFolder(1:max(strfind(newFolder,filesep)));
-load_listbox(newFolder,handles)
+% Remove leading slash, add trailing slash
+if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+    newfolder = [newfolder,filesep];
+end
+if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+    newfolder = newfolder(2:end);
+    end
+load_listbox(newfolder,handles)
 
 % ========================================================================================
 
@@ -179,19 +199,26 @@ function pushbutton1B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1B: browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-PathName = uigetdir(handles.locations.scope);
-if (PathName~=0)
-    if ~strcmp(PathName(end),filesep)
-        PathName = [PathName,filesep];
-    end
-    if length(PathName)<length(handles.locations.scope) || ...
-        ~strcmp(PathName(1:length(handles.locations.scope)),handles.locations.scope)
+newfolder = uigetdir(handles.locations.scope);
+if (newfolder~=0)
+
+    if length(newfolder)<length(handles.locations.scope) || ...
+        ~strcmp(newfolder(1:length(handles.locations.scope)),handles.locations.scope)
+        disp('- - - - - - - ')
         warning('Images must be located at selected mount point - keeping previous directory.')
+        disp('- - - - - - - ')
     else
-        PathName = PathName(length(handles.locations.scope)+1:end);
-        set(handles.edit1A,'String',PathName)
-        handles.parameters.ImagePath = PathName;
-        load_listbox(PathName,handles)
+        newfolder = newfolder(length(handles.locations.scope)+1:end);
+        % Remove leading slash, add trailing slash
+        if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+            newfolder = [newfolder,filesep];
+        end
+        if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+            newfolder = newfolder(2:end);
+        end
+        set(handles.edit1A,'String',newfolder)
+        handles.parameters.ImagePath = newfolder;
+        load_listbox(newfolder,handles)
     end
 end
 % ========================================================================================
@@ -219,9 +246,6 @@ function load_listbox(dir_path, handles)
 % dir_path  name of directory to display
 % handles   structure with handles and userdata
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-set(handles.listbox1A,'String','Loading...')
-
-
 if ~exist([handles.locations.scope,dir_path],'dir')
     dir_path = '';
 else
@@ -242,10 +266,6 @@ else
     handles.sorted_index = sorted_index;
     set(handles.listbox1A,'String',handles.file_names,...
      'Value',1)
-
-    if isempty(dir_path) || ~strcmp(dir_path(end),filesep)
-        dir_path = [dir_path,filesep];
-    end
 end
 set(handles.edit1A,'String',dir_path)
 handles.parameters.ImagePath= dir_path;
@@ -370,16 +390,19 @@ function edit3A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % EDIT3A: select save directory for tracking output
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-PathName = get(handles.edit3A,'String');
-if ~exist([handles.locations.data, PathName],'dir')
-    PathName = filesep;
+newfolder = get(handles.edit3A,'String');
+if ~exist([handles.locations.data, newfolder],'dir')
+    newfolder = '';
 end
-if ~isempty(PathName) && ~strcmp(PathName(end),filesep)
-        PathName = [PathName,filesep];
+% Remove leading slash, add trailing slash
+if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+    newfolder = [newfolder,filesep];
 end
-
-handles.parameters.SaveDirectory = PathName;
-set(handles.edit3A,'String',PathName)
+if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+    newfolder = newfolder(2:end);
+end
+handles.parameters.SaveDirectory = newfolder;
+set(handles.edit3A,'String',newfolder)
 guidata(handles.figure1,handles)
 % ========================================================================================
 
@@ -387,21 +410,22 @@ function pushbutton3A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3A: Browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-PathName = uigetdir(handles.locations.data);
-if ~strcmp(PathName(end),filesep)
-    PathName = [PathName,filesep];
-end
-if (PathName~=0)
-    if length(PathName)<length(handles.locations.data) || ...
-        ~strcmp(PathName(1:length(handles.locations.data)),handles.locations.data)
+newfolder = uigetdir(handles.locations.data);
+
+if (newfolder~=0)
+    if length(newfolder)<length(handles.locations.data) || ...
+        ~strcmp(newfolder(1:length(handles.locations.data)),handles.locations.data)
         warning('Data must be located under selected mount point - keeping previous save directory.')
     else
-        if ~strcmp(PathName(end),filesep)
-            PathName = [PathName,filesep];
+        % Remove leading slash, add trailing slash
+        if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+            newfolder = [newfolder,filesep];
         end
-        PathName = PathName(length(handles.locations.data)+1:end);
-        set(handles.edit3A,'String',PathName)
-        handles.parameters.SaveDirectory = PathName;
+        if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+            newfolder = newfolder(2:end);
+        end
+        set(handles.edit3A,'String',newfolder)
+        handles.parameters.SaveDirectory = newfolder;
         guidata(handles.figure1,handles)
     end
 end
@@ -410,7 +434,7 @@ end
 
 function pushbutton3B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PUSHBUTTON3B: specify new moont points for input/output data
+% PUSHBUTTON3B: specify new mount points for input/output data
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 h = specifyLocations;
 uiwait(h);
@@ -428,7 +452,7 @@ function pushbutton4A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON4A: Load an existing parameter set
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[FileName,PathName] = uigetfile('*','Select parameters file');
+[FileName,PathName] = uigetfile('*','Select parameters file',[handles.home_folder,'Parameters']);
 if (FileName~=0)
     handles = initializeParameters([PathName,FileName], handles);
 end
@@ -445,7 +469,8 @@ function pushbutton4B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 parameters = handles.parameters;
 FileName = '';
-[FileName,PathName] = uiputfile('*','Save current parameters (.mat)','.mat');
+[FileName,PathName] = uiputfile([handles.home_folder,'Parameters',filesep,'*.mat'],...
+    'Save current parameters (.mat)');
 if (FileName~=0)
     save([PathName,FileName],'parameters')
 end
