@@ -2,4 +2,4 @@
 $GIT_DIR/Parameters/*
 
 # Exclude locations file
-
+$GIT_DIR/locations.mat
