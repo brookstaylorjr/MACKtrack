@@ -248,25 +248,26 @@ function load_listbox(dir_path, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if ~exist([handles.locations.scope,dir_path],'dir')
     dir_path = '';
-else
-    dir_struct = dir([handles.locations.scope,dir_path]);
-    % Clean directory of any invisible files
-    drop_ind = 1;
-    for i=1:length(dir_struct)
-        if strcmp(dir_struct(drop_ind).name(1),'.')
-            dir_struct(drop_ind) = [];
-        else
-            drop_ind = drop_ind+1;
-        end
-    end
-    % Place remaining files in listbox and update edit1A (add filesep)
-    [sorted_names,sorted_index] = sortrows({dir_struct.name}');
-    handles.file_names = sorted_names;
-    handles.is_dir = [dir_struct.isdir];
-    handles.sorted_index = sorted_index;
-    set(handles.listbox1A,'String',handles.file_names,...
-     'Value',1)
 end
+
+dir_struct = dir([handles.locations.scope,dir_path]);
+% Clean directory of any invisible files
+drop_ind = 1;
+for i=1:length(dir_struct)
+    if strcmp(dir_struct(drop_ind).name(1),'.')
+        dir_struct(drop_ind) = [];
+    else
+        drop_ind = drop_ind+1;
+    end
+end
+% Place remaining files in listbox and update edit1A (add filesep)
+[sorted_names,sorted_index] = sortrows({dir_struct.name}');
+handles.file_names = sorted_names;
+handles.is_dir = [dir_struct.isdir];
+handles.sorted_index = sorted_index;
+set(handles.listbox1A,'String',handles.file_names,...
+ 'Value',1)
+
 set(handles.edit1A,'String',dir_path)
 handles.parameters.ImagePath= dir_path;
 check_expr(handles);
