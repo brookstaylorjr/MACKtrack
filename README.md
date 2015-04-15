@@ -31,3 +31,5 @@ $ sh install.sh
 
 ## TODO:
 * Make it a matlab toolbox, ref: potterswheel or https://github.com/nwh/matlab
+  + During install, copy all the files into /path-to-matlab/toolbox/UCSDcellTrack; make that discoverable during startup 
+  + It then can be used by any users in the same computer or cluster 
