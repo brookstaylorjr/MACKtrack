@@ -69,10 +69,10 @@ p = mfilename('fullpath');
 slash_idx = strfind(p,filesep);
 handles.save_loc = [p(1:slash_idx(end-1)), 'locations.mat'];
 load(handles.save_loc,'-mat')
-if ~strcmp(locations.scope(end),filesep)
+if isempty(locations.scope) || ~strcmp(locations.scope(end),filesep)
     locations.scope = [locations.scope,filesep];
 end
-if ~strcmp(locations.data(end),filesep)
+if isempty(locations.data) || ~strcmp(locations.data(end),filesep)
     locations.data = [locations.data,filesep];
 end
 handles.locations = locations;
@@ -115,7 +115,7 @@ function edit1_Callback(hObject, eventdata, handles)
 try
     newfolder = get(hObject,'String');
     if exist(newfolder,'dir')
-        if ~strcmp(newfolder(end),filesep)
+        if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
             newfolder = [newfolder,filesep];
         end
         set(handles.edit1,'String',newfolder,'ForegroundColor',handles.blue)
@@ -146,14 +146,15 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1: browse for folder (scope data)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-PathName = uigetdir();
-if ~strcmp(PathName(end),filesep)
-	PathName = [PathName,filesep];
-end
-if (PathName~=0)
-    set(handles.edit1,'String',PathName)
+newfolder = uigetdir();
+
+if (newfolder~=0)
+    if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+        newfolder = [newfolder,filesep];
+    end
+    set(handles.edit1,'String',newfolder)
     set(handles.edit1,'ForegroundColor',handles.blue)
-    handles.locations.scope = PathName;
+    handles.locations.scope = newfolder;
     % Unlock save button
     handles.Locked1 = 0;
     if ~handles.Locked2
@@ -171,7 +172,7 @@ function edit2_Callback(hObject, eventdata, handles)
 try
     newfolder = get(hObject,'String');
     if exist(newfolder,'dir')
-        if ~strcmp(newfolder(end),filesep)
+        if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
             newfolder = [newfolder,filesep];
         end
         set(handles.edit2,'String',newfolder, 'ForegroundColor',handles.blue)
@@ -204,14 +205,14 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1: browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-PathName = uigetdir();
-if ~strcmp(PathName(end),filesep)
-	PathName = [PathName,filesep];
-end
-if (PathName~=0)
-    set(handles.edit2,'String',PathName)
+newfolder = uigetdir();
+if (newfolder~=0)
+    if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+        newfolder = [newfolder,filesep];
+    end
+    set(handles.edit2,'String',newfolder)
     set(handles.edit2,'ForegroundColor',handles.blue)
-    handles.locations.data = PathName;
+    handles.locations.data = newfolder;
     handles.Locked2 = 0;
     % Unlock save button
     if ~handles.Locked1
