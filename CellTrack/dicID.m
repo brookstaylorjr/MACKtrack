@@ -19,8 +19,8 @@ function [output, diagnos] =  dicID(image0,p, ~)
 % 08/04/2013 - Updated to fit memory checking
 
 %- - - - Initial edge transformation on image - - - -
-horizontalEdge = imfilter(image0,fspecial('sobel') /8,'replicate');
-verticalEdge = imfilter(image0,fspecial('sobel')'/8,'replicate');
+horizontalEdge = imfilter(image0,fspecial('sobel') /8,'symmetric');
+verticalEdge = imfilter(image0,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_dir = atan(horizontalEdge./verticalEdge);
 

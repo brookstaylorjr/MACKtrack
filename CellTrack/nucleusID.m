@@ -36,8 +36,8 @@ diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
 
 %- - - - - - - - - - - - - - - - - - - Label1 - - - - - - - - - - - - - - - - - - - - - - -
 % Label1: strong-edge nuclei. Use watershed1 and p.NucleusEdgeThreshold
-horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'replicate');
-verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'replicate');
+horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'symmetric');
+verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
 

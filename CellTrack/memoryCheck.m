@@ -302,7 +302,7 @@ if ~isempty(fixlist)
     mask1 = mask_reseg &~ borders;
     % Propogate 1x using old borders
     seeds1 =  IdentifySecPropagateSubfunction(double(nuclei_fix),double(cell_img),mask1,lambda);
-    label1 = propagateSegment(seeds1, mask_reseg, cell_img, round(p.MinCellWidth/2), nuclei_fix, lambda);
+    label1 = propagatesegment(seeds1, mask_reseg, cell_img, round(p.MinCellWidth/2), nuclei_fix, lambda);
 else
     label1 = queue(1).cells;
 end

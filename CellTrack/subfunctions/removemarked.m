@@ -1,14 +1,20 @@
 function [output_obj] = removemarked(input_obj, markerMask, type)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [output_obj] = removemarked(input_obj, markerMask, type)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%
 % REMOVEMARKED Remove "marked" areas from a label matrix. Any object in the markerMask 
 % that shares pixels with an object in an input label matrix (labelMarker) will cause that object to be removed 
 % in a new labelMatrix. Works with bwconncomp structure or conventional label matrix.
 %
+% INPUT:
 % input_obj       label matrix/bwconncomp structure that defines pixel groups that are to be removed
 % markerMask      the set of markers used to find candidate groups in labelMarker
 % type            "remove"/"keep" - keep everything that is not marked, or marked - defaults to "remove"
 %
+% OUTPUT:
 % output_obj      label matrix/bwconncomp structure with marked objects turned to zeros (same as background)
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if nargin<3
