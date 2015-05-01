@@ -482,7 +482,7 @@ function pushbutton4C_Callback(~, ~, handles)
 % PUSHBUTTON4C: test first image in specified series
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~handles.Locked2
-    set(handles.pushbutton4C,'ForegroundColor',handles.gray,'String','Loading...')
+    set(handles.pushbutton4C,'ForegroundColor',handles.gray,'String','Testing...')
     set(handles.pushbutton4D,'ForegroundColor',handles.gray)
     drawnow;
     if strcmp(handles.parameters.ImageType,'None')
@@ -502,7 +502,7 @@ function pushbutton4D_Callback(~, ~, handles)
 if ~handles.Locked2
     try
     set(handles.pushbutton4C,'ForegroundColor',handles.gray)
-    set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Loading...')
+    set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Running...')
     drawnow;
     parameters = handles.parameters;    
     % 1) Track loop (put in parfor)

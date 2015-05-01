@@ -159,7 +159,6 @@ for cycle = 1:length(parameters.TimeRange)
     
     
     % - - - - Display progress/times taken for mask/track/segment - - - -
-    disp('- - - - - - - - - - - - - - -')
     name1 = parameters.SaveDirectory;
     if strcmp(name1(end),filesep)
         name1 = name1(1:end-1);
@@ -167,17 +166,18 @@ for cycle = 1:length(parameters.TimeRange)
     seps = strfind(name1,filesep);
     seps = seps(end);
     name1 = name1(seps+1:end);
+    str = '\n';
     if cycle < parameters.StackSize 
-        disp([name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)])
+        str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)]);
     else
-        disp([name1, ' - XY ', num2str(xyPos),', Save Cycle ', num2str(saveCycle)])
+        str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Save Cycle ', num2str(saveCycle)]);
     end
-    disp(['Nucleus Image: ',nucName1])
+        str = sprintf([str, '\n', 'Nucleus Image: ',nucName1]);
     n = fieldnames(tocs);
     for k = 1:length(n)
-        disp([n{k},'- ',num2str(tocs.(n{k})),' sec'])
+        str = sprintf([str '\n', n{k},'- ',num2str(tocs.(n{k})),' sec']);
     end
-    disp('- - - - - - - - - - - - - - -')
+    fprintf([str, '\n- - - - - - - - - - - - - - -'])
 
 end
 

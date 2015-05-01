@@ -148,7 +148,7 @@ if draw
     handles.CLim = double([min(img(:)), max(img(:))]);
     set(handles.axes1,'CLim',handles.CLim)
     if size(img,1) > size(img,2)
-        img = img';
+        img = imrotate(img,90);
     end
     image('CData',img,'Parent',handles.axes1,'CDataMapping','scaled'), colormap gray
     fig_resize([],[],handles)

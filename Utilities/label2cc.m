@@ -1,11 +1,17 @@
 function [cc_out] = label2cc(label_in, compressed)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% [cc_out] = label2cc(label_in, compressed)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % label2cc is the inverse of "labelmatrix"- it converts label_in to a bwconncomp structure
 % (structure will be renumbered contiguously by default)
 %
-% label_in        input label matrix
-% compressed      boolean (true/false) sets conncomp as contiguous or not - defaults to true 
+% INPUT:
+% label_in       input label matrix
+% compressed     boolean flag which sets conncomp as contiguous or not - defaults to true 
 %
+%
+% OUTPUT:
+% cc_out         output conncomp structure (identical to the output of 'bwconncomp')
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin < 2

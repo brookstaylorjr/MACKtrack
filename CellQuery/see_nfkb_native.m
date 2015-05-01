@@ -1,4 +1,4 @@
-function [graph, info, measure] = see_nfkb_dim(id,show_graphs, diagnos)
+function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % SEE_NFKB_DIM is a data processing.and visualization script specialized to handle
 % a nuclear-translocating species (it looks for NFkBdimNuclear and NFkBdimCytoplasm measurements).
