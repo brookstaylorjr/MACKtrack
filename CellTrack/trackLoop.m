@@ -6,7 +6,7 @@ function [] = trackLoop(parameters,xyPos)
 % Main subfunctions/subscripts
 % phaseID.m/dicID.m, nucleusID.m, trackNuclei.m. dicCheck.m, phaseSegment.m/dicSegment.m
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-parameters.debug = 1;
+parameters.debug = 0;
 
 % SETUP: define options, initialize structures for images/masks/label matricies
 home_folder = mfilename('fullpath');
