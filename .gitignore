@@ -1,4 +1,4 @@
 # Exclude parameter files (except default)
-/Parameters/*
+/Parameters/Other/*
 # Exclude locations file
 /locations.mat
