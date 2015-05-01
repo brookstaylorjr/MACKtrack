@@ -13,7 +13,7 @@ function img = checkread(name, bitdepth, double_flag,debug)
 % OUTPUT:
 % img       output image (double)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-if nargin<3
+if nargin<4
     debug = 0;
 end
 if nargin<3

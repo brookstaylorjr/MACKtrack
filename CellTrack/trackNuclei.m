@@ -67,7 +67,7 @@ while ~isempty(links)
     links = links(resolve_order,:);
     % Resolve link (unless it tries to link together two old blocks)
     if (~ismember(links(1,1),old_blocks(:,links(1,2)))) || (~ismember(links(1,3),old_blocks(:,links(1,4))))
-        [links,blocks] = resolvelink(blocks,links,labeldata,p,0);
+        [links,blocks] = resolvelink(blocks,links,labeldata,p);
     else
         links(1,:) = [];
     end

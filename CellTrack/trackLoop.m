@@ -6,6 +6,7 @@ function [] = trackLoop(parameters,xyPos)
 % Main subfunctions/subscripts
 % phaseID.m/dicID.m, nucleusID.m, trackNuclei.m. dicCheck.m, phaseSegment.m/dicSegment.m
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+parameters.debug = 1;
 
 % SETUP: define options, initialize structures for images/masks/label matricies
 home_folder = mfilename('fullpath');
@@ -60,7 +61,7 @@ for cycle = 1:length(parameters.TimeRange)
     % CELL MASKING on phase contrast/DIC image
     tic
     cellName1 = eval(parameters.CellExpr);
-    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth);
+    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,parameters.debug);
     maskfn = str2func([fnstem,'ID']);
     data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
     tocs.CellMasking = toc;
@@ -68,7 +69,7 @@ for cycle = 1:length(parameters.TimeRange)
     % NUCLEAR IDENTIFICATION
     tic
     nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth);
+    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,parameters.debug);
     data_tmp = nucleusID(images.nuc,parameters,data,X);
     data = combinestructures(data,data_tmp);
     tocs.NucMasking = toc;
@@ -97,7 +98,8 @@ for cycle = 1:length(parameters.TimeRange)
         saveCycle = cycle-parameters.StackSize+1; % Value assigned to CellData and tracked label matricies
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Re-read image corresponding to bottom of the stack (for segmentation and saving)
-        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)],bit_depth);       
+        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
+            ,bit_depth,parameters.debug);       
         
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic

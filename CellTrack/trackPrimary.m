@@ -2,14 +2,14 @@ function [] = trackPrimary(parameters,xyPos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [] = trackPrimary(parameters,xyPos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% TRACKPRIMARY takes a time-lapse image series and converts into  into segmented, tracked data. 
+% TRACKPRIMARY takes a time-lapse image series and converts into segmented, tracked data. 
 % Output cellular trajetories are saved as successive label matricies. It is identical to
 % TRACKLOOP, but finds only nuclei (primary objects)
 %
 % Main subfunctions
 % phaseID.m/dicID.m, nucleusID.m, trackNuclei.m. dicCheck.m, phaseSegment.m/dicSegment.m
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
+parameters.debug = 0;
 
 % SETUP: define options, initialize structures for images/masks/label matricies
 home_folder = mfilename('fullpath');
@@ -52,7 +52,7 @@ for cycle = 1:length(parameters.TimeRange)
     % NUCLEAR IDENTIFICATION
     tic
     nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth);
+    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,parameters.debug);
     data = primaryID(images.nuc,parameters,[]);
     tocs.NucMasking = toc;
     
@@ -73,7 +73,8 @@ for cycle = 1:length(parameters.TimeRange)
         saveCycle = cycle-parameters.StackSize+1; % Value assigned to CellData and tracked label matricies
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Read 1st auxiliary image - corresponding to bottom of the stack
-        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)],bit_depth);       
+        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)],...
+            bit_depth,parameters.debug);       
         
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic

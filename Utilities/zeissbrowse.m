@@ -1,9 +1,15 @@
 function [] = zeissbrowse(start_dir)
-% zeissbrowse look through sequential image set
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% ZEISSBROWSE  look through sequential image set
+% [] = zeissbrowse(start_dir)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% ZEISSBROWSE creates GUI allowing user to browse a sequential image set inside a directory
+% Image names MUST be formatted to specify channel, position, and timepoint as shown (e.g.):
+% - fluorescence channel: c2 (must be single digit)
+% - XY (stage) position: s05 (can be any number of digits)
+% - timepoint: t001 (can be any number of digits)
 %
-% start_dir     image directory to start from (dialog box opens if this isn't selected)
+% INPUT
+% start_dir     image directory to start from (a dialog box will open if left unspecified)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if nargin<1
@@ -150,7 +156,7 @@ if draw
     if size(img,1) > size(img,2)
         img = imrotate(img,90);
     end
-    image('CData',img,'Parent',handles.axes1,'CDataMapping','scaled'), colormap gray
+    image('CData',img,'Parent',handles.axes1,'CDataMapping','scaled',img(end:-1:1,:)), colormap gray
     fig_resize([],[],handles)
     guidata(handles.figure1,handles)
 
@@ -169,10 +175,10 @@ function [handles_out] = drawimage(handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0);
 if size(img,1) > size(img,2)
-    img = img';
+    img = imrotate(img,90);
 end
 cla(handles.axes1)
-image('Parent',handles.axes1,'CDataMapping','scaled','CData',img)
+image('Parent',handles.axes1,'CDataMapping','scaled','CData',img(end:-1:1,:))
 
 if isfield(handles,'CLim')
     set(handles.axes1, 'CLim', handles.CLim)
