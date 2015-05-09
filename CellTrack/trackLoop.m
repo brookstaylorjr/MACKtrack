@@ -61,7 +61,7 @@ for cycle = 1:length(parameters.TimeRange)
     % CELL MASKING on phase contrast/DIC image
     tic
     cellName1 = eval(parameters.CellExpr);
-    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,parameters.debug);
+    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
     maskfn = str2func([fnstem,'ID']);
     data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
     tocs.CellMasking = toc;
@@ -69,7 +69,7 @@ for cycle = 1:length(parameters.TimeRange)
     % NUCLEAR IDENTIFICATION
     tic
     nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,parameters.debug);
+    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
     data_tmp = nucleusID(images.nuc,parameters,data,X);
     data = combinestructures(data,data_tmp);
     tocs.NucMasking = toc;
@@ -99,7 +99,7 @@ for cycle = 1:length(parameters.TimeRange)
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Re-read image corresponding to bottom of the stack (for segmentation and saving)
         images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
-            ,bit_depth,parameters.debug);       
+            ,bit_depth,1,parameters.debug);       
         
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic
@@ -168,7 +168,7 @@ for cycle = 1:length(parameters.TimeRange)
     seps = strfind(name1,filesep);
     seps = seps(end);
     name1 = name1(seps+1:end);
-    str = '\n';
+    str = '\n- - - - - - - - - - - - - - -';
     if cycle < parameters.StackSize 
         str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)]);
     else
@@ -179,7 +179,7 @@ for cycle = 1:length(parameters.TimeRange)
     for k = 1:length(n)
         str = sprintf([str '\n', n{k},'- ',num2str(tocs.(n{k})),' sec']);
     end
-    fprintf([str, '\n- - - - - - - - - - - - - - -'])
+    fprintf([str, '\n'])
 
 end
 
