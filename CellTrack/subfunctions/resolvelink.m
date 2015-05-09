@@ -44,7 +44,7 @@ if sum(obj_sums) > 3
     
     % Check if distance to smaller block is out of range established by larger block
     dist1 = sqrt( ((mean(props2(2,:)) - means1(2)).^2) + ((mean(props2(3,:)) - means1(3)).^2) );
-    maxdist = max([3*sqrt(stds1(2)^2 + stds1(3)^2), sqrt(means1(1)/pi)*3]);
+    maxdist = max([5*sqrt(stds1(2)^2 + stds1(3)^2), sqrt(means1(1)/pi)*5]);
     if dist1 > maxdist
         % If 2nd object is single-frame, or also has an out-of range area, invalidate link
         if (mean(props2(1,:)) > (means1(1)+3*stds1(1))) || (mean(props2(1,:)) < (means1(1)+3*stds1(2))) || (length(frm2)==1)
@@ -53,7 +53,7 @@ if sum(obj_sums) > 3
     end
 end
 
-if verbose
+if p.debug
     disp(['#',num2str(rows(1)),': [',num2str(blocks(rows(1),:)),'] linked to'])
     disp(['#',num2str(rows(2)),': [',num2str(blocks(rows(2),:)),']'])
     disp(['dist: ',num2str(link(5)),', area/perim change: ',num2str(link(6))])

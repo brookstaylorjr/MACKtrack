@@ -59,22 +59,55 @@ for i = 1:length(info.fields)
 end
 info.fields = fieldnames(measure);
 
-% Read in 3rd image from each XY position, calculate background mean/std (resave AllParameters)
+% Add measurement-specific information and add to AllParameters:
+% - for see_nfkb calculate base image distributions and threshold for positiev NFkB expression
+% - for see_nfkb_native, calculate adjusted image distributions
+
+% Read in 1st image from each XY position, calculate background mean/std (resave AllParameters)
+
 p = AllMeasurements.parameters;
-if ~isfield(p, 'nfkb_thresh')
-    nfkb_thresh = zeros(1,length(p.XYRange));
-    p.img_distr = zeros(2,length(p.XYRange));
-    for ind = 1:length(p.XYRange)
-        i = p.XYRange(ind);
-        j = min(p.TimeRange)+2;
-        expr = p.nfkbModule.ImageExpr;
-        img = checkread([locations.scope, p.ImagePath, eval(expr)],16);
-        nfkb_thresh(ind) = otsuthresh(img,false(size(img)),'log');
-        [~,p.img_distr(:,ind)] = modebalance(img,2,16,'measure');
+
+if isfield(AllMeasurements,'NFkBNuclear')
+    if ~isfield(p, 'nfkb_thresh')
+        disp('Measuring and saving initial image distributions')
+        nfkb_thresh = zeros(1,length(p.XYRange));
+        p.img_distr = zeros(2,length(p.XYRange));
+        for ind = 1:length(p.XYRange)
+            i = p.XYRange(ind);
+            j = min(p.TimeRange);
+            expr = p.nfkbModule.ImageExpr;
+            nfkb = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth);
+            nfkb_thresh(ind) = otsuthresh(nfkb,false(size(nfkb)),'log');
+            [~,p.img_distr(:,ind)] = modebalance(nfkb,2,p.BitDepth,'measure');
+        end
+        p.nfkb_thresh = mean(nfkb_thresh);
+        AllMeasurements.parameters = p;
+        save(info.savename,'AllMeasurements')
     end
-    p.nfkb_thresh = mean(nfkb_thresh);
-    AllMeasurements.parameters = p;
-    save(info.savename,'AllMeasurements')
+elseif isfield(AllMeasurements, 'NFkBdimNuclear')
+    if ~isfield(p, 'adj_distr')
+        disp('Measuring and saving initial (flatfield-corrected) image distributions')
+        p.adj_distr = zeros(2,length(p.XYRange));
+        for ind = 1:length(p.XYRange)
+            i = p.XYRange(ind);
+            j = min(p.TimeRange);
+            expr = p.nfkbModule.ImageExpr;
+            nfkb = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth);
+            if ind==1
+                X = backgroundcalculate(size(nfkb));
+            end
+            warning off MATLAB:nearlySingularMatrix
+            pStar = (X'*X)\(X')*double(nfkb(:));
+            warning on MATLAB:nearlySingularMatrix
+
+            % Apply background correction
+            nfkb = reshape((double(nfkb(:) - X*pStar)),size(nfkb));
+            nfkb = nfkb-min(nfkb(:)); % Set minimum to zero
+            [~,p.adj_distr(:,ind)] = modebalance(nfkb,1,p.BitDepth,'measure');
+            AllMeasurements.parameters = p;
+            save(info.savename,'AllMeasurements')
+        end
+    end
 end
 info.parameters = p;
 

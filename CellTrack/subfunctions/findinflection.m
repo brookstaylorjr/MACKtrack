@@ -1,4 +1,4 @@
-function [inflection] = findInflection(mask_cell, label_nuc, skeleton, markers, max_inflection, filter_size)
+function [inflection] = findinflection(mask_cell, label_nuc, skeleton, markers, max_inflection, filter_size)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % FINDINFLECTION   Given a marked skeleton
 %

@@ -59,31 +59,45 @@ switch p.ImageType
 end
 
 % - - - - 1st mask: make mask from cell image - - - - 
+tic
 maskfn = str2func([fnstem,'ID']);
 [data,diag_tmp] = maskfn(images.cell,p,X);
 % Save information
 handles.diagnostics.cell = diag_tmp;
+tocs.CellMasking = toc;
 
 % - - - - 1st label: make label matrix from nuclear image - - - -
 [data_tmp, diag_tmp] = nucleusID(images.nucleus,p,data,X);
 % Save information
 handles.diagnostics.nuclei = diag_tmp;
 data = combinestructures(data,data_tmp);
+tocs.NucMasking = toc;
 
 
 % - - - - Check cells (binucleates, missed nuclei, etc.) - - - -
+tic
 checkfn = str2func([fnstem,'Check']);
 [data_tmp,diag_tmp] = checkfn(data,images.cell,p);
 % Save information
 handles.diagnostics.check = diag_tmp;
 data = combinestructures(data,data_tmp);
+tocs.CheckCells = toc;
 
 % - - - - 2nd label: make label matrix by segmenting cell image - - - - 
+tic
 segmentfn = str2func([fnstem,'Segment']);
 [data_tmp, diag_tmp] = segmentfn(data,images.cell,p);
 % Save information
 handles.diagnostics.segmentation = diag_tmp;
 data = combinestructures(data,data_tmp);
+tocs.Segmentation = toc;
+
+% Display times
+n = fieldnames(tocs);
+for k = 1:length(n)
+    disp([n{k},'- ',num2str(tocs.(n{k})),' sec'])
+end
+
 
 assignin('base', 'diagnostics',handles.diagnostics)
 assignin('base','images',images);

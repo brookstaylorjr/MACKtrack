@@ -1,4 +1,4 @@
-function img = checkread(name, bitdepth, double_flag)
+function img = checkread(name, bitdepth, double_flag,debug)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [img ] = CHECKREAD(name)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -8,10 +8,14 @@ function img = checkread(name, bitdepth, double_flag)
 % name          name of image (+ file path)
 % bitdepth      bit depth of image
 % double_flag   if 1, outputs double of image (as opposed to read precision) (default=1)
+% debug         if 1, show initial/final image size
 %
 % OUTPUT:
 % img       output image (double)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+if nargin<4
+    debug = 0;
+end
 if nargin<3
     double_flag = 1;
 end
@@ -46,10 +50,12 @@ end
 new_nrow = size(img,1);
 new_ncol = size(img,2);
 
-if (old_nrow~=new_nrow)||(old_ncol~=new_ncol)
-    disp(sprintf(['Note: max-saturated rows/cols dropped from "', name,'"\n',...
-            'Old dimensions: [',num2str(old_nrow),', ',num2str(old_ncol),']. ',...
-            'New dimensions: [',num2str(new_nrow),', ',num2str(new_ncol),']']));
+if debug
+    if (old_nrow~=new_nrow)||(old_ncol~=new_ncol)
+        disp(sprintf(['Note: max-saturated rows/cols dropped from "', name,'"\n',...
+                'Old dimensions: [',num2str(old_nrow),', ',num2str(old_ncol),']. ',...
+                'New dimensions: [',num2str(new_nrow),', ',num2str(new_ncol),']']));
+    end
 end
 
 if double_flag

@@ -64,7 +64,7 @@ for idx = 1:numel(data.dates)
     end
     
     % MEASUREMENT
-    disp('Measuring...')
+    disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
         UCSDcellMeasure(parameters);      
     catch ME

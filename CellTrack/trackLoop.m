@@ -6,6 +6,7 @@ function [] = trackLoop(parameters,xyPos)
 % Main subfunctions/subscripts
 % phaseID.m/dicID.m, nucleusID.m, trackNuclei.m. dicCheck.m, phaseSegment.m/dicSegment.m
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+parameters.debug = 0;
 
 % SETUP: define options, initialize structures for images/masks/label matricies
 home_folder = mfilename('fullpath');
@@ -60,7 +61,7 @@ for cycle = 1:length(parameters.TimeRange)
     % CELL MASKING on phase contrast/DIC image
     tic
     cellName1 = eval(parameters.CellExpr);
-    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth);
+    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
     maskfn = str2func([fnstem,'ID']);
     data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
     tocs.CellMasking = toc;
@@ -68,7 +69,7 @@ for cycle = 1:length(parameters.TimeRange)
     % NUCLEAR IDENTIFICATION
     tic
     nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth);
+    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
     data_tmp = nucleusID(images.nuc,parameters,data,X);
     data = combinestructures(data,data_tmp);
     tocs.NucMasking = toc;
@@ -97,7 +98,8 @@ for cycle = 1:length(parameters.TimeRange)
         saveCycle = cycle-parameters.StackSize+1; % Value assigned to CellData and tracked label matricies
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Re-read image corresponding to bottom of the stack (for segmentation and saving)
-        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)],bit_depth);       
+        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
+            ,bit_depth,1,parameters.debug);       
         
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic
@@ -159,7 +161,6 @@ for cycle = 1:length(parameters.TimeRange)
     
     
     % - - - - Display progress/times taken for mask/track/segment - - - -
-    disp('- - - - - - - - - - - - - - -')
     name1 = parameters.SaveDirectory;
     if strcmp(name1(end),filesep)
         name1 = name1(1:end-1);
@@ -167,17 +168,18 @@ for cycle = 1:length(parameters.TimeRange)
     seps = strfind(name1,filesep);
     seps = seps(end);
     name1 = name1(seps+1:end);
+    str = '\n- - - - - - - - - - - - - - -';
     if cycle < parameters.StackSize 
-        disp([name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)])
+        str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)]);
     else
-        disp([name1, ' - XY ', num2str(xyPos),', Save Cycle ', num2str(saveCycle)])
+        str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Save Cycle ', num2str(saveCycle)]);
     end
-    disp(['Nucleus Image: ',nucName1])
+        str = sprintf([str, '\n', 'Nucleus Image: ',nucName1]);
     n = fieldnames(tocs);
     for k = 1:length(n)
-        disp([n{k},'- ',num2str(tocs.(n{k})),' sec'])
+        str = sprintf([str '\n', n{k},'- ',num2str(tocs.(n{k})),' sec']);
     end
-    disp('- - - - - - - - - - - - - - -')
+    fprintf([str, '\n'])
 
 end
 

@@ -1,6 +1,6 @@
-function [label_out] = propagateSegment(seeds, mask, image_in, strel_size, nuclei, lambda)
+function [label_out] = propagatesegment(seeds, mask, image_in, strel_size, nuclei, lambda)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% PROPAGATE SEGEMENT performs 'propagate' algorithm (taken from CellProfiler), then corrects
+% PROPAGATESEGEMENT performs 'propagate' algorithm (taken from CellProfiler), then corrects
 % small errors
 %
 % seeds        label matrix of seed objects
@@ -10,7 +10,7 @@ function [label_out] = propagateSegment(seeds, mask, image_in, strel_size, nucle
 % nuclei       nuclear seeds (default to "seeds" if not specified)
 % lambda       (optional) scaling parameter for Propagate. Default is 0.02
 %
-% albel_out    final image
+% label_out    final image
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin<6
@@ -20,8 +20,11 @@ if nargin<6
     end
 end
 
+image_clamp = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
+image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
+
 % Run propagate (requires compiled binary)
-label1 = IdentifySecPropagateSubfunction(double(seeds),double(image_in),mask,lambda);
+label1 = IdentifySecPropagateSubfunction(double(seeds),double(image_clamp),mask,lambda);
 
 
 % Correct for errors segmentation: look for thin pieces
@@ -61,9 +64,9 @@ borders2 = dilate1 - seed_contig;
 seed_contig( (borders1~=0) | (borders2~=0) )=0;
 seed_contig = bwlabel(seed_contig>0,4);
 seed_contig = removemarked(seed_contig,nuclei>0,'keep');
-label2 = IdentifySecPropagateSubfunction(double(nuclei),double(image_in),seed_contig>0,lambda);
+label2 = IdentifySecPropagateSubfunction(double(nuclei),double(image_clamp),seed_contig>0,lambda);
 
 
 % Do final propagation
-label_out = IdentifySecPropagateSubfunction(double(label2),double(image_in),mask,lambda);
+label_out = IdentifySecPropagateSubfunction(double(label2),double(image_clamp),mask,lambda);
 label_out(isnan(label_out)) = 0;

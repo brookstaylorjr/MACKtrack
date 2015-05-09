@@ -116,7 +116,9 @@ while flag == 0
     catch ME
         start_val = start_val + 1;
         disp(['Skipped function "' fcn_name,'"'])
-        disp(ME)
+        disp('- - - - - - (begin error trace) - - - - - - - - - - - - -')
+        disp(getReport(ME,'extended'));
+        disp('- - - - - - (end error trace) - - - - - - - - - - - - - -')
         if start_val>max_val
             error('No valid measurement funtions found.')
         end
