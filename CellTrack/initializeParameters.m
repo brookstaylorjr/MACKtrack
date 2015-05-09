@@ -191,8 +191,11 @@ catch ME
 end
 
 % Resave parameters in place to reflect new updated values
-parameters = handles.parameters;
-save(paramfile,'parameters')
+if ~isequal(handles.parameters,parameters)
+    disp('Saving automatically-updated parameters')
+    parameters = handles.parameters;
+    save(paramfile,'parameters')
+end
 
 
 handlesOut = handles;
