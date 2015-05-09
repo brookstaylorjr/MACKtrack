@@ -156,7 +156,7 @@ if draw
     if size(img,1) > size(img,2)
         img = imrotate(img,90);
     end
-    image('CData',img,'Parent',handles.axes1,'CDataMapping','scaled',img(end:-1:1,:)), colormap gray
+    image('CData',img,'Parent',handles.axes1,'CDataMapping','scaled','CData',img(end:-1:1,:)), colormap gray
     fig_resize([],[],handles)
     guidata(handles.figure1,handles)
 

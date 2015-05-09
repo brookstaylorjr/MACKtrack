@@ -30,203 +30,71 @@ end
 info.Module = 'nfkbdimModule';
 
 % Display parameters
-t_hrs = 11; % Number of hours to display in graphs
+t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-1)/12]); % Number of hours to display in graphs
 max_shift = 0; % Max allowable frame shift in XY-specific correction
-info.graph_limits = [0 1.8];
+info.graph_limits = [-50 500];
 dendro = 0;
 colors = setcolors;
 
-%% Filtering
-bright = nanmin([prctile(measure.NFkBdimCytoplasm(:,1:8),18.75,2),nanmedian(measure.NFkBdimCytoplasm,2)],[],2);
-bright_min = 0.2*info.parameters.nfkb_thresh;
-bright_max = nanmean(bright(bright>bright_min)) + 1.8*nanstd(bright(bright>bright_min));
-
-% Filter cells by fate and NFkB expression level
-info.droprows = [];
-info.droprows = [info.droprows, sum(isnan(measure.NFkBdimCytoplasm(:,1:4)),2)>1]; % Cells existing @ expt start
-info.droprows = [info.droprows, sum(isnan(measure.NFkBdimNuclear(:,1:54)),2)>3]; % Long-lived cells
-%info.droprows = [info.droprows, info.CellData(:,end)]; % Non-edge cells
-info.droprows = [info.droprows,(bright<bright_min)|(bright>bright_max)]; % Cells within brightness thresholds
-
-% (graph of bright vs dim cells)
+% Cytoplasmic trajectory -> stable, or is there some universal change (akin to RAW cells)?
 if diagnos
-    brights_graph = measure.NFkBdimNuclear(max(info.droprows(:,1:end-2),[],2)==0,:);
-    mean2 = bright(max(info.droprows(:,1:end-2),[],2)==0,:);
-    [mean2,idx] = sort(mean2,'ascend');
-    brights_graph = brights_graph(idx,:)./repmat(nanmean(brights_graph(idx,1:3),2),1,size(brights_graph,2));
-    figure,ax = tight_subplot(3,1,0.05);
-    imagesc(brights_graph(mean2<bright_min,:),'Parent',ax(1))
-    set(ax(1),'CLim',[0.5 2.5],'XTick',[]), colormap gray
-    title(ax(1),['Dim cells (starting nuclear level < ',num2str(round(bright_min*10)/10),')'])
-    imagesc(brights_graph((mean2>bright_min)&(mean2<bright_max),:),'Parent',ax(2))
-    set(ax(2),'CLim',[0.5 2.5],'XTick',[])
-    imagesc(brights_graph(mean2>bright_max,:),'Parent',ax(3))
-    set(ax(3),'CLim',[0.5 2.5],'XTick',[])
-    title(ax(3),['Bright cells (starting nuclear level > ',num2str(bright_max),')'])
+    figure,ha = tight_subplot(2,1);
+    plot(ha(1),smoothrows(measure.NFkBdimCytoplasm,7)')
+    set(ha(1),'XTickLabel',{})
+    plot(ha(2),nanmean(measure.NFkBdimCytoplasm))
+    hold on
+    plot(nanmedian(measure.NFkBdimCytoplasm),'Color',colors.blue)
+    hold off
 end
 
-% Filter cells by nuclear/cytoplasmic expression levels
-p1 = zeros(1,3);
-p0 = zeros(1,3);
-for i =1:3
-    xvar1 = measure.NFkBdimCytoplasm(max(info.droprows,[],2) == 0,i);
-    yvar1 = measure.NFkBdimNuclear(max(info.droprows,[],2) == 0,i);
-    drop1 = isnan(xvar1)|isnan(yvar1);
-    ply = polyfit(xvar1(~drop1),yvar1(~drop1),1);
-    p1(i) = ply(1);
-    p0(i) = ply(2);
-end
-nuc_adj = measure.NFkBdimNuclear-mean(p0);
-ratio_early =  nanmedian(nuc_adj(:,1:3)./measure.NFkBdimCytoplasm(:,1:3),2);
-info.droprows = [info.droprows,(ratio_early<(mean(p1)-0.2))...
-    |(ratio_early>(mean(p1)+0.2))]; % Cells with physiological ratios
+% Filter cells by fate
+droprows = [];
+droprows = [droprows, sum(isnan(measure.NFkBdimCytoplasm(:,1:4)),2)>1]; % Cells existing @ expt start
+droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:100)),2)>3]; % Long-lived cells
+droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
+%droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
+info.keep = max(droprows,[],2) == 0;
 
-% Combine filters
-info.keep = max(info.droprows,[],2) == 0;
-
-%% Normalize dynamics for morphology changes and mixed expression levels 
-% Identify and remove translocation-related artifacts in cytoplasm data
-nfkb_cyto = measure.NFkBdimCytoplasm(info.keep,:);
-nfkb_nuc = measure.NFkBdimNuclear(info.keep,:);
-numcols = size(nfkb_nuc,2);
-test1 = (nfkb_nuc - repmat(prctile(nfkb_nuc(:,1:8),18.75,2),1,numcols))./repmat(nanstd(nfkb_nuc,0,2),1,numcols);
-test2 = (nfkb_cyto - repmat(nanmedian(nfkb_cyto(:,1:2),2),1,numcols))./repmat(nanstd(nfkb_cyto,0,2),1,numcols);
-thresh = 2.5;
-for i=1:size(nfkb_cyto,1)
-    x1 = 1:size(nfkb_cyto,2);
-    x1((test1(i,:)>thresh)&(test2(i,:)>thresh)) = [];
-    y1 = nfkb_cyto(i,~((test1(i,:)>thresh)&(test2(i,:)>thresh)));
-    x1(isnan(y1)) = [];
-    y1(isnan(y1)) = [];
-    tmp = interp1(x1,y1,1:size(nfkb_cyto,2));
-    tmp(isnan(nfkb_cyto(i,:))) = nan;
-    nfkb_cyto(i,:) = tmp;
-end
-
-% Identify and remove data spikes from cytoplasm data
-nfkb_cyto = nfkb_cyto./repmat(nanmean(nfkb_cyto(:,1:3),2),1,size(nfkb_cyto,2));
-tmp = smoothrows(nfkb_cyto,5);
-diffs = nfkb_cyto-tmp;
-thresh = 5*nanstd(abs(diffs(:)));
-deviat = abs(diffs)>thresh;
-corr_cyto = nfkb_cyto;
-for i=1:size(nfkb_cyto,1)
-    x1 = find(~deviat(i,:));
-    y1 = nfkb_cyto(i,~deviat(i,:));
-    x1(isnan(y1)) = [];
-    y1(isnan(y1)) = [];
-    corr_cyto(i,:) = interp1(x1,y1,1:size(nfkb_cyto,2));
-end
-corr_cyto(isnan(nfkb_cyto)) = nan;
-
-% Scale cytplasmic trajectories to balance nuclear baseline change.
-smooth_cyto = smoothrows(corr_cyto,7);
-corr_nuc = measure.NFkBdimNuclear(info.keep,:);
-start_nuc = prctile(corr_nuc(:,1:8),18.75,2);
-start_cyto = nanmedian(smooth_cyto(:,1:4),2);
-
-win = 2;
-std_nuc = stdfilt(corr_nuc,true(1,2*win+1));
-std_nuc(imdilate(isnan(corr_nuc),true(1,2*win+1))) = inf;
-omit_frames = ceil(0.8*info.parameters.FramesPerHour);
-
-% Find each cell's late-time-point baseline and correct nuclear trajectory
-for i =1:size(corr_nuc,1)
-    min_v = min(std_nuc(i,omit_frames:end-win))*5;
-    low_locs = find(std_nuc(i,:)<min_v);
-    low_locs((low_locs<(omit_frames))|(low_locs>(size(std_nuc,2)-win))) = [];
-    % Find first point where cytoplasm and nuclear trajectories show same trend
-    ind = 1;
-    end_nuc = nanmean(corr_nuc(i,low_locs(ind)-win:low_locs(ind)+win));
-    end_cyto = nanmean(smooth_cyto(i,low_locs(ind)-win:low_locs(ind)+win));
-    while (((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) < 0) && (ind<length(low_locs))
-        ind = ind+1;
-        end_nuc = nanmean(corr_nuc(i,low_locs(ind)-win:low_locs(ind)+win));
-        end_cyto = nanmean(smooth_cyto(i,low_locs(ind)-win:low_locs(ind)+win));
-    end
-    % Find lowest baseline reached
-    for j = (ind+1):length(low_locs)
-        if ((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) > 0
-            nuc_a = nanmean(corr_nuc(i,low_locs(j)-win:low_locs(j)+win));
-            cyto_a = nanmean(smooth_cyto(i,low_locs(j)-win:low_locs(j)+win));
-            testval = nuc_a - abs(cyto_a-min([start_cyto(i),end_cyto]))...
-                /abs(start_cyto(i)-end_cyto)*abs(start_nuc(i)-end_nuc);
-            if testval< end_nuc
-                end_nuc = nuc_a;
-                end_cyto = cyto_a;
-            end
-        end
-    end
-    % Apply correction (if nucleus and cytoplasm show same trend)
-    if ((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) > 0
-        corr_row = (smooth_cyto(i,:) - min([start_cyto(i),end_cyto]))/abs(start_cyto(i)-end_cyto);
-        corr_nuc(i,:) = (corr_nuc(i,:) - corr_row*abs(start_nuc(i)-end_nuc));
-    end   
-end
-
-% Self-normalize corrected nuclear trajectories to starting cytoplasmic values
-corr_nuc = corr_nuc - repmat(prctile(corr_nuc(:,1:8),18.75,2),1,size(corr_nuc,2));
-cyto_balanced = repmat(nanmedian(measure.NFkBdimCytoplasm(info.keep,1:5),2)-mean(info.parameters.img_distr(1,:))...
-    ,1,size(corr_nuc,2));
-%corr_nuc = corr_nuc./cyto_balanced;
-tmp = reshape(corr_nuc(:,2:end),[1,numel(corr_nuc(:,2:end))]);
-corr_nuc = (corr_nuc - prctile(tmp,5))/diff(prctile(tmp,[5 95]));
-
-
-% (graph of randomly selected uncorrected vs corrected trajectories)
+% NFkB normalization
+% Find baseline for each cell
+nfkb = measure.NFkBdimNuclear(:,:);
+nfkb_baseline = nanmin([prctile(nfkb(:,1:8),18.75,2),prctile(nfkb,10,2)],[],2);
+nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
-    tmp_celldata = info.CellData(info.keep,:);
-    nfkb_cyto = measure.NFkBdimCytoplasm(info.keep,:);
-    nfkb_cyto = nfkb_cyto./repmat(nanmean(nfkb_cyto(:,1:3),2),1,size(nfkb_cyto,2));
-    nfkb_nuc = measure.NFkBdimNuclear(info.keep,:);
-    nfkb_nuc = nfkb_nuc./repmat(prctile(nfkb_nuc(:,1:8),18.75,2),1,size(nfkb_nuc,2));
-    
-    order1 = randperm(size(nfkb_cyto,1),6);
-    legend1 = cell(size(order1));
-    for i =1:length(order1)
-        legend1{i} = ['xy',num2str(tmp_celldata(order1(i),1)),', cell ', num2str(tmp_celldata(order1(i),2))];
-    end
-    figure,ax = tight_subplot(4,1,0.08);
-    plot(ax(1),nfkb_nuc(order1,:)','LineWidth',2),set(ax(1),'XLim',[1 size(nfkb_nuc,2)], 'YLim', [0.3 5])
-    title(ax(1),'Raw nuclear NFkB (self-scaled)'), legend(ax(1),legend1)
-    plot(ax(2),corr_nuc(order1,:)','LineWidth',2),set(ax(2),'XLim',[1 size(nfkb_nuc,2)], 'YLim', info.graph_limits)
-    title(ax(2),'Corrected nuclear NFkB')
-    plot(ax(3),nfkb_cyto(order1,:)','LineWidth',2),set(ax(3),'XLim',[1 size(nfkb_nuc,2)], 'YLim',[0.3 1.8])
-    title(ax(3),'Raw cytoplasmic NFkB')
-    plot(ax(4),smooth_cyto(order1,:)','LineWidth',2),set(ax(4),'XLim',[1 size(nfkb_nuc,2)], 'YLim', [0.3 1.8])
-    title(ax(4),'Smoothed cytoplasmic NFkB')
+    figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar
 end
+nfkb = nfkb(info.keep,:);
 
 
-%% Filtering, part 2: do in 2 stages
-keep2 =  (nanmean(abs(corr_nuc-nanmean(corr_nuc(:))),2)./nanstd(corr_nuc(:)))<3;
+%% Filtering, part 2: eliminate outlier cells (based on mean value)
+keep2 =  (nanmean(abs(nfkb-nanmean(nfkb(:))),2)./nanstd(nfkb(:)))<3;
 info.keep(info.keep) =  keep2;
-corr_nuc(~keep2,:) = [];
+nfkb(~keep2,:) = [];
 
-keep3 =  (nanmean(abs(corr_nuc-nanmean(corr_nuc(:))),2)./nanstd(corr_nuc(:)))<1.5;
+keep3 =  (nanmean(abs(nfkb-nanmean(nfkb(:))),2)./nanstd(nfkb(:)))<1.5;
 info.keep(info.keep) =  keep3;
-corr_nuc(~keep3,:) = [];
+nfkb(~keep3,:) = [];
 
 
 disp(['dropped ',num2str(sum(~keep2)),'+',num2str(+sum(~keep3)),' high-variance cells'])
 
 %% Initialize outputs, do final corrections
 
-graph.t = 0:(1/12):t_hrs;
+graph.t = 0:(1/info.parameters.FramesPerHour):t_hrs;
 graph.celldata = info.CellData(info.keep,:);
 graph.opt = maketicks(graph.t,info.graph_limits,0);
 graph.opt.Name = 'NFkB Activation'; 
-
 % Correct for XY positions that activate late
-[graph.var, shift_xy] = alignTrajectories(corr_nuc(:,1:length(graph.t)+2*max_shift), graph.celldata, 60, max_shift);
+[graph.var, shift_xy] = alignTrajectories(nfkb(:,1:length(graph.t)+2*max_shift), graph.celldata, 60, max_shift);
 [graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
-
 if diagnos
     for i = 1:length(shift_xy)
         disp(['xy ',num2str(i),' shift : ',num2str(shift_xy(i))])
     end
 end
 graph.shift = shift_xy;
+
+
 
 
 %% Graphing

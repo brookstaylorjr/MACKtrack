@@ -1,19 +1,37 @@
-function [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, varargin)
+function [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, balance_mode, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% modebalance takes any input image and attempts to normalize the background distribution,
+% [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, balance_mode, varargin)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% MODEBALANCE takes any input image and attempts to normalize the background distribution,
 % i.e. the first "major" peak. Used in making output images and fluorescence measurements.
 %
 % [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, varargin)
+%
+% INPUT:
 % input_img      raw input image (can be any imaging modality)
 % num_modes      number of subpopulations (should be one or two)
 % bit_depth      bit depth of image (used in assigning number of bins)
+% balance_mode   string specifying form of mode-balancing: 
+%                   - 'display'    (normalize background to 0, w/ std. deviation of 1) - default
+%                   - 'measure'    return background distribution only
+%                   - 'correct'    normalize background to match an input distribution
+% varargin       if 'correct' mode, specifies [mu; sigma] to which background dist will be matched
 %
+% OUTPUT:
 % output_img     adjusted image
+% varargout      variable output based on correction mode
+%                  - 'display' mode: no output 
+%                  - 'correct' mode: scaling factor for corrected image
+%                  - 'measure' mode: return background distribution
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Validate number of subpopulations (needs to be 1 or 2)
 if ~ismember(num_modes,[1 2]);
     error('Error in MODEBALANCE: only uni- or bi-modal populations can be modeled')
+end
+
+if nargin<4
+    balance_mode = 'display';
 end
 
 % Prep image: drop saturated pixels, convert to vector
@@ -34,7 +52,6 @@ if max(pct1>0.68)
 else
     sigma1 = x(mode_loc).^2;
 end
-
 
 % Turn convergence warning off
 warning('off','stats:gmdistribution:FailedToConverge')
@@ -73,26 +90,19 @@ else
     background_sigma = sqrt(obj.Sigma(mu_ind));
 end
 
-% 3 possible modes: 
-% - 'display'    (normalize background to 0, w/ standard deviation of 1) - defualt
-% - 'measure'    return background distribution only
-% - 'correct'    normalize background to match an input distribution
-if isempty(varargin)
-    varargin{1} = 'display';
-end
-
-if strcmp(varargin{1},'measure')
+if strcmp(balance_mode,'measure')
     varargout{1} = [background_mu(1); background_sigma(1)];
     output_img = input_img; % Don't modify image
-elseif strcmp(varargin{1},'correct')
-    if length(varargin)<2
+elseif strcmp(balance_mode,'correct')
+    if length(varargin)<1
         error('Error in MODEBALANCE: corrected images need a distribution to match of form [mu; sigma]')
     end
-    match_dist = varargin{2};
+    match_dist = varargin{1};
     output_img = (input_img-background_mu(1))/background_sigma(1)*match_dist(2); % Match standard deviation
     output_img = output_img + match_dist(1); % Match mean
     output_img(output_img<0) = 0;
     output_img(output_img > ((2^bit_depth)-1)) = (2^bit_depth)-1;
+    varargout{1} = match_dist(2)/background_sigma(1);
 else % display
     output_img = (input_img - background_mu(1))/(background_sigma(1));
 end
