@@ -30,53 +30,77 @@ end
 info.Module = 'nfkbdimModule';
 
 % Display parameters
-t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-1)/12]); % Number of hours to display in graphs
-max_shift = 0; % Max allowable frame shift in XY-specific correction
-info.graph_limits = [-50 500];
+max_shift = 2; % Max allowable frame shift in XY-specific correction
+t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/12]); % Number of hours to display in graphs
+info.graph_limits = [-0.5 8];
 dendro = 0;
 colors = setcolors;
+robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
 
-% Cytoplasmic trajectory -> stable, or is there some universal change (akin to RAW cells)?
-if diagnos
-    figure,ha = tight_subplot(2,1);
-    plot(ha(1),smoothrows(measure.NFkBdimCytoplasm,7)')
-    set(ha(1),'XTickLabel',{})
-    plot(ha(2),nanmean(measure.NFkBdimCytoplasm))
-    hold on
-    plot(nanmedian(measure.NFkBdimCytoplasm),'Color',colors.blue)
-    hold off
-end
 
-% Filter cells by fate
+% Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
 droprows = [droprows, sum(isnan(measure.NFkBdimCytoplasm(:,1:4)),2)>1]; % Cells existing @ expt start
 droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:100)),2)>3]; % Long-lived cells
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
-info.keep = max(droprows,[],2) == 0;
 
-% NFkB normalization
-% Find baseline for each cell
+% NFkB normalization - subtract baseline for each cell; divide y background distribution width
 nfkb = measure.NFkBdimNuclear(:,:);
 nfkb_baseline = nanmin([prctile(nfkb(:,1:8),18.75,2),prctile(nfkb,10,2)],[],2);
 nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar
+    title('All (baseline-subtracted) trajectories')
 end
+
+nfkb = nfkb/mean(info.parameters.adj_distr(2,:));
+
+
+% Filtering, part 2: eliminate outlier cells (based on mean value)
+nfkb_lvl = reshape(nfkb(max(droprows,[],2) == 0,:),[1 numel(nfkb(max(droprows,[],2) == 0,:))]);
+droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl))>=3];
+droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl))>=1.7];
+
+% Filtering, part 3: nuclear stain intensity and starting NFkB value
+keep = max(droprows,[],2) == 0;
+start_lvl = prctile(nfkb(keep,1:8),18.75,2);
+start_thresh = (nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
+nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
+nuc_thresh = nanmedian(nuc_lvl)+2*robuststd(nuc_lvl(:),2);
+
+droprows =  [droprows, prctile(nfkb(:,1:8),18.75,2) > start_thresh];
+droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thresh];
+
+% Show some filter information
+if diagnos
+    filter_str = {'didn''t exist @ start', 'short-lived cells', 'NFkB<background',...
+        'outliers [mean val >3*std]','extreme val [mean>1.7*std]', 'active @ start', 'high nuclear stain'};
+    disp(['INITIAL: ', num2str(size(droprows,1)),' cells'])
+    
+    for i = 1:size(droprows,2)
+        if i ==1
+            num_dropped = sum(droprows(:,i)==1);
+        else
+            num_dropped = sum( (max(droprows(:,1:i-1),[],2)==0) & (droprows(:,i)==1));
+        end
+        disp(['Filter #', num2str(i), ' (',filter_str{i},') - ',num2str(num_dropped), ' cells dropped']) 
+    end
+    disp(['FINAL: ', num2str(sum(max(droprows,[],2) == 0)),' cells'])
+
+    % Show cutoff for nuclear and starting level cutoffs 
+    ranksmult(nfkb(keep,:),start_lvl);
+    h = suptitle(['x = NFkB activation @ start. Threshold = ',num2str(start_thresh)]);
+    set(h,'FontSize',14)
+    ranksmult(nfkb(keep,:),nuc_lvl);
+    h = suptitle(['x = Nuclear stain level. Threshold = ',num2str(nuc_thresh)]);
+    set(h,'FontSize',14)
+
+
+end
+
+info.keep = max(droprows,[],2) == 0;
 nfkb = nfkb(info.keep,:);
-
-
-%% Filtering, part 2: eliminate outlier cells (based on mean value)
-keep2 =  (nanmean(abs(nfkb-nanmean(nfkb(:))),2)./nanstd(nfkb(:)))<3;
-info.keep(info.keep) =  keep2;
-nfkb(~keep2,:) = [];
-
-keep3 =  (nanmean(abs(nfkb-nanmean(nfkb(:))),2)./nanstd(nfkb(:)))<1.5;
-info.keep(info.keep) =  keep3;
-nfkb(~keep3,:) = [];
-
-
-disp(['dropped ',num2str(sum(~keep2)),'+',num2str(+sum(~keep3)),' high-variance cells'])
 
 %% Initialize outputs, do final corrections
 

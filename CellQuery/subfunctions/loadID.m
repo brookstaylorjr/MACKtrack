@@ -61,7 +61,7 @@ info.fields = fieldnames(measure);
 
 % Add measurement-specific information and add to AllParameters:
 % - for see_nfkb calculate base image distributions and threshold for positiev NFkB expression
-% - for see_nfkb_native, calculate adjusted image distributions
+% - for see_nfkb_native, calculate (adjusted) nfkb & nuclear image distributions
 
 % Read in 1st image from each XY position, calculate background mean/std (resave AllParameters)
 
@@ -76,9 +76,9 @@ if isfield(AllMeasurements,'NFkBNuclear')
             i = p.XYRange(ind);
             j = min(p.TimeRange);
             expr = p.nfkbModule.ImageExpr;
-            nfkb = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth);
-            nfkb_thresh(ind) = otsuthresh(nfkb,false(size(nfkb)),'log');
-            [~,p.img_distr(:,ind)] = modebalance(nfkb,2,p.BitDepth,'measure');
+            img = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth);
+            nfkb_thresh(ind) = otsuthresh(img,false(size(img)),'log');
+            [~,p.img_distr(:,ind)] = modebalance(img,2,p.BitDepth,'measure');
         end
         p.nfkb_thresh = mean(nfkb_thresh);
         AllMeasurements.parameters = p;
@@ -89,23 +89,21 @@ elseif isfield(AllMeasurements, 'NFkBdimNuclear')
         disp('Measuring and saving initial (flatfield-corrected) image distributions')
         p.adj_distr = zeros(2,length(p.XYRange));
         for ind = 1:length(p.XYRange)
+            % NFkB image distribution
             i = p.XYRange(ind);
             j = min(p.TimeRange);
             expr = p.nfkbModule.ImageExpr;
-            nfkb = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth);
+            img = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth);
             if ind==1
-                X = backgroundcalculate(size(nfkb));
+                X = backgroundcalculate(size(img));
             end
             warning off MATLAB:nearlySingularMatrix
-            pStar = (X'*X)\(X')*double(nfkb(:));
+            pStar = (X'*X)\(X')*double(img(:));
             warning on MATLAB:nearlySingularMatrix
-
             % Apply background correction
-            nfkb = reshape((double(nfkb(:) - X*pStar)),size(nfkb));
-            nfkb = nfkb-min(nfkb(:)); % Set minimum to zero
-            [~,p.adj_distr(:,ind)] = modebalance(nfkb,1,p.BitDepth,'measure');
-            AllMeasurements.parameters = p;
-            save(info.savename,'AllMeasurements')
+            img = reshape((double(img(:) - X*pStar)),size(img));
+            img = img-min(img(:)); % Set minimum to zero
+            [~,p.adj_distr(:,ind)] = modebalance(img,1,p.BitDepth,'measure');
         end
     end
 end
