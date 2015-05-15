@@ -39,8 +39,8 @@ if sum(ind_r)>0
         img(ind_r,:) = [];
     end
 end
-
-ind_c = sum((img==max_val | img==min_val))>(old_nrow*0.99);
+nrow = size(img,1);
+ind_c = sum((img==max_val | img==min_val))>(nrow*0.99);
 if sum(ind_c)>0
     if (find(ind_c,1,'first')==1) || (find(ind_c,1,'last')==old_ncol)
         img(:,ind_c) = [];

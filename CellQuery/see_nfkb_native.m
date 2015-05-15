@@ -32,7 +32,7 @@ info.Module = 'nfkbdimModule';
 % Display parameters
 max_shift = 2; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/12]); % Number of hours to display in graphs
-info.graph_limits = [-0.5 8];
+info.graph_limits = [-0.5 5];
 dendro = 0;
 colors = setcolors;
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
@@ -40,7 +40,7 @@ robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanst
 
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
-droprows = [droprows, sum(isnan(measure.NFkBdimCytoplasm(:,1:4)),2)>1]; % Cells existing @ expt start
+droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:4)),2)>1]; % Cells existing @ expt start
 droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:100)),2)>3]; % Long-lived cells
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
