@@ -1,4 +1,4 @@
-function img = checkread(name, bitdepth, double_flag,debug)
+function img = checkread(name, bitdepth, double_flag, debug)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [img ] = CHECKREAD(name)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -23,33 +23,33 @@ if nargin<2
     bitdepth = 16;
 end
 max_val = (2^bitdepth)-1;
-%min_val = 0;
+min_val = 0;
+
+
 
 img = imread(name);
 old_nrow = size(img,1);
 old_ncol = size(img,2);
 
 % Identify if there are any saturated columns/rows padded at edges of image - drop, if present
-ind_r = sum(img==max_val,2)>=(old_ncol*0.99);
+
+ind_r = sum((img==max_val | img==min_val),2)>=(old_ncol*0.99);
 if sum(ind_r)>0
     if (find(ind_r,1,'first')==1) || (find(ind_r,1,'last')==old_nrow)
         img(ind_r,:) = [];
     end
 end
 
-ind_c = sum(img==max_val)>(old_nrow*0.99);
+ind_c = sum((img==max_val | img==min_val))>(old_nrow*0.99);
 if sum(ind_c)>0
     if (find(ind_c,1,'first')==1) || (find(ind_c,1,'last')==old_ncol)
         img(:,ind_c) = [];
     end
 end
-%img(sum(img==min_val,2)>=(old_nrow*0.99),:) = [];
-%img(:,sum(img==min_val)>(old_ncol*0.99)) = [];
 
 
 new_nrow = size(img,1);
 new_ncol = size(img,2);
-
 if debug
     if (old_nrow~=new_nrow)||(old_ncol~=new_ncol)
         disp(sprintf(['Note: max-saturated rows/cols dropped from "', name,'"\n',...

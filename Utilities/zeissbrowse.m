@@ -11,7 +11,6 @@ function [] = zeissbrowse(start_dir)
 % INPUT
 % start_dir     image directory to start from (a dialog box will open if left unspecified)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
 if nargin<1
     if ispc; userdir= getenv('USERPROFILE'); 
     else userdir= getenv('HOME');
@@ -150,7 +149,7 @@ if draw
     imfo = imfinfo([handles.dir,filesep,handles.img]);
     handles.bit_depth = imfo.BitDepth;
     
-    img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0);
+    img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0,0);
     handles.CLim = double([min(img(:)), max(img(:))]);
     set(handles.axes1,'CLim',handles.CLim)
     if size(img,1) > size(img,2)
@@ -173,7 +172,7 @@ function [handles_out] = drawimage(handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Update image in the axes
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0);
+img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0,0);
 if size(img,1) > size(img,2)
     img = imrotate(img,90);
 end

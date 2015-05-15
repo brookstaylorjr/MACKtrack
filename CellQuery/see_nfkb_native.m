@@ -65,7 +65,7 @@ droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl)
 % Filtering, part 3: nuclear stain intensity and starting NFkB value
 keep = max(droprows,[],2) == 0;
 start_lvl = prctile(nfkb(keep,1:8),18.75,2);
-start_thresh = (nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
+start_thresh = 0.85;%(nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2*robuststd(nuc_lvl(:),2);
 

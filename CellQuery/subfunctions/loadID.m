@@ -85,6 +85,7 @@ if isfield(AllMeasurements,'NFkBNuclear')
         save(info.savename,'AllMeasurements')
     end
 elseif isfield(AllMeasurements, 'NFkBdimNuclear')
+    
     if ~isfield(p, 'adj_distr')
         disp('Measuring and saving initial (flatfield-corrected) image distributions')
         p.adj_distr = zeros(2,length(p.XYRange));
@@ -104,9 +105,13 @@ elseif isfield(AllMeasurements, 'NFkBdimNuclear')
             img = reshape((double(img(:) - X*pStar)),size(img));
             img = img-min(img(:)); % Set minimum to zero
             [~,p.adj_distr(:,ind)] = modebalance(img,1,p.BitDepth,'measure');
+            AllMeasurements.parameters = p;
+            save(info.savename,'AllMeasurements')
         end
     end
 end
+
+
 info.parameters = p;
 
 toc1 = toc;
