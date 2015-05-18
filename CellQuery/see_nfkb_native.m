@@ -32,7 +32,7 @@ info.Module = 'nfkbdimModule';
 % Display parameters
 max_shift = 2; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/12]); % Number of hours to display in graphs
-info.graph_limits = [-0.5 5];
+info.graph_limits = [-0.5 6.5];
 dendro = 0;
 colors = setcolors;
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));

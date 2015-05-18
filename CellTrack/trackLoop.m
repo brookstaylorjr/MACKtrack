@@ -1,5 +1,7 @@
 function [] = trackLoop(parameters,xyPos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [] = trackLoop(parameters,xyPos)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % TRACKLOOP takes a time-lapse image series and converts into  into segmented, tracked data. 
 % Output cellular trajetories are saved as successive label matricies.
 %

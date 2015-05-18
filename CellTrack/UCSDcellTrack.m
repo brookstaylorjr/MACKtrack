@@ -158,6 +158,7 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
+    
     if handles.is_dir(handles.sorted_index(index_selected))
         newfolder = [get(handles.edit1A,'String'),filename];
         % Remove leading slash, add trailing slash
@@ -506,7 +507,7 @@ if ~handles.Locked2
     drawnow;
     parameters = handles.parameters;    
     % 1) Track loop (put in parfor)
-    parfor i = 1:length(parameters.XYRange)
+    for i = 1:length(parameters.XYRange)
         xyPos = parameters.XYRange(i);
         if strcmp(handles.parameters.ImageType,'None')
             trackPrimary(parameters,xyPos)

@@ -18,25 +18,24 @@ function [output, diagnos] =  dicID(image0,p, ~)
 % 11/06/2012 - Created, updated CellTrack to include radiobuttons to pick between phase and DIC
 % 08/04/2013 - Updated to fit memory checking
 
-%- - - - Initial edge transformation on image - - - -
+% Initial edge transformation on image 
 horizontalEdge = imfilter(image0,fspecial('sobel') /8,'symmetric');
 verticalEdge = imfilter(image0,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_dir = atan(horizontalEdge./verticalEdge);
 
-% - - - - - Image subset: control for sparsely populated images - - - - 
+% Image subset: control for sparsely populated images  
 diagnos.subsetThreshold = otsuthresh(diagnos.edge_mag,false(size(diagnos.edge_mag)),'none');
 diagnos.image_subset = imdilate(diagnos.edge_mag>(diagnos.subsetThreshold), ones(80));
 
-
-% - - - -  Edge thresholding: speckle-noise-based - - - - 
+% Edge thresholding: speckle-noise-based  
 [diagnos.edgeThreshold, diagnos.noiseCount, diagnos.val] = ...
     noisethresh(diagnos.edge_mag, ~diagnos.image_subset, p.CellSearchRange ,p.NoiseSize);
 output.mask0 = diagnos.edge_mag>diagnos.edgeThreshold;
 output.mask0 = bwareaopen(output.mask0,p.NoiseSize/4); % Get rid of outlying noise
 output.mask0(image0==max(image0(:)))= 1; % Turn on saturated pixels
 
-% - - - - Edge thresholding (2): Canny-derived - - - - 
+% Edge thresholding (2): Canny-derived  
 diagnos.mask1 = output.mask0;
 if ~isempty(diagnos.noiseCount)
     for i = 1:length(p.GaussSizes)
@@ -45,8 +44,13 @@ if ~isempty(diagnos.noiseCount)
 end
 diagnos.mask1 = bwareaopen(diagnos.mask1,p.NoiseSize/4,4);
 
+% Eliminate spurious pixels caused by vignetting at camera edge
+diagnos.mask1(1:5,:) = imopen(diagnos.mask1(1:5,:),ones(5,1));
+diagnos.mask1(end-4:end,:) = imopen(diagnos.mask1(end-4:end,:),ones(5,1));
+diagnos.mask1(:,1:5) = imopen(diagnos.mask1(:,1:5),ones(1,5));
+diagnos.mask1(:,end-4:end) = imopen(diagnos.mask1(:,end-4:end),ones(1,5));
 
-% - - - - "Connection" step: dilate out remaining edges, thin result, then contract if not connected - - - -
+% "Connection" step: dilate out remaining edges, thin result, then contract if not connected 
 diagnos.mask1 = bwareaopen(diagnos.mask1,4);
 BWconnect = bwmorph(diagnos.mask1,'skel','Inf');
 for i = 3:2:floor(sqrt(p.NoiseSize))
@@ -60,14 +64,13 @@ for i = 3:2:floor(sqrt(p.NoiseSize))
 end
 diagnos.mask2 = diagnos.mask1|BWconnect;
 
-% - - - - Eliminate spurious pixels around strong edges - - - -
+%  Eliminate spurious pixels around strong edges 
 strong = diagnos.edge_mag>(diagnos.edgeThreshold*5);
 strong = bwareaopen(strong,p.NoiseSize*2,4);
 diagnos.dnf = imdilate(strong,diskstrel(10)) &~output.mask0;
 diagnos.mask2(diagnos.dnf) = 0;
 
-% - - - - Hole filling and cleanup - - - -
-% Hole filling: larger holes
+% Hole filling: fill larger holes
 holes_mask = bwareaopen(~diagnos.mask2,p.MinHoleSize,4)&~bwareaopen(~diagnos.mask2,p.MaxHoleSize,4);
 holes_mask = imclose(holes_mask,ones(3));
 holes_cc = bwconncomp(holes_mask,4);

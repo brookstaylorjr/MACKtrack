@@ -58,9 +58,6 @@ set(handles.edit5F,'String',num2str(handles.parameters.Compactness(2)))
 set(handles.edit5G,'String',num2str(handles.parameters.Eccentricity))
 
 %% - - - - - - - - - Phase/DIC parameters - - - - - - - - - - - - 
-if ~isfield(handles.parameters,'ImageType')
-    handles.parameters.ImageType = 'DIC';
-end
 set(handles.popupmenu0,'Value',find(strcmp(handles.parameters.ImageType,{'phase','DIC','None'})));
 setVisibility(handles)
 
@@ -191,6 +188,7 @@ catch ME
 end
 
 % Resave parameters in place to reflect new updated values
+load(paramfile,'-mat') % Reload original parameters for comparison
 if ~isequal(handles.parameters,parameters)
     disp('Saving automatically-updated parameters')
     parameters = handles.parameters;

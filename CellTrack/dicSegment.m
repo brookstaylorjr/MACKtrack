@@ -14,70 +14,20 @@ function [output, diagnos] = dicSegment(data, image_in, p)
 % output      all information (masks) needed for tracking
 % diagnos     major masks/thresholds created as intermediates
 %
-%
-% Subfunctions
-% matchclosest.m, findinflection.m, IdentifySecPropagateSubfunction.cpp (compiled w/ mex)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 %% Setup Create basic masks/label matrices from phase/nuclear images
-SEround = strel('disk',floor(p.MinCellWidth/2),4);
 cell_mask = data.mask_cell>0;
-cell_mask1 = imopen(cell_mask,SEround); % Break thin connections
 nuc_mask = data.nuclei>0;
-
 
 %% Inflection point splitting
 
-% Downsample image to a maximum size of 512x512
-factor = round(max(size(cell_mask1))/512);
-cell_dwn = cell_mask1(1:factor:end,1:factor:end);
-nuc_dwn = data.nuclei(1:factor:end,1:factor:end);
-
-
-% Skeletonize cell clusters; mark skeleton point closest to each nucleus
-skeleton = bwmorph(cell_dwn,'skel','Inf');
-skeleton(imopen(skeleton,ones(3))) = 0;
-nucCentroids = round(cell2mat(struct2cell(regionprops(nuc_dwn,'Centroid'))')');
-nucCentroids = [nucCentroids(2,:);nucCentroids(1,:)];
-skeletonMarkers = matchclosest(skeleton,nucCentroids,size(cell_dwn));
-
-diagnos.modifier_mask = false(size(cell_dwn));
-try
-    % Find all candidate inflection points
-    max_inflection = round(p.MaxInflection/factor);
-    inflection = findinflection(cell_dwn,nuc_dwn,skeleton,skeletonMarkers, max_inflection,p.MedianFilterSize);
-    matches = matchclosest(inflection.perim, inflection.points);
-    [r, c] = find(inflection.points);
-    
-    % Match each inflection point to its nearest perimeter point
-    seeds = [r(:)';c(:)'];
-    matches2 = round(matches - 2.5*(matches - seeds));
-    matches2(matches2<1) = 1;
-    matches2(1,matches2(1,:)>size(cell_dwn,1))= size(cell_dwn,1); 
-    matches2(2,matches2(2,:)>size(cell_dwn,2))= size(cell_dwn,2); 
-    % Create masks for modification/display
-    for pt = 1:size(matches,2)
-        % Drop the point if it doesn't clear other side of cell cluster
-        if cell_dwn(matches2(1,pt),matches2(2,pt))==0   
-            steps = max([abs(matches(1,pt)-matches2(1,pt)), abs(matches(2,pt)-matches2(2,pt))])+1;
-            test_cut = sub2ind(size(cell_dwn),round(linspace(matches(1,pt),matches2(1,pt),steps)),...
-                round(linspace(matches(2,pt),matches2(2,pt),steps)));
-            % Drop the point if it crosses nuclei
-            if max(nuc_dwn(test_cut))>0
-                test_cut = [];
-            end
-            diagnos.modifier_mask(test_cut) = true;
-        end
-    end
-    
-    diagnos.modifier_mask = imresize(diagnos.modifier_mask,size(nuc_mask));
-    diagnos.all_inflection = diagnos.modifier_mask+nuc_mask+cell_mask1;
-catch exception
-    disp('Segmentation error:')
-    disp(exception.message)
-    disp(exception.stack(1))
-    disp(['(triggered by xy=',num2str(p.i),', t=',num2str(p.j),')'])
+% Find all candidate inflection points
+diagnos.modifier_mask = findinflection(cell_mask,nuc_mask,p);
+if nargout>1
+    diagnos.all_inflection = diagnos.modifier_mask+nuc_mask+cell_mask;
 end
+
 
 %% Straight-edge finding
 
@@ -118,17 +68,19 @@ diagnos.edge_straight = removemarked(bwlabel(diagnos.edge_straight),imerode(nuc_
 diagnos.edge_straight = diagnos.edge_straight | (curv_image>L);
 diagnos.edge_straight = bwareaopen(diagnos.edge_straight,small);
 
-
 % Use straight edges to remove offending inflection points
 diagnos.modifier_mask = imdilate(diagnos.modifier_mask,ones(3));
 diagnos.modifier_mask = removemarked(bwlabel(diagnos.modifier_mask),diagnos.edge_straight)> 0;
 diagnos.modifier_mask = removemarked(bwlabel(diagnos.modifier_mask),nuc_mask)> 0;
+%%
+% Use straight edges to further break up mask
+cell_mask = bwareaopen(cell_mask,round(pi*p.MinNucleusRadius.^2));
+cell_broken = cell_mask&~imdilate(diagnos.edge_straight,ones(3));
 
-% Use straight edges to potentially further break up mask
-mask1 = bwareaopen(cell_mask,round(pi*p.MinNucleusRadius.^2));
-mask2 = mask1&~imdilate(diagnos.edge_straight,ones(3));
-obj1 = bwconncomp(mask1);
-obj2 = bwlabel(bwareaopen(mask2,round(pi*p.MinNucleusRadius.^2)));
+
+obj1 = bwconncomp(cell_mask);
+obj2 = bwlabel(bwareaopen(cell_broken,round(pi*p.MaxNucleusRadius.^2)));
+obj2 = removemarked(obj2,nuc_mask,'keep');
 edgeobj = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(5)));
 edgeobj2 = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(3)));
 
@@ -144,12 +96,12 @@ unique_obj = cellfun(find_uniques,edgeobj.PixelIdxList,'UniformOutput',0);
 idx = cellfun(test_length,unique_obj);
 
 keep_edges = cell2mat(edgeobj2.PixelIdxList(idx));
+keep_edges = imerode(keep_edges,ones(3));
 diagnos.modifier_mask(keep_edges) = 1;
 
-%% Propogation and correction
-
 % Turn off pixels from modifier mask, do initial segmentation
-cell_mask1(diagnos.modifier_mask) = 0;
+cell_mask(diagnos.modifier_mask) = 0;
+cell_mask = imopen(cell_mask,diskstrel(2));
 image_clamp = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
 image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
 image_clamp(imdilate(diagnos.edge_straight,ones(3))) = 1;
@@ -157,10 +109,11 @@ image_clamp(diagnos.edge_straight) = 0;
 
 diagnos.image_segment = image_clamp;
 lambda = .02;
-diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(image_clamp),cell_mask1,lambda);
+diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(image_clamp),cell_mask,lambda);
 
 % Perform segmentation and correct
-output.seeds2 = propagatesegment(diagnos.seeds1, cell_mask, image_in, round(p.MinCellWidth/2), data.nuclei, lambda);
+output.seeds2 = propagatesegment(diagnos.seeds1, data.mask_cell>0, image_in,...
+    round(p.MinCellWidth/2), data.nuclei, lambda);
 
 % Fill all holes that are internal to a single object
 output.cells = output.seeds2;

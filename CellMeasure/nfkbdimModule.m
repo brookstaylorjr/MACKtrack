@@ -34,6 +34,7 @@ end
 if ~isfield(CellMeasurements,'NFkBdimNuclear')
     % Intensity-based measurement initialization
     CellMeasurements.NFkBdimNuclear = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.NFkBdimNuclear_erode = nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.NFkBdimCytoplasm = nan(parameters.TotalCells,parameters.TotalImages);
 end
 
@@ -45,9 +46,13 @@ cells(cells==0) = [];
 
 % Cycle through each image and assign measurements
 for i = 1:length(cells)
-    nucleus = imerode(labels.Nucleus==cells(i),diskstrel(floor(parameters.MinNucleusRadius/5)));
+    nucleus = labels.Nucleus==cells(i);
+    nucleus_erode = imerode(labels.Nucleus==cells(i),diskstrel(1));
+
     cytoplasm = (labels.Cell==cells(i)) &~nucleus;
     a = median(nfkb(nucleus));
+    a_erode = median(nfkb(nucleus_erode));
+
     b = (mean(nfkb(cytoplasm))-distr2(1));
     if b<0
         b = 0;
@@ -56,6 +61,8 @@ for i = 1:length(cells)
     %disp(['nuc: ', num2str(a),'. cyto: ',num2str(b)])
     % Assign measurements
     CellMeasurements.NFkBdimNuclear(cells(i),ModuleData.iter) = a;
+    CellMeasurements.NFkBdimNuclear_erode(cells(i),ModuleData.iter) = a;
+
     CellMeasurements.NFkBdimCytoplasm(cells(i),ModuleData.iter) = b;
 end
 

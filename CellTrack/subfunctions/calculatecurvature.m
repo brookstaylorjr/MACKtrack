@@ -1,5 +1,6 @@
 function [curvature,idx] = calculatecurvature(object,L,n,sz)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 idx = sub2ind(sz,object(:,1),object(:,2));
 idx = idx(1:length(unique(idx)));

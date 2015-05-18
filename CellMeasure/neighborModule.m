@@ -1,13 +1,18 @@
 function [CellMeasurements, ModuleDataOut] = neighborModule(CellMeasurements,parameters, labels, ~, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%  [CellMeasurements, ModuleDataOut] = neighborModule(CellMeasurements,parameters, labels, ~, ModuleData)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % NEIGHBORMODULE  measure how many cells each cell is touching, as well as how many are nearby
 %
-% CellMeasurements    structure with fields corresponding to cell measurements
-%
+% INPUT:
 % parameters          experiment data (total cells, total images, output directory)
 % labels              Cell,Nuclear label matricies (labels.Cell and labels.Nucleus)
 % AuxImages           images to measure
-% ModuleData          extra information (current iteration, etc.) used in measurement 
+% ModuleData          extra information (current iteration, etc.) used in measurement
+%
+% OUTPUT:
+% CellMeasurements    structure with fields corresponding to cell measurements
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Default conversion factor for my images = 4.03 pix/micron

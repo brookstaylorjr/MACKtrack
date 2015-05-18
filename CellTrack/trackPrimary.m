@@ -100,7 +100,8 @@ for cycle = 1:length(parameters.TimeRange)
         save([outputDirectory,'NuclearLabels',filesep,'NuclearLabel-',numseq(saveCycle,4),'.mat'], 'NuclearLabel')
         % Save composite 'Segmentation' image
         alpha = 0.30;
-        saveFig(images.bottom,NuclearLabel,NuclearLabel,[],parameters,[outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  alpha)
+        saveFig(images.bottom,NuclearLabel,NuclearLabel,[],bit_depth,[outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  alpha)
+
         tocs.Saving = toc;
         % Save decisions.txt
         fid = fopen([outputDirectory,'decisions.txt'],'a','n','UTF-8');
