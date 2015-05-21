@@ -338,7 +338,7 @@ if ~isempty(fixlist)
     for i = 1:length(fix1)
         tmp = cells_accum==fix1(i);
         locs = removemarked(bwconncomp(tmp,4),nucs_fix==fix1(i),'keep');
-        cells_contig(cell2mat(locs.PixelIdxList)) = fix1(i);
+        cells_contig(cell2mat(locs.PixelIdxList')) = fix1(i);
     end
     cells_contig(all_cells>0) = 0;
     all_cells = all_cells + ...
