@@ -44,9 +44,10 @@ for idx = 1:numel(data.dates)
     parameters.TimeRange = eval(data.time_ranges{idx});
     parameters.XYRange = eval(data.xy_ranges{idx});
     parameters.SaveDirectory = [data.save_dir{idx},filesep,data.dates{idx},'_',data.names{idx}];
-    eval(data.modify{idx}); parameters = combinestructures(p,parameters);
+    eval(data.modify{idx});
+    if exist('p','var'); parameters = combinestructures(p,parameters); end;
+
     mkdir([locations.data,filesep,parameters.SaveDirectory])
-    
     % TRACKING
     parfor i = 1:length(parameters.XYRange)
         xyPos = parameters.XYRange(i);

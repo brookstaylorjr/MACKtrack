@@ -59,7 +59,7 @@ table_data(sum(cellfun(@isempty,table_data),2)==size(table_data,2),:) = [];
 
 
 % Get IDs and pull out corresponding rows
-ids = cellfun(@eval,table_data(2:end,strcmpi(table_data(1,:),'#')));
+ids = cellfun(@str2num,table_data(2:end,strcmpi(table_data(1,:),'#')));
 if isempty(ids)
     error('ERROR: Couldn''t find a column named "#" in spreadsheet.')
 end
