@@ -102,14 +102,14 @@ diagnos.modifier_mask(keep_edges) = 1;
 % Turn off pixels from modifier mask, do initial segmentation
 cell_mask(diagnos.modifier_mask) = 0;
 cell_mask = imopen(cell_mask,diskstrel(2));
-image_clamp = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
-image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
-image_clamp(imdilate(diagnos.edge_straight,ones(3))) = 1;
-image_clamp(diagnos.edge_straight) = 0;
+output.img_straight = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
+output.img_straight(output.img_straight<0) = 0; output.img_straight(output.img_straight>1) = 1;
+output.img_straight(imdilate(diagnos.edge_straight,ones(3))) = 1;
+output.img_straight(diagnos.edge_straight) = 0;
 
-diagnos.image_segment = image_clamp;
+diagnos.image_segment = output.img_straight;
 lambda = .02;
-diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(image_clamp),cell_mask,lambda);
+diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(output.img_straight),cell_mask,lambda);
 
 % Perform segmentation and correct
 output.seeds2 = propagatesegment(diagnos.seeds1, data.mask_cell>0, image_in,...

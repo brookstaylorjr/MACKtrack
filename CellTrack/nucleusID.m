@@ -13,7 +13,6 @@ function [output, diagnos] =  nucleusID(nucOrig,p,data,~)
 % Subfunctions
 % watershedalt.m, removemarked.m
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-debug = '';
 
 %- - - - - - - - - - - - - - - - - - - SETUP - - - - - - - - - - - - - - - - - - - - - - -
 % Set cutoffs for nuclear shape
@@ -60,7 +59,7 @@ for i = 1:length(edge_cutoffs)
 end
 
 diagnos.label1a = labelmatrix(label2cc(diagnos.label1a));
-diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff,debug);
+diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff,p.debug);
 
 % ID nuclei w/ strong edges tends to be over-generous. Erode things somewhat, then remove super-small objects again
 borders = (imdilate(diagnos.label1,ones(3))-diagnos.label1)>0;
@@ -121,7 +120,7 @@ diagnos.label2a= imerode(imdilate(diagnos.label2a,ones(3)),ones(3));
 diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
 diagnos.label2a = labelmatrix(label2cc(diagnos.label2a));
 cutoff.Area(1) = cutoff.Area(1)*0.5;
-diagnos.label2 = bridgenuclei(diagnos.label2a,cutoff,debug);
+diagnos.label2 = bridgenuclei(diagnos.label2a,cutoff,p.debug);
 
 
 % - - - - - - - - - - - - - - - LABEL_END - - - - - - - - - - - - - - - - - - - - -

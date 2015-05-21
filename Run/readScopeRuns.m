@@ -74,6 +74,7 @@ data.xy_ranges = table_data(2:end,strcmpi(table_data(1,:),'xy'));
 data.time_ranges = table_data(2:end,strcmpi(table_data(1,:),'t'));
 data.parameter_files = table_data(2:end,strcmpi(table_data(1,:),'params file'));
 data.save_dir = table_data(2:end,strcmpi(table_data(1,:),'save path'));
+data.modify = table_data(2:end,strcmpi(table_data(1,:),'other params'));
 
 % Double check that all necessary data was found and subset data
 types = fieldnames(data);

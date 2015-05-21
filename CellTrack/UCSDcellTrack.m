@@ -746,9 +746,9 @@ function edit5E_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
-    if newVal > handles.Compactness(2)
+    if newVal > handles.parameters.Compactness(2)
         warning('Resetting - round compactness value shound be less than oblong compactness value')
-        newVal = handles.Compactness(2);
+        newVal = handles.parameters.Compactness(2);
     end
     set(hObject,'String',num2str(newVal))
     handles.parameters.Compactness(1) = newVal;
@@ -773,9 +773,9 @@ function edit5F_Callback(hObject, eventdata, handles)
 try
     newVal = eval(get(hObject,'String'));
     % Parameter checking
-    if newVal < handles.Compactness(1)
+    if newVal < handles.parameters.Compactness(1)
         warning('Resetting - oblong compactness value shound be greater than round compactness value')
-        newVal = handles.Compactness(1);
+        newVal = handles.parameters.Compactness(1);
     end
     set(hObject,'String',num2str(newVal))
     handles.parameters.Compactness(2) = newVal;

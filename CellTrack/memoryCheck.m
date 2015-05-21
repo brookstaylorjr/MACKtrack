@@ -243,7 +243,6 @@ for i = 1:length(droplist)
 end
 
 % FIXING: add back all cells that need to be added
-
 if ~isempty(addlist) 
     % Initialize existing nuclei as points
     nprops_new = regionprops(queue(1).nuclei,'Centroid');
@@ -270,6 +269,9 @@ if ~isempty(addlist)
             disp(['No room to add add cell #', num2str(r), ' - deleting'])
             CellData.FrameOut(r) = curr_frame-1;
             CellData.blocks(r,:) = 0;
+            borderlist(borderlist==r) = [];
+            fixlist(fixlist==r) = [];
+            queue(1).cells(queue(1).cells==r) = 0;
         end
     end
     % Get nuclei by using propagate function from seeds
@@ -288,30 +290,68 @@ if ~isempty(addlist)
 end
 
 % FIXING: resegment
-cells_ok = queue(1).cells;
 if ~isempty(fixlist)
-    cells_ok(ismember(cells_ok,fixlist)) = 0;
-    nuclei_fix = zeros(size(queue(1).nuclei));
-    nuclei_fix(ismember(queue(1).nuclei,fixlist)) = queue(1).nuclei(ismember(queue(1).nuclei,fixlist));
-    % Isolate implicated borders and dilate them
-    borders1 = imdilate(queue(2).cells,ones(3));
-    borders2 = imerode(queue(2).cells,ones(3));
-    borders = (borders1~=borders2) & ismember(borders1,borderlist) & ismember(borders2,borderlist);
-    borders = imdilate(borders,ones(floor(sqrt(p.NoiseSize))));
-    borders(nuclei_fix>0) = 0;
-    mask1 = mask_reseg &~ borders;
-    % Propogate 1x using old borders
-    seeds1 =  IdentifySecPropagateSubfunction(double(nuclei_fix),double(cell_img),mask1,lambda);
-    label1 = propagatesegment(seeds1, mask_reseg, cell_img, round(p.MinCellWidth/2), nuclei_fix, lambda);
-else
-    label1 = queue(1).cells;
+    all_cells = queue(1).cells;
+    all_cells(queue(1).nuclei>0) = queue(1).nuclei(queue(1).nuclei>0);
+    all_cells(ismember(all_cells,fixlist)) = 0;
+    
+    % Handle added/jumped cells
+    borderlist(ismember(borderlist,addlist)) = [];
+    fix1 = fixlist(~ismember(fixlist,borderlist));
+    mask_fix = ismember(queue(1).cells,fix1);
+    mask_fix(all_cells>0) = 0;
+    nucs_fix = queue(1).nuclei;
+    nucs_fix(~ismember(nucs_fix,fix1)) = 0;
+    all_cells = all_cells + ...
+        IdentifySecPropagateSubfunction(nucs_fix,double(queue(1).img_straight),mask_fix,lambda);
+    % Handle mis-segmented cells: re-initialize old locations (in new mask)
+    fix1 = borderlist;
+    mask_fix = ismember(queue(1).cells,fix1);
+    mask_fix(all_cells>0) = 0;
+    nucs_fix = queue(1).nuclei;
+    nucs_fix(~ismember(nucs_fix,fix1)) = 0;
+    nucs_old = label2cc(queue(2).nuclei,0);
+    cells_old = label2cc(queue(2).cells,0);
+    props_new = regionprops(nucs_fix,'Centroid');
+    props_old = regionprops(nucs_old,'Centroid');
+    cells_accum = zeros(size(mask_fix));
+
+    for i = 1:length(fix1)
+        % Initialize cell mask; shift it by amount the nuclei putatively moved
+        tmp = false(size(mask_fix));
+        [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});
+        r = round(r + props_new(fix1(i)).Centroid(2) - props_old(fix1(i)).Centroid(2));
+        c = round(c + props_new(fix1(i)).Centroid(1) - props_old(fix1(i)).Centroid(1));
+        r = max(r,1); r=min(r,size(tmp,1));
+        c = max(c,1); c=min(c,size(tmp,2));
+        tmp(sub2ind(size(tmp),r,c)) = 1;
+        tmp = imerode(tmp,diskstrel(2));
+        % Turn off any conflicting pixels, then add to mask.
+        conflict = tmp&(cells_accum>0);
+        cells_accum(conflict) = 0;
+        tmp(conflict) = 0;
+        cells_accum(tmp&mask_fix) = fix1(i);
+    end
+    cells_accum(nucs_fix>0) = nucs_fix(nucs_fix>0);
+    % Cycle through objects once; ensure every cell is contiguous
+    cells_contig = zeros(size(cells_accum));
+    for i = 1:length(fix1)
+        tmp = cells_accum==fix1(i);
+        locs = removemarked(bwconncomp(tmp,4),nucs_fix==fix1(i),'keep');
+        cells_contig(cell2mat(locs.PixelIdxList)) = fix1(i);
+    end
+    cells_contig(all_cells>0) = 0;
+    all_cells = all_cells + ...
+        IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
+    % And once more, making sure we got all those non-contiguous regions covered
+    image_clamp = abs((cell_img-prctile(cell_img(:),0.02))/diff(prctile(cell_img(:),[0.02 98])));
+    image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
+    all_cells = IdentifySecPropagateSubfunction(all_cells,double(image_clamp),(queue(1).mask_cell),lambda);
+    queue(1).cells = all_cells;
 end
 
-label1(cells_ok>0) = cells_ok(cells_ok>0);
-queue(1).cells = label1;
 CellData_out = CellData;
 queue_out = queue;
-
 
 
 

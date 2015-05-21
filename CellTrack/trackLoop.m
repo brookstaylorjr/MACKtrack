@@ -72,15 +72,15 @@ for cycle = 1:length(parameters.TimeRange)
     tic
     nucName1 = eval(parameters.NucleusExpr);
     images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
-    data_tmp = nucleusID(images.nuc,parameters,data,X);
-    data = combinestructures(data,data_tmp);
+    present = nucleusID(images.nuc,parameters,data,X);
+    data = combinestructures(data,present);
     tocs.NucMasking = toc;
     
     % NUCLEUS/CELL CHECKS (preliminary)
     tic
     checkfn = str2func([fnstem,'Check']);
-    data_tmp = checkfn(data,images.cell,parameters);
-    data = combinestructures(data,data_tmp);
+    present = checkfn(data,images.cell,parameters);
+    data = combinestructures(data,present);
     tocs.CheckCells = toc;
     
     % Update stacks/structs with each iteration      
@@ -117,15 +117,16 @@ for cycle = 1:length(parameters.TimeRange)
         % SEGMENT CELLS (bottom of "future" queue)
         tic
         segmentfn = str2func([fnstem,'Segment']);
-        data_tmp = segmentfn(future(1), images.bottom, parameters); % either phaseSegment or dicSegment (5 args)
+        present = segmentfn(future(1), images.bottom, parameters); % either phaseSegment or dicSegment (5 args)
         tocs.Segmentation = toc;
 
         % MEMORY CHECKING ("past" queue)
         tic
         if ~exist('past','var')
-            past = combinestructures(future(1),data_tmp);
+            past = combinestructures(future(1),present);
         else
-            past = cat(1,combinestructures(future(1),data_tmp),past);
+            present = combinestructures(future(1),present);
+            past = cat(1,present,past);
             if length(past) >= 2
                 [tmpstring, CellData, past] =  evalc('memoryCheck(CellData, past, images.bottom, saveCycle, parameters)');
                 trackstring = [trackstring,tmpstring];
