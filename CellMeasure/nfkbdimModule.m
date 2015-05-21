@@ -61,8 +61,7 @@ for i = 1:length(cells)
     %disp(['nuc: ', num2str(a),'. cyto: ',num2str(b)])
     % Assign measurements
     CellMeasurements.NFkBdimNuclear(cells(i),ModuleData.iter) = a;
-    CellMeasurements.NFkBdimNuclear_erode(cells(i),ModuleData.iter) = a;
-
+    CellMeasurements.NFkBdimNuclear_erode(cells(i),ModuleData.iter) = a_erode;
     CellMeasurements.NFkBdimCytoplasm(cells(i),ModuleData.iter) = b;
 end
 
