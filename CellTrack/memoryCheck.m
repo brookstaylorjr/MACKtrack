@@ -315,34 +315,38 @@ if ~isempty(fixlist)
     props_new = regionprops(nucs_fix,'Centroid');
     props_old = regionprops(nucs_old,'Centroid');
     cells_accum = zeros(size(mask_fix));
-
-    for i = 1:length(fix1)
-        % Initialize cell mask; shift it by amount the nuclei putatively moved
-        tmp = false(size(mask_fix));
-        [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});
-        r = round(r + props_new(fix1(i)).Centroid(2) - props_old(fix1(i)).Centroid(2));
-        c = round(c + props_new(fix1(i)).Centroid(1) - props_old(fix1(i)).Centroid(1));
-        r = max(r,1); r=min(r,size(tmp,1));
-        c = max(c,1); c=min(c,size(tmp,2));
-        tmp(sub2ind(size(tmp),r,c)) = 1;
-        tmp = imerode(tmp,diskstrel(2));
-        % Turn off any conflicting pixels, then add to mask.
-        conflict = tmp&(cells_accum>0);
-        cells_accum(conflict) = 0;
-        tmp(conflict) = 0;
-        cells_accum(tmp&mask_fix) = fix1(i);
+    try
+        for i = 1:length(fix1)
+            % Initialize cell mask; shift it by amount the nuclei putatively moved
+            tmp = false(size(mask_fix));
+            [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});
+            r = round(r + props_new(fix1(i)).Centroid(2) - props_old(fix1(i)).Centroid(2));
+            c = round(c + props_new(fix1(i)).Centroid(1) - props_old(fix1(i)).Centroid(1));
+            r = max(r,1); r=min(r,size(tmp,1));
+            c = max(c,1); c=min(c,size(tmp,2));
+            tmp(sub2ind(size(tmp),r,c)) = 1;
+            tmp = imerode(tmp,diskstrel(2));
+            % Turn off any conflicting pixels, then add to mask.
+            conflict = tmp&(cells_accum>0);
+            cells_accum(conflict) = 0;
+            tmp(conflict) = 0;
+            cells_accum(tmp&mask_fix) = fix1(i);
+        end
+        cells_accum(nucs_fix>0) = nucs_fix(nucs_fix>0);
+        % Cycle through objects once; ensure every cell is contiguous
+        cells_contig = zeros(size(cells_accum));
+        for i = 1:length(fix1)
+            tmp = cells_accum==fix1(i);
+            locs = removemarked(bwconncomp(tmp,4),nucs_fix==fix1(i),'keep');
+            cells_contig(cell2mat(locs.PixelIdxList')) = fix1(i);
+        end
+        cells_contig(all_cells>0) = 0;
+        all_cells = all_cells + ...
+            IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
+    catch me
+        disp(getreport(me))
+        disp(['fix1 list: [',num2str(fix1(:)'),']']) 
     end
-    cells_accum(nucs_fix>0) = nucs_fix(nucs_fix>0);
-    % Cycle through objects once; ensure every cell is contiguous
-    cells_contig = zeros(size(cells_accum));
-    for i = 1:length(fix1)
-        tmp = cells_accum==fix1(i);
-        locs = removemarked(bwconncomp(tmp,4),nucs_fix==fix1(i),'keep');
-        cells_contig(cell2mat(locs.PixelIdxList')) = fix1(i);
-    end
-    cells_contig(all_cells>0) = 0;
-    all_cells = all_cells + ...
-        IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
     % And once more, making sure we got all those non-contiguous regions covered
     image_clamp = abs((cell_img-prctile(cell_img(:),0.02))/diff(prctile(cell_img(:),[0.02 98])));
     image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
