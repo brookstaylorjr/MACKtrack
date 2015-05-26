@@ -343,9 +343,9 @@ if ~isempty(fixlist)
         cells_contig(all_cells>0) = 0;
         all_cells = all_cells + ...
             IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
-    catch me
-        disp(getreport(me))
+    catch ME
         disp(['fix1 list: [',num2str(fix1(:)'),']']) 
+        disp(getReport(ME,'extended'));
     end
     % And once more, making sure we got all those non-contiguous regions covered
     image_clamp = abs((cell_img-prctile(cell_img(:),0.02))/diff(prctile(cell_img(:),[0.02 98])));
