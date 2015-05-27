@@ -9,6 +9,16 @@ function [CellData_out, queue_out] = memoryCheck(CellData, queue, cell_img, curr
 % p            tracking parameters structure
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% ERROR TYPES:
+%
+% I.    A dropped cell was added to an existing cell; recreate the dropped cell
+% IIa. Segmentation error with neighbors (area increase)
+% IIb. Segmentation error with neighbors (area decrease)
+% III. A perviously untracked cell was added
+% IV.  Holes were improperly filled, increasing cell area
+% V.   A false positive cell was added inappropriately
+% VI.  Old filled holes were lost
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 disp('Memory checking:')
 lambda = 0.02;
 
@@ -125,11 +135,33 @@ for n = reshape(checklist,1,length(checklist))
         % ERROR HANDLING: INCREASES
         % disp([num2str(n) '''s error nos [',num2str(error_nos),'] - total error: ',num2str(delta_a)])
         switch error_case    
-            case 1 % Recreate dropped nucleus for resegmentation, edit block info
+            case 1 % Area increase was from a previously dropped cell
                 r = mode(vals2(ismember(vals2,drops)));
-                addlist = cat(2,addlist,r);
-                fixlist = cat(2,fixlist,n,r);
-                disp(['Cell # ',num2str(n),' error I - trying to add #',num2str(r)])   
+                % Dropped cell was parent - divvy up old parent to children 
+                if ismember(r,CellData.Parent)
+                    children = find(CellData.Parent==r);
+                    children = children(:)';
+                    nucs = queue(1).nuclei;
+                    nucs( (~ismember(nucs,children)) | (queue(2).cells~=r)) = 0;
+                    if sum(ismember(children,unique(nucs(:)))) == length(children)
+                        tmp = IdentifySecPropagateSubfunction(nucs,...
+                            double(queue(1).img_straight),(queue(2).cells==r),lambda);
+                        if sum(tmp(:)>0) == sum(queue(2).cells(:)==r)
+                            queue(2).nuclei(queue(2).nuclei==r) = 0;
+                            queue(2).nuclei = queue(2).nuclei + nucs;
+                            queue(2).cells(queue(2).cells==r) = tmp(tmp>0);
+                            fixlist = cat(2,fixlist,[n,children]);
+                            borderlist = cat(2,borderlist,[n,children]); 
+                            disp(['Cell # ',num2str(n),' error IIa ',...
+                                '- reassigning with children [',num2str(children),']'])
+                        end
+                    end
+                else 
+                    % Recreate dropped nucleus for resegmentation, edit block info
+                    addlist = cat(2,addlist,r);
+                    fixlist = cat(2,fixlist,n,r);
+                    disp(['Cell # ',num2str(n),' error I - trying to add #',num2str(r)])
+                end
             case 2 % Flag all implicated cells for resegmentation
                 group1 = unique(vals2(~ismember(vals2, drops)));
                 tmplist = [];
@@ -221,7 +253,6 @@ fixlist(ismember(fixlist,droplist)) = [];
 
 borderlist = unique(borderlist);
 borderlist(ismember(borderlist,droplist)) = [];
-
 % FIXING: delete all cells that need to be deleted
 for i = 1:length(droplist)
     r = droplist(i);
@@ -265,6 +296,7 @@ if ~isempty(addlist)
             CellData.labeldata(1).obj = [CellData.labeldata(1).obj; new_ind];
             CellData.blocks(r,1) = new_ind;
             CellData.FrameOut(r) = max(CellData.FrameOut);
+            disp(['cell #', num2str(r),' passed - added back'])
         else
             disp(['No room to add add cell #', num2str(r), ' - deleting'])
             CellData.FrameOut(r) = curr_frame-1;
@@ -288,7 +320,6 @@ if ~isempty(addlist)
         end
     end
 end
-
 % FIXING: resegment
 if ~isempty(fixlist)
     all_cells = queue(1).cells;
@@ -306,6 +337,7 @@ if ~isempty(fixlist)
         IdentifySecPropagateSubfunction(nucs_fix,double(queue(1).img_straight),mask_fix,lambda);
     % Handle mis-segmented cells: re-initialize old locations (in new mask)
     fix1 = borderlist;
+    fix1(~ismember(fix1,queue(2).cells(:))) = [];
     mask_fix = ismember(queue(1).cells,fix1);
     mask_fix(all_cells>0) = 0;
     nucs_fix = queue(1).nuclei;
@@ -317,7 +349,7 @@ if ~isempty(fixlist)
     cells_accum = zeros(size(mask_fix));
     try
         for i = 1:length(fix1)
-            % Initialize cell mask; shift it by amount the nuclei putatively moved
+            % Initialize cell mask for each cell; shift it by amount the nuclei putatively moved
             tmp = false(size(mask_fix));
             [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});
             r = round(r + props_new(fix1(i)).Centroid(2) - props_old(fix1(i)).Centroid(2));
@@ -345,17 +377,17 @@ if ~isempty(fixlist)
             IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
     catch ME
         disp(['fix1 list: [',num2str(fix1(:)'),']']) 
-        disp(getReport(ME,'extended'));
+        disp(getReport(ME,'extended','hyperlinks','off'));
     end
-    % And once more, making sure we got all those non-contiguous regions covered
+    % Propogate outward once more; ensure all cell mask is accounted for, and that nuclei and cells match
     image_clamp = abs((cell_img-prctile(cell_img(:),0.02))/diff(prctile(cell_img(:),[0.02 98])));
     image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
+    all_cells(~ismember(all_cells,unique(queue(1).nuclei(:)))) = 0;
     all_cells = IdentifySecPropagateSubfunction(all_cells,double(image_clamp),(queue(1).mask_cell),lambda);
     queue(1).cells = all_cells;
 end
 
 CellData_out = CellData;
 queue_out = queue;
-
 
 

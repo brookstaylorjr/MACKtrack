@@ -198,10 +198,12 @@ for i = 1:size(blocks,1)
             newblocks = cat(1,newblocks, blocks(i,:), blocks_pre(p_block,:));
             blockedge = cat(1,blockedge, 0, 0);
             blockparent = cat(1,blockparent,p_block, p_block);
-            blocks_pre(p_block,:) = 0; % Zero parent
+            blocks_pre(p_block,:) = 0; % Zero parent     
             CellData.FrameOut(p_block) = curr_frame-1; % Assign parent the proper frame out
             cellnum = size(blocks_pre,1)+length(blockedge)-1;
-            disp(['Created sister cells #',num2str(cellnum),' & #',num2str(cellnum+1),': [',num2str(newblocks(end-1,:)),'] and [',num2str(newblocks(end,:)),']'])
+            disp(['Created sisters (from #', num2str(p_block),') '...
+                '#',num2str(cellnum),' & #',num2str(cellnum+1),...
+                ': [',num2str(newblocks(end-1,:)),'] and [',num2str(newblocks(end,:)),']'])
             
         % CHECK 4: if no suitable parent is found, we better be REAL sure this cell exists.
         elseif (sum(blocks(i,:)==0)) < 2
