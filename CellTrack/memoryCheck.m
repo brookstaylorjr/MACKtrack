@@ -347,8 +347,8 @@ if ~isempty(fixlist)
     props_new = regionprops(nucs_fix,'Centroid');
     props_old = regionprops(nucs_old,'Centroid');
     cells_accum = zeros(size(mask_fix));
-    try
-        for i = 1:length(fix1)
+    for i = 1:length(fix1)
+        try
             % Initialize cell mask for each cell; shift it by amount the nuclei putatively moved
             tmp = false(size(mask_fix));
             [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});
@@ -363,22 +363,24 @@ if ~isempty(fixlist)
             cells_accum(conflict) = 0;
             tmp(conflict) = 0;
             cells_accum(tmp&mask_fix) = fix1(i);
+        catch me
+            disp(['cell #',num2str(fix1(i)),'triggered error:']) 
+            disp(getReport(me,'extended','hyperlinks','off'));
+            continue
         end
-        cells_accum(nucs_fix>0) = nucs_fix(nucs_fix>0);
-        % Cycle through objects once; ensure every cell is contiguous
-        cells_contig = zeros(size(cells_accum));
-        for i = 1:length(fix1)
-            tmp = cells_accum==fix1(i);
-            locs = removemarked(bwconncomp(tmp,4),nucs_fix==fix1(i),'keep');
-            cells_contig(cell2mat(locs.PixelIdxList')) = fix1(i);
-        end
-        cells_contig(all_cells>0) = 0;
-        all_cells = all_cells + ...
-            IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
-    catch ME
-        disp(['fix1 list: [',num2str(fix1(:)'),']']) 
-        disp(getReport(ME,'extended','hyperlinks','off'));
     end
+    cells_accum(nucs_fix>0) = nucs_fix(nucs_fix>0);
+    % Cycle through objects once; ensure every cell is contiguous
+    cells_contig = zeros(size(cells_accum));
+    for i = 1:length(fix1)
+        tmp = cells_accum==fix1(i);
+        locs = removemarked(bwconncomp(tmp,4),nucs_fix==fix1(i),'keep');
+        cells_contig(cell2mat(locs.PixelIdxList')) = fix1(i);
+    end
+    cells_contig(all_cells>0) = 0;
+    all_cells = all_cells + ...
+        IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
+
     % Propogate outward once more; ensure all cell mask is accounted for, and that nuclei and cells match
     image_clamp = abs((cell_img-prctile(cell_img(:),0.02))/diff(prctile(cell_img(:),[0.02 98])));
     image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
