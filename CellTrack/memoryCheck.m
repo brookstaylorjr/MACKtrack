@@ -381,7 +381,7 @@ if ~isempty(fixlist)
     all_cells = all_cells + ...
         IdentifySecPropagateSubfunction(cells_contig,double(queue(1).img_straight),mask_fix,lambda);
 
-    % Propogate outward once more; ensure all cell mask is accounted for, and that nuclei and cells match
+    % Propagate outward once more; ensure all cell mask is accounted for, and that nuclei and cells match
     image_clamp = abs((cell_img-prctile(cell_img(:),0.02))/diff(prctile(cell_img(:),[0.02 98])));
     image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
     all_cells(~ismember(all_cells,unique(queue(1).nuclei(:)))) = 0;
