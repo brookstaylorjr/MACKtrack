@@ -1,4 +1,4 @@
-function [] = UCSDcellMeasure(parameters)
+function [] = UCSDcellMeasure(parameters,parallel_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % UCSDcellMeasure calculates morphological features and optional
 % additional-channel data from a UCSDcellTrack output set.
@@ -10,6 +10,9 @@ function [] = UCSDcellMeasure(parameters)
 % At the end, it concatenates measurement sets into AllMeasurements 
 % structure, which is saved in the output directory
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+if nargin<2
+    parallel_flag = 1;
+end
 
 % Make directory names, list contents, initialize variables 
 home_folder = mfilename('fullpath');
@@ -20,10 +23,17 @@ AllMeasurements= struct;
 parameters.TotalImages = length(parameters.TimeRange) - parameters.StackSize+1;
 
 % Outer loop: Cycle xy folders (in each condition)
-parfor i = 1:length(parameters.XYRange)
-    xy = parameters.XYRange(i);
-    measureLoop(xy,parameters)
-end % [end (xy) loop]
+if parallel_flag
+    parfor i = 1:length(parameters.XYRange)
+        xy = parameters.XYRange(i);
+        measureLoop(xy,parameters)
+    end % [end (xy) loop]
+else
+    for i = 1:length(parameters.XYRange)
+        xy = parameters.XYRange(i);
+        measureLoop(xy,parameters)
+    end % [end (xy) loop]
+end
 
 % Cycle through XY directories and combine their measurements
 for i = parameters.XYRange

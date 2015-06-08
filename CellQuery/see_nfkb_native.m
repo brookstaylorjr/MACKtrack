@@ -1,6 +1,8 @@
 function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SEE_NFKB_DIM is a data processing.and visualization script specialized to handle
+% [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% SEE_NFKB_NATIVE is a data processing.and visualization script specialized to handle
 % a nuclear-translocating species (it looks for NFkBdimNuclear and NFkBdimCytoplasm measurements).
 %
 % id             experiment ID (from Google Spreadsheet specigied in "loadID.m")
@@ -25,13 +27,14 @@ if nargin<3
     end
 end
 
+
 % Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
-
+measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
 % Display parameters
-max_shift = 2; % Max allowable frame shift in XY-specific correction
-t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/12]); % Number of hours to display in graphs
+max_shift = 1; % Max allowable frame shift in XY-specific correction
+t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
 info.graph_limits = [-0.5 6.5];
 dendro = 0;
 colors = setcolors;
@@ -47,7 +50,8 @@ droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim c
 
 % NFkB normalization - subtract baseline for each cell; divide y background distribution width
 nfkb = measure.NFkBdimNuclear(:,:);
-nfkb_baseline = nanmin([prctile(nfkb(:,1:8),18.75,2),prctile(nfkb,10,2)],[],2);
+nfkb_smooth = medfilt1(nfkb,5,size(nfkb,1),2);
+nfkb_baseline = nanmin([prctile(nfkb(:,1:8),18.75,2),prctile(nfkb_smooth,10,2)],[],2);
 nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar
@@ -68,14 +72,17 @@ start_lvl = prctile(nfkb(keep,1:8),18.75,2);
 start_thresh = 0.85;%(nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2*robuststd(nuc_lvl(:),2);
+area_thresh = 40;
 
 droprows =  [droprows, prctile(nfkb(:,1:8),18.75,2) > start_thresh];
 droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thresh];
 
+droprows =  [droprows, nanmedian(measure.Area,2) < area_thresh];
+
 % Show some filter information
 if diagnos
     filter_str = {'didn''t exist @ start', 'short-lived cells', 'NFkB<background',...
-        'outliers [mean val >3*std]','extreme val [mean>1.7*std]', 'active @ start', 'high nuclear stain'};
+        'outliers [mean val >3*std]','extreme val [mean>1.7*std]', 'active @ start', 'high nuclear stain','low area'};
     disp(['INITIAL: ', num2str(size(droprows,1)),' cells'])
     
     for i = 1:size(droprows,2)

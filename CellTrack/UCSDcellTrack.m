@@ -22,7 +22,7 @@ function varargout = UCSDcellTrack(varargin)
 
 % Edit the above text to modify the response to help UCSDcellTrack
 
-% Last Modified by GUIDE v2.5 13-Apr-2015 12:40:26
+% Last Modified by GUIDE v2.5 08-Jun-2015 12:09:45
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -94,7 +94,7 @@ handles.Locked2 = 1;
 
 % Load from parent directory and update handles structure
 load_listbox(handles.parameters.ImagePath, handles)
-
+check_savedir(handles.parameters.SaveDirectory,handles);
 
 % OSX-specific formatting
 os = computer;
@@ -202,11 +202,11 @@ function pushbutton1B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 newfolder = uigetdir(handles.locations.scope);
 if (newfolder~=0)
-
     if length(newfolder)<length(handles.locations.scope) || ...
         ~strcmp(newfolder(1:length(handles.locations.scope)),handles.locations.scope)
         disp('- - - - - - - ')
-        warning('Images must be located at selected mount point - keeping previous directory.')
+        warning(['Images must be located at selected mount point (',handles.locations.scope,...
+            ')- keeping previous directory.'])
         disp('- - - - - - - ')
     else
         newfolder = newfolder(length(handles.locations.scope)+1:end);
@@ -236,7 +236,7 @@ set(handles.text1A,'String',handles.locations.scope);
 set(handles.text3A,'String',handles.locations.data);
 drawnow;
 load_listbox(handles.parameters.ImagePath,handles)
-guidata(handles.figure1,handles)
+check_savedir(handles.parameters.SaveDirectory,handles)
 % ========================================================================================
 
 
@@ -392,10 +392,55 @@ function edit3A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % EDIT3A: select save directory for tracking output
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-newfolder = get(handles.edit3A,'String');
-if ~exist([handles.locations.data, newfolder],'dir')
-    newfolder = '';
+check_savedir(get(handles.edit3A,'String'),handles);
+% ========================================================================================
+
+function pushbutton3A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON3A: Browse for folder
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+newfolder = uigetdir(handles.locations.data);
+if (newfolder~=0)
+    if ~strcmp(newfolder(1:length(handles.locations.data)),handles.locations.data)
+        warning(['Please choose a folder under the selected mount point (',handles.locations.data,')'])
+    else
+        check_savedir(newfolder(length(handles.locations.data)+1:end),handles);
+    end
 end
+
+% ========================================================================================
+
+function check_savedir(testfolder,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% Helper function for UI panel 3: ensure that base location and subfolder location match.
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+testfolder_orig = testfolder;
+if ~isempty(testfolder) && strcmp(testfolder(end),filesep)
+    testfolder = testfolder(1:end-1);
+end
+idx = strfind(testfolder,filesep);
+if ~isempty(idx)
+    idx= idx(end);
+    testfolder = testfolder(1:idx);
+else
+    testfolder = '';
+end
+if ~exist([handles.locations.data, testfolder],'dir')
+    if exist([handles.locations.data, handles.parameters.SaveDirectory],'dir')
+        newfolder = handles.parameters.SaveDirectory;
+        warning(['Data directory must be located under selected mount point (',handles.locations.data,...
+            ')- resetting to previous SaveDirectory.'])
+    else
+        newfolder = '';
+         warning(['Data directory must be located under selected mount point (',handles.locations.data,...
+        ')- setting to base location.'])
+        handles.parameters.SaveDirectory = '';
+    end
+else
+    newfolder = testfolder_orig;
+
+end
+
 % Remove leading slash, add trailing slash
 if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
     newfolder = [newfolder,filesep];
@@ -405,33 +450,7 @@ if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
 end
 handles.parameters.SaveDirectory = newfolder;
 set(handles.edit3A,'String',newfolder)
-guidata(handles.figure1,handles)
-% ========================================================================================
-
-function pushbutton3A_Callback(hObject, eventdata, handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PUSHBUTTON3A: Browse for folder
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-newfolder = uigetdir(handles.locations.data);
-
-if (newfolder~=0)
-    if length(newfolder)<length(handles.locations.data) || ...
-        ~strcmp(newfolder(1:length(handles.locations.data)),handles.locations.data)
-        warning('Data must be located under selected mount point - keeping previous save directory.')
-    else
-        % Remove leading slash, add trailing slash
-        if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-            newfolder = [newfolder,filesep];
-        end
-        if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
-            newfolder = newfolder(2:end);
-        end
-        set(handles.edit3A,'String',newfolder)
-        handles.parameters.SaveDirectory = newfolder;
-        guidata(handles.figure1,handles)
-    end
-end
-% ========================================================================================
+check_expr(handles)
 
 
 function pushbutton3B_Callback(hObject, eventdata, handles)
@@ -444,6 +463,10 @@ load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
 set(handles.text1A,'String',locations.scope);
 set(handles.text3A,'String',locations.data);
+drawnow;
+load_listbox(handles.parameters.ImagePath,handles)
+check_savedir(handles.parameters.SaveDirectory,handles)
+guidata(handles.figure1,handles)
 guidata(handles.figure1,handles)
 % ========================================================================================
 
@@ -470,6 +493,12 @@ function pushbutton4B_Callback(hObject, eventdata, handles)
 % PUSHBUTTON4B: save current parameter set
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 parameters = handles.parameters;
+if ispc
+    % Replace file separator in SaveDirectory and in ImagePath
+    parameters.SaveDirectory(strfind(parameters.SaveDirectory,filesep)) = '/';
+    parameters.ImagePath(strfind(parameters.ImagePath,filesep)) = '/';
+end
+
 FileName = '';
 [FileName,PathName] = uiputfile([handles.home_folder,'Parameters',filesep,'*.mat'],...
     'Save current parameters (.mat)');
@@ -483,6 +512,8 @@ function pushbutton4C_Callback(~, ~, handles)
 % PUSHBUTTON4C: test first image in specified series
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~handles.Locked2
+    handles.parameters.debug = get(handles.checkbox4A,'Value');
+
     set(handles.pushbutton4C,'ForegroundColor',handles.gray,'String','Testing...')
     set(handles.pushbutton4D,'ForegroundColor',handles.gray)
     drawnow;
@@ -502,37 +533,52 @@ function pushbutton4D_Callback(~, ~, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if ~handles.Locked2
     try
-    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
-    set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Running...')
-    drawnow;
-    parameters = handles.parameters;    
-    % 1) Track loop (put in parfor)
-    for i = 1:length(parameters.XYRange)
-        xyPos = parameters.XYRange(i);
-        if strcmp(handles.parameters.ImageType,'None')
-            trackPrimary(parameters,xyPos)
+        set(handles.pushbutton4C,'ForegroundColor',handles.gray)
+        set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Running...')
+        drawnow;
+        parameters = handles.parameters;    
+        % 1) Track loop (put in parfor if 'parallel' option is selected'
+        if get(handles.checkbox4B,'Value')
+            parfor i = 1:length(parameters.XYRange)
+                xyPos = parameters.XYRange(i);
+                if strcmp(handles.parameters.ImageType,'None')
+                    trackPrimary(parameters,xyPos)
+                else
+                    trackLoop(parameters,xyPos) % DIC or phase
+                end
+            end        
+            % 3) Measure loop (AllMeasurements.mat output)
+            disp('Measuring...')
+            UCSDcellMeasure(parameters,1);
+
+            set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+            set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
+
         else
-            trackLoop(parameters,xyPos) % DIC or phase
+            for i = 1:length(parameters.XYRange)
+                xyPos = parameters.XYRange(i);
+                if strcmp(handles.parameters.ImageType,'None')
+                    trackPrimary(parameters,xyPos)
+                else
+                    trackLoop(parameters,xyPos) % DIC or phase
+                end
+            end        
+            % 3) Measure loop (AllMeasurements.mat output)
+            disp('Measuring...')
+            UCSDcellMeasure(parameters,0);
         end
-        
-    end        
-    
-    % 3) Measure loop (AllMeasurements.mat output)
-    disp('Measuring...')
-    UCSDcellMeasure(parameters);
-    
-    set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+
+        set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
     catch ME
         set(handles.pushbutton4C,'ForegroundColor',handles.blue)
         set(handles.pushbutton4D,'ForegroundColor',handles.orange,'String','Run')
         rethrow(ME)
     end
-
 end
 % ========================================================================================
 
-%  - - - - - - - - - - - - - - - - - - - - - -  - - PARAMETER / IMAGE TYPE SWITCHING - - - - - - - -  - - - - - - - - - - - - - - - - - - 
+%  %%%%%%%%%%%%%%%%%% PARAMETER / IMAGE TYPE SWITCHING %%%%%%%%%%%%%%%%%%%%%%%%
 
 function pushbuttonSwitch1_Callback(~, ~, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -590,7 +636,7 @@ guidata(handles.figure1,handles)
 
 
 
-%  %%%%%%%%%%%%%%%%%%% UIPANEL 5 : NUCLEUS PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  %%%%%%%%%%%%%%%%%%%     UIPANEL 5 : NUCLEUS PARAMETERS     %%%%%%%%%%%%%%%%%%%%%%
 
 
 function slider5A_Callback(hObject, ~, handles)
@@ -1337,7 +1383,6 @@ end
 
 
 
-% --- Executes on selection change in listbox7.
 function listbox7_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % LISTBOX7: Load module's associated parameters and update GUI elements

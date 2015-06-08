@@ -6,7 +6,6 @@ function [] = testImages(handles)
 %
 % handles  master structure with parameters and naming dat
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-handles.parameters.debug = 0;
 
 % - - - - Setup: create structure for images, define options - - - -
 p = handles.parameters;

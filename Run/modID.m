@@ -1,4 +1,4 @@
-function [] = runID(varargin)
+function [] = modID(varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [] = runID(varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -39,43 +39,18 @@ end
 for idx = 1:numel(data.dates)
     
     % PARAMETERS
-    load([home_folder,'Parameters',filesep,data.parameter_files{idx}])
-    parameters.ImagePath = data.image_paths{idx};
-    parameters.TimeRange = eval(data.time_ranges{idx});
-    parameters.XYRange = eval(data.xy_ranges{idx});
     parameters.SaveDirectory = [data.save_dir{idx},filesep,data.dates{idx},'_',data.names{idx}];
+    load([parameters.SaveDirectory,filesep,'AllMeasurements.mat'])
+    disp([parameters.SaveDirectory,', before: ', num2str(AllMeasurements.parameters.FramesPerHour),' frames per hr'])
     clear p;
     eval(data.modify{idx});
-    if exist('p','var'); parameters = combinestructures(p,parameters); end;
-
-    mkdir([locations.data,filesep,parameters.SaveDirectory])
-    % TRACKING
-    parfor i = 1:length(parameters.XYRange)
-        xyPos = parameters.XYRange(i);
-        try
-            if strcmp(parameters.ImageType,'None')
-                trackPrimary(parameters,xyPos)
-            else
-                trackLoop(parameters,xyPos) % DIC or phase
-            end
-        catch ME
-            disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
-            for err = 1:length(ME.stack)
-                disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
-            end
-            error('killing tracking')
-        end
+    if exist('p','var'); 
+        AllMeasurements.parameters = combinestructures(p, AllMeasurements.parameters);
+    else
+        AllMeasurements.parameters.FramesPerHour = 12;
     end
-    
-    % MEASUREMENT
-    disp(['Measuring ', parameters.SaveDirectory,'...'])
-    try
-        UCSDcellMeasure(parameters);      
-    catch ME
-        disp(['Error in measurement:' , ME.message])
-        for err = 1:length(ME.stack)
-            disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
-        end
-        error('killing measurement')
-    end
+    disp([parameters.SaveDirectory,', after: ', num2str(AllMeasurements.parameters.FramesPerHour),' frames per hr'])
+    disp('- - - - -')
+    save([parameters.SaveDirectory,filesep,'AllMeasurements.mat'],'AllMeasurements')
+    clear AllMeasurements
 end
