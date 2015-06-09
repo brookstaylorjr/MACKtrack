@@ -76,9 +76,17 @@ if isfield(AllMeasurements,'NFkBNuclear')
             i = p.XYRange(ind);
             j = min(p.TimeRange);
             expr = p.nfkbModule.ImageExpr;
-            img = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth,1,1);
+            if ~exist('bit_depth','var')
+                if isfield(p,'BitDepth')
+                    bit_depth = p.BitDepth;
+                else
+                    imfo = imfinfo([locations.scope, p.ImagePath, eval(expr)]);
+                    bit_depth = imfo.BitDepth;
+                end
+            end
+            img = checkread([locations.scope, p.ImagePath, eval(expr)],bit_depth,1,1);
             nfkb_thresh(ind) = otsuthresh(img,false(size(img)),'log');
-            [~,p.img_distr(:,ind)] = modebalance(img,2,p.BitDepth,'measure');
+            [~,p.img_distr(:,ind)] = modebalance(img,2,bit_depth,'measure');
         end
         p.nfkb_thresh = mean(nfkb_thresh);
         AllMeasurements.parameters = p;
@@ -94,7 +102,15 @@ elseif isfield(AllMeasurements, 'NFkBdimNuclear')
             i = p.XYRange(ind);
             j = min(p.TimeRange);
             expr = p.nfkbModule.ImageExpr;
-            img = checkread([locations.scope, p.ImagePath, eval(expr)],p.BitDepth,1,1);
+            if ~exist('bit_depth','var')
+                if isfield(p,'BitDepth')
+                    bit_depth = p.BitDepth;
+                else
+                    imfo = imfinfo([locations.scope, p.ImagePath, eval(expr)]);
+                    bit_depth = imfo.BitDepth;
+                end
+            end
+            img = checkread([locations.scope, p.ImagePath, eval(expr)],bit_depth,1,1);
             if ind==1
                 X = backgroundcalculate(size(img));
             end
@@ -104,7 +120,7 @@ elseif isfield(AllMeasurements, 'NFkBdimNuclear')
             % Apply background correction
             img = reshape((double(img(:) - X*pStar)),size(img));
             img = img-min(img(:)); % Set minimum to zero
-            [~,p.adj_distr(:,ind)] = modebalance(img,1,p.BitDepth,'measure');
+            [~,p.adj_distr(:,ind)] = modebalance(img,1,bit_depth,'measure');
         end
             AllMeasurements.parameters = p;
             save(info.savename,'AllMeasurements')
