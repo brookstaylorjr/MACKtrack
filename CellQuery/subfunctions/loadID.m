@@ -41,7 +41,7 @@ else
     info.savename = id;
 end
 
-% Parse and smooth AllMeasurements
+% Parse AllMeasurements
 info.CellData = AllMeasurements.CellData;
 info.fields = fieldnames(AllMeasurements);
 info.ImageDirectory = [locations.scope, AllMeasurements.parameters.ImagePath];

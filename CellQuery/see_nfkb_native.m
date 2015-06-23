@@ -31,7 +31,9 @@ end
 % Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
-measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
+if isfield(measure, 'NFkBdimNuclear_erode')
+    measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
+end
 % Display parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
@@ -117,7 +119,11 @@ graph.opt = maketicks(graph.t,info.graph_limits,0);
 graph.opt.Name = 'NFkB Activation'; 
 % Correct for XY positions that activate late
 [graph.var, shift_xy] = alignTrajectories(nfkb(:,1:length(graph.t)+2*max_shift), graph.celldata, 60, max_shift);
-[graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
+if dendro
+    [graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
+else
+    [~,graph.order] = sort(nansum(graph.var(:,1:min([size(graph.var,2),150])),2),'descend');
+end
 if diagnos
     for i = 1:length(shift_xy)
         disp(['xy ',num2str(i),' shift : ',num2str(shift_xy(i))])

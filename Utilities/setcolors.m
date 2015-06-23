@@ -4,21 +4,29 @@ function [colors] = setcolors(graph_flag)
 %
 % graph_flag    (optional) if true, show colors on heatmap
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-colors.blue = [46 103 207]/255;
-colors.green = [45 191 104]/255;
-colors.light_blue = [150 210 230]/255;
-colors.red = [166,22,36]/255;
+colors.blue = [62 107 133]/255;
+colors.green = [0 195 169]/255;
+colors.light_blue = [29 155 184]/255;
+colors.red = [231 76 60]/255;
 
 colors.grays = {[40 40 42]/255,...
     [74 76 79]/255,...
    [113 115 118]/255,...
    [160 165 170]/255}; 
 
-% Model-specific colors
+% TLR4 model colors (Science Signaling 2015)
 colors.trif = [46 122 145]/255; % blue
 colors.both = [120 46 103]/255; % purple
 colors.myd = [186 80 73]/255; % red
 colors.irf = [48 145 50]/255;
+
+% NFkB stimulus specificity colors
+colors.tnf = [118 180 203]/255;
+colors.lps = [223 79 66]/255;
+colors.cpg = [136 180 69]/255;
+colors.pam = [230 130 57]/255;
+colors.off = [217 210 200]/255;
+colors.pic = [101 76 125]/255;
 
 if nargin>0
     if graph_flag
