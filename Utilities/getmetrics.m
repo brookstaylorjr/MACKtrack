@@ -14,14 +14,18 @@ function [metrics,fourier] = getmetrics(id, baseline)
 
 % Define baseline, if not passed
 if nargin <2
-    baseline = 1;
+    if id <= 270
+        baseline = 1;
+    else
+        baseline = 1.75;
+    end
 end
 
 % If user passes baseline of 0, reacluclate it from an "off" set (best one is currently #215)
 if baseline==0
-    [graph, info] = see_nfkb_native(215); %0.33ng/mL LPS - no activation observed.
+    [graph] = see_nfkb_native(274); %0.33ng/mL LPS - no activation observed.
     robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
-    baseline = nanmedian(graph.var(:))+2*robuststd(graph.var(:),3);
+    baseline = nanmedian(graph.var(:))+2.5*robuststd(graph.var(:),3);
 end
 
 % Load/filter/normalize data. Calculate time vector (as function of hrs)
@@ -85,8 +89,10 @@ for i = 1:size(metrics.time_series,1)
 end
 % Find the point of peak (secondary) power
 metrics.peakfreq = nan(size(fourier.power,1),1);
+metrics.oscfrac = nan(size(fourier.power,1),1);
+
 for i =1:size(metrics.time_series,1)
-    [~,locs] = findpeaks(fourier.power(i,:),'sortstr','descend');
+    [~,locs] = globalpeaks(fourier.power(i,:),2);
     if length(locs)>1
         idx = max(locs(1:2));
         metrics.peakfreq(i) = 3600*fourier.freq(idx);
@@ -95,7 +101,14 @@ for i =1:size(metrics.time_series,1)
     else
         metrics.peakfreq(i) = 3600*fourier.freq(1);
     end
+    metrics.oscfrac(i) = nansum(fourier.power(i,(3600*fourier.freq) > 0.5)) /nansum(fourier.power(i,:));
+    if isnan(metrics.oscfrac(i))
+        metrics.oscfrac(i) = 0;
+    end
 end
+
+
+
 
 % METRICS OF AMPLITUDE AND TIMING
 % 1st + 2nd peak time/amplitude
@@ -169,7 +182,7 @@ for i = 1:length(thresholds)
 end
 
 
-%% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 16 hrs (192 frames)
-metrics.time_series = metrics.time_series(:,1:191);
-metrics.integrals = metrics.integrals(:,1:191);
-metrics.derivatives = metrics.derivatives(:,1:189);
+%% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 20 hrs (192 frames)
+metrics.time_series = metrics.time_series(:,1:240);
+metrics.integrals = metrics.integrals(:,1:240);
+metrics.derivatives = metrics.derivatives(:,1:240);

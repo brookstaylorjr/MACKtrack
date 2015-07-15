@@ -88,12 +88,12 @@ for i = 1:length(vects)
     % Make main violin plot
     hold(violin,'on')
     fill([places(i)+obj_width*yy,places(i)-obj_width*yy(end:-1:1)],[xx,xx(end:-1:1)],...
-        colors{mod(i-1,length(colors))+1},'LineWidth',2,'Parent',violin)
+        colors{mod(i-1,length(colors))+1},'LineWidth',1.2,'Parent',violin)
     hold(violin,'off')
 end
 % Plot medians and set graph properties
 hold(violin,'on')
-    plot(violin, places,medians,'o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0 0 0],...
+    plot(violin, places,medians,'-o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0 0 0],...
         'Color', [0 0 0],'LineWidth',2,'MarkerSize',8)
 hold(violin,'off')
 set(violin,'YLim',graph_limits,'XLim',x_lim);

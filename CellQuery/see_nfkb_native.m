@@ -31,13 +31,17 @@ end
 % Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
-if isfield(measure, 'NFkBdimNuclear_erode')
-    measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
-end
+% if isfield(measure, 'NFkBdimNuclear_erode')
+%     measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
+% end
 % Display parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
-info.graph_limits = [-0.5 6.5];
+if id > 270 % switched to +/+ cells at this point
+    info.graph_limits = [-0.5 9];
+else
+    info.graph_limits = [-0.5 6];
+end
 dendro = 0;
 colors = setcolors;
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
@@ -45,7 +49,7 @@ robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanst
 
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
-droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:4)),2)>1]; % Cells existing @ expt start
+droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:8)),2)>2]; % Cells existing @ expt start
 droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:100)),2)>3]; % Long-lived cells
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
@@ -53,7 +57,7 @@ droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim c
 % NFkB normalization - subtract baseline for each cell; divide y background distribution width
 nfkb = measure.NFkBdimNuclear(:,:);
 nfkb_smooth = medfilt1(nfkb,5,size(nfkb,1),2);
-nfkb_baseline = nanmin([prctile(nfkb(:,1:8),18.75,2),prctile(nfkb_smooth,10,2)],[],2);
+nfkb_baseline = nanmin([nanmin(nfkb(:,1:8),[],2),prctile(nfkb_smooth,20,2)],[],2);
 nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar
@@ -70,11 +74,15 @@ droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl)
 
 % Filtering, part 3: nuclear stain intensity and starting NFkB value
 keep = max(droprows,[],2) == 0;
-start_lvl = prctile(nfkb(keep,1:8),18.75,2);
-start_thresh = 0.85;%(nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
+start_lvl = nanmin(nfkb(keep,1:8),[],2);
+start_thresh = 1.5;%(nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
+if id>270
+    start_thresh = 2;
+end
+
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
-nuc_thresh = nanmedian(nuc_lvl)+2*robuststd(nuc_lvl(:),2);
-area_thresh = 40;
+nuc_thresh = nanmedian(nuc_lvl)+2.5*robuststd(nuc_lvl(:),2);
+area_thresh = 90;
 
 droprows =  [droprows, prctile(nfkb(:,1:8),18.75,2) > start_thresh];
 droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thresh];
@@ -104,7 +112,10 @@ if diagnos
     ranksmult(nfkb(keep,:),nuc_lvl);
     h = suptitle(['x = Nuclear stain level. Threshold = ',num2str(nuc_thresh)]);
     set(h,'FontSize',14)
-
+    
+    ranksmult(nfkb(keep,:),nanmedian(measure.Area(keep,:),2))
+    h = suptitle(['x = Median area. Threshold = ',num2str(area_thresh)]);
+    set(h,'FontSize',14)
 
 end
 
