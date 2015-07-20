@@ -49,15 +49,15 @@ robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanst
 
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
-droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:8)),2)>2]; % Cells existing @ expt start
+droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:4)),2)>2]; % Cells existing @ expt start
 droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:100)),2)>3]; % Long-lived cells
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
 
 % NFkB normalization - subtract baseline for each cell; divide y background distribution width
 nfkb = measure.NFkBdimNuclear(:,:);
-nfkb_smooth = medfilt1(nfkb,5,size(nfkb,1),2);
-nfkb_baseline = nanmin([nanmin(nfkb(:,1:8),[],2),prctile(nfkb_smooth,20,2)],[],2);
+nfkb_smooth = smoothrows(nfkb,5);
+nfkb_baseline = nanmin([nanmin(nfkb_smooth(:,1:4),[],2),prctile(nfkb,10,2),prctile(nfkb_smooth,10,2)],[],2);
 nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar
@@ -74,11 +74,11 @@ droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl)
 
 % Filtering, part 3: nuclear stain intensity and starting NFkB value
 keep = max(droprows,[],2) == 0;
-start_lvl = nanmin(nfkb(keep,1:8),[],2);
+start_lvl = nanmin(nfkb(keep,1:3),[],2);
+
 start_thresh = 1.5;%(nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
-if id>270
-    start_thresh = 2;
-end
+if id>266; start_thresh = 10; end % Late-timepoint experiments (ids 267-270)
+if id>270; start_thresh = 2; end % Homozygous mice imaged from this point fwd
 
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2.5*robuststd(nuc_lvl(:),2);

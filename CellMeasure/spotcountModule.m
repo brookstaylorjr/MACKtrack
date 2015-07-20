@@ -13,7 +13,7 @@ function [CellMeasurements, ModuleDataOut] = spotcountModule(CellMeasurements,pa
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 iteration = ModuleData.iter;
-spotSize = 3;
+spotSize = 5;
 
 % On 1st iteration, threshold using the secondarily-passed image
 if iteration ==1
