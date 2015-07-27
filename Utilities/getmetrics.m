@@ -29,15 +29,19 @@ if baseline==0
 end
 
 % Load/filter/normalize data. Calculate time vector (as function of hrs)
-[graph, info] = see_nfkb_native(id);
-t_orig = ((1:size(graph.var,2))-1)/info.parameters.FramesPerHour;
-t = ((1:floor(max(t_orig)*12)) - 1)/12;
+[graph] = see_nfkb_native(id);
+t = min(graph.t):1/12:max(graph.t);
 
-% 1) basic time series. Interpolate over "normal" interval (12 frames per hr)
-metrics.time_series = nan(size(graph.var,1),length(t));
-for i = 1:size(graph.var,1)
-    metrics.time_series(i,:) = interp1(t_orig,graph.var(i,:),t);
+% 1) basic time series. Interpolate over "normal" interval (12 frames per hr) if required
+if length(t)~=length(graph.t)
+    metrics.time_series = nan(size(graph.var,1),length(t));
+    for i = 1:size(graph.var,1)
+        metrics.time_series(i,:) = interp1(graph.t,graph.var(i,:),t);
+    end
+else
+    metrics.time_series = graph.var;
 end
+
 
 % 2) integrated activity
 metrics.integrals = nan(size(metrics.time_series));
@@ -183,6 +187,10 @@ end
 
 
 %% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 20 hrs (192 frames)
-metrics.time_series = metrics.time_series(:,1:240);
-metrics.integrals = metrics.integrals(:,1:240);
-metrics.derivatives = metrics.derivatives(:,1:240);
+try
+    metrics.time_series = metrics.time_series(:,1:252);
+    metrics.integrals = metrics.integrals(:,1:252);
+    metrics.derivatives = metrics.derivatives(:,1:250);
+catch me
+    disp('Note: vectors too short to cap @ 252 frames')
+end

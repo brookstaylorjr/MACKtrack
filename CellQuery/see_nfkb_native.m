@@ -20,6 +20,8 @@ function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
 % measure         full output structure from loadID
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+
+%% Setup
 if nargin<3
     diagnos=0;
     if nargin<2
@@ -27,14 +29,14 @@ if nargin<3
     end
 end
 
-
 % Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
 % if isfield(measure, 'NFkBdimNuclear_erode')
 %     measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
 % end
-% Display parameters
+
+% Set display parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
 if id > 270 % switched to +/+ cells at this point
@@ -45,7 +47,7 @@ end
 dendro = 0;
 colors = setcolors;
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
-
+%% Filtering
 
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
@@ -57,7 +59,7 @@ droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim c
 % NFkB normalization - subtract baseline for each cell; divide y background distribution width
 nfkb = measure.NFkBdimNuclear(:,:);
 nfkb_smooth = smoothrows(nfkb,5);
-nfkb_baseline = nanmin([nanmin(nfkb_smooth(:,1:4),[],2),prctile(nfkb,10,2),prctile(nfkb_smooth,10,2)],[],2);
+nfkb_baseline = nanmin([nanmin(nfkb_smooth(:,1:4),[],2),prctile(nfkb_smooth,10,2)],[],2);
 nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar

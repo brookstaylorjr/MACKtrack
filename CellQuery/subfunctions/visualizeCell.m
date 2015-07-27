@@ -88,6 +88,7 @@ if notfound
     visualize.title = [visualize.title, '(selected cell/XY not found)'];
 end
 
+
 draw_figure(visualize,1,visualize.imageList{1})
 fig_resize([],[],visualize)
 
@@ -144,7 +145,7 @@ switch imageStr
     otherwise
         imgname = [visualize.image_dir,filesep,eval(visualize.parameters.(imageStr(1:end-3)).ImageExpr)];
 end
-image1 = checkread(imgname,visualize.parameters.BitDepth);
+image1 = checkread(imgname);
 clim = prctile(image1(:),[1 99]);
 
 % Get masks and overlay object (if it's in range).

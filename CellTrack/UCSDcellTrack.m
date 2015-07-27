@@ -200,7 +200,12 @@ function pushbutton1B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1B: browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-newfolder = uigetdir(handles.locations.scope);
+tmp = [handles.locations.scope,filesep,handles.parameters.ImagePath];
+if ~exist(tmp,'dir')
+    tmp = handles.locations.scope;
+end
+newfolder = uigetdir(tmp);
+    
 if (newfolder~=0)
     if length(newfolder)<length(handles.locations.scope) || ...
         ~strcmp(newfolder(1:length(handles.locations.scope)),handles.locations.scope)
@@ -399,7 +404,11 @@ function pushbutton3A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3A: Browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-newfolder = uigetdir(handles.locations.data);
+tmp = [handles.locations.data,filesep,handles.parameters.SaveDirectory];
+if ~exist(tmp,'dir')
+    tmp = handles.locations.data;
+end
+newfolder = uigetdir(tmp);
 if (newfolder~=0)
     if ~strcmp(newfolder(1:length(handles.locations.data)),handles.locations.data)
         warning(['Please choose a folder under the selected mount point (',handles.locations.data,')'])

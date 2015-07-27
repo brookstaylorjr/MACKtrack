@@ -18,6 +18,8 @@ function [graph, info, measure] = see_nfkb(id,show_graphs, diagnos)
 % measure         full output structure from loadID
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+
+%% Setup
 if nargin<3
     diagnos=0;
     if nargin<2
@@ -29,7 +31,7 @@ end
 [measure, info] = loadID(id);
 info.Module = 'nfkbModule';
 
-% Display parameters
+% Set display parameters
 t_hrs = 12; % Number of hours to display in graphs
 max_shift = 0; % Max allowable frame shift in XY-specific correction
 info.graph_limits = [-0.1 2.5];
