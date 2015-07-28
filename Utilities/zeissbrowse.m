@@ -255,9 +255,19 @@ function hist_callback(~,~,handles)
 % Make ImageJ-styled figure to allow contrast adjustment
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 handles = guidata(handles.figure1);
-if isempty(findobj('type','figure','name',['Adjust Contrast (', num2str(handles.figure1),')']))
+if isfield(handles,'histaxes')
+    handles = rmfield(handles,'hist');
+    handles = rmfield(handles,'histaxes');
+    handles = rmfield(handles,'histline1');
+    handles = rmfield(handles,'histline2');
+    handles = rmfield(handles,'histtext1');
+    handles = rmfield(handles,'histtext2');
+    handles = rmfield(handles,'histslider1');
+    handles = rmfield(handles,'histslider2');
+end
+if isempty(findobj('type','figure','name',['Adjust Contrast (', num2str(double(handles.figure1)),')']))
     pos1 = get(handles.figure1,'Position');
-    handles.hist = figure('Name', ['Adjust Contrast (', num2str(handles.figure1),')'],...
+    handles.hist = figure('Name', ['Adjust Contrast (', num2str(double(handles.figure1)),')'],...
         'Position',[pos1(1)+pos1(3)+10 pos1(2)+pos1(4)-300 300 300], 'MenuBar','none', 'ToolBar','none');
 end
 handles.histaxes = axes('Parent',handles.hist);
@@ -342,7 +352,8 @@ function handles_out = drawhistogram(handles,flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Draw the actual relative frequency image histogram
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-if ~isempty(findobj('type','figure','name',['Adjust Contrast (', num2str(handles.figure1),')']))
+
+if ~isempty(findobj('type','figure','name',['Adjust Contrast (', num2str(double(handles.figure1)),')']))
     cla(handles.histaxes,'reset')
     if nargin<2
         flag = 0;
@@ -380,7 +391,7 @@ function [] = close_fig(~,~,handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Close histogram with figure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-delete(findobj('type','figure','name',['Adjust Contrast (', num2str(handles.figure1),')']))
+delete(findobj('type','figure','name',['Adjust Contrast (', num2str(double(handles.figure1)),')']))
 
 
 if isempty(gcbf)

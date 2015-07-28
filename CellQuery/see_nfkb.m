@@ -137,33 +137,36 @@ for i =1:size(corr_nuc,1)
     min_v = min(std_nuc(i,omit_frames:end-win))*5;
     low_locs = find(std_nuc(i,:)<min_v);
     low_locs((low_locs<(omit_frames))|(low_locs>(size(std_nuc,2)-win))) = [];
-    % Find first point where cytoplasm and nuclear trajectories show same trend
-    ind = 1;
-    end_nuc = nanmean(corr_nuc(i,low_locs(ind)-win:low_locs(ind)+win));
-    end_cyto = nanmean(smooth_cyto(i,low_locs(ind)-win:low_locs(ind)+win));
-    while (((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) < 0) && (ind<length(low_locs))
-        ind = ind+1;
+    if numel(low_locs)>0
+        % Find first point where cytoplasm and nuclear trajectories show same trend
+        ind = 1;
         end_nuc = nanmean(corr_nuc(i,low_locs(ind)-win:low_locs(ind)+win));
         end_cyto = nanmean(smooth_cyto(i,low_locs(ind)-win:low_locs(ind)+win));
-    end
-    % Find lowest baseline reached
-    for j = (ind+1):length(low_locs)
-        if ((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) > 0
-            nuc_a = nanmean(corr_nuc(i,low_locs(j)-win:low_locs(j)+win));
-            cyto_a = nanmean(smooth_cyto(i,low_locs(j)-win:low_locs(j)+win));
-            testval = nuc_a - abs(cyto_a-min([start_cyto(i),end_cyto]))...
-                /abs(start_cyto(i)-end_cyto)*abs(start_nuc(i)-end_nuc);
-            if testval< end_nuc
-                end_nuc = nuc_a;
-                end_cyto = cyto_a;
+        while (((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) < 0) && (ind<length(low_locs))
+            ind = ind+1;
+            end_nuc = nanmean(corr_nuc(i,low_locs(ind)-win:low_locs(ind)+win));
+            end_cyto = nanmean(smooth_cyto(i,low_locs(ind)-win:low_locs(ind)+win));
+        end
+        % Find lowest baseline reached
+        for j = (ind+1):length(low_locs)
+            if ((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) > 0
+                nuc_a = nanmean(corr_nuc(i,low_locs(j)-win:low_locs(j)+win));
+                cyto_a = nanmean(smooth_cyto(i,low_locs(j)-win:low_locs(j)+win));
+                testval = nuc_a - abs(cyto_a-min([start_cyto(i),end_cyto]))...
+                    /abs(start_cyto(i)-end_cyto)*abs(start_nuc(i)-end_nuc);
+                if testval< end_nuc
+                    end_nuc = nuc_a;
+                    end_cyto = cyto_a;
+                end
             end
         end
+        % Apply correction (if nucleus and cytoplasm show same trend)
+        if ((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) > 0
+            corr_row = (smooth_cyto(i,:) - min([start_cyto(i),end_cyto]))/abs(start_cyto(i)-end_cyto);
+            corr_nuc(i,:) = (corr_nuc(i,:) - corr_row*abs(start_nuc(i)-end_nuc));
+        end
+        
     end
-    % Apply correction (if nucleus and cytoplasm show same trend)
-    if ((start_cyto(i)-end_cyto)/(start_nuc(i)-end_nuc)) > 0
-        corr_row = (smooth_cyto(i,:) - min([start_cyto(i),end_cyto]))/abs(start_cyto(i)-end_cyto);
-        corr_nuc(i,:) = (corr_nuc(i,:) - corr_row*abs(start_nuc(i)-end_nuc));
-    end   
 end
 
 % Self-normalize corrected nuclear trajectories to starting cytoplasmic values
