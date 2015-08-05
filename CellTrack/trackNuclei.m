@@ -171,11 +171,11 @@ for i = 1:size(blocks,1)
         blocknums = blocknums(blocknums>0);
         p_distances(blocks_pre(blocknums,1)==0) = [];
         blocknums(blocks_pre(blocknums,1)==0) = [];
-        s_distances = sqrt( (labeldata(1).centroidx(blocks_pre(blocknums,1)) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
-            (labeldata(1).centroidy(blocks_pre(blocknums,1)) - labeldata(1).centroidy(blocks(i,1))).^2 );
+        %s_distances = sqrt( (labeldata(1).centroidx(blocks_pre(blocknums,1)) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
+         %   (labeldata(1).centroidy(blocks_pre(blocknums,1)) - labeldata(1).centroidy(blocks(i,1))).^2 );
         % For all candidates, parent should be CLOSER than sister
-        blocknums = blocknums(p_distances<s_distances);
-        p_distances = p_distances(p_distances<s_distances);
+        %blocknums = blocknums(p_distances<s_distances);
+        %p_distances = p_distances(p_distances<s_distances);
         % Of remaining candidates, minimize distance to parent
         p_block = blocknums(find(p_distances==min(p_distances),1,'first'));
         % a) Both daughters must exist in at least (n-1)/n frames 
@@ -184,8 +184,8 @@ for i = 1:size(blocks,1)
         else
             test2a = 0;
         end
-        % b) New daughter must be within 2 diameters of parent
-        test2b =  min(p_distances) < (2*labeldata(1).perimeter(blocks(i,1))/pi);
+        % b) New daughter must be nearby (within 3 nuclear diameters) of parent
+        test2b =  min(p_distances) < (3*labeldata(1).perimeter(blocks(i,1))/pi);
         % c) If the parent has a parent, it must be at least 6 hrs old
         if CellData.Parent(p_block)==0
             test2c = 1;

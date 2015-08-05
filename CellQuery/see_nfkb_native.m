@@ -58,8 +58,12 @@ droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim c
 
 % NFkB normalization - subtract baseline for each cell; divide y background distribution width
 nfkb = measure.NFkBdimNuclear(:,:);
-nfkb_smooth = smoothrows(nfkb,5);
-nfkb_baseline = nanmin([nanmin(nfkb_smooth(:,1:4),[],2),prctile(nfkb_smooth,10,2)],[],2);
+nfkb_smooth = nan(size(nfkb));
+for i = 1:size(nfkb,1)
+    nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
+end
+
+nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),prctile(nfkb_smooth,5,2)],[],2);
 nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
 if diagnos
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar

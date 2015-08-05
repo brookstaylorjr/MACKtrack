@@ -140,9 +140,9 @@ handles.module = info.Module;
 handles.mask_dir = info.savename(1:max(strfind(info.savename,filesep)));
 
 % Initialize slider + popup values
-v1 = min(info.parameters.XYRange); v2 = max(info.parameters.XYRange);
-set(handles.slider1, 'Min',v1, 'Max',v2,'SliderStep',[1/(v2-v1) 4/(v2-v1)],'Value',v1);
-handles.xy = v1;
+handles.xys =  info.parameters.XYRange;
+set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
+handles.xy = handles.xys(1);
 set(handles.text5,'String',['xy ',num2str(handles.xy)]);
 v1 = 1; v2 = length(handles.t); 
 set(handles.slider2, 'Min',v1, 'Max',v2,'SliderStep',[1/(v2-v1) 4/(v2-v1)],'Value',v1);
@@ -159,8 +159,9 @@ handles_out = handles;
 function slider1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
-handles.xy = round(get(hObject,'Value'));
-set(hObject,'Value',handles.xy);
+sliderval = round(get(hObject,'Value'));
+handles.xy = handles.xys(sliderval);
+set(hObject,'Value',sliderval);
 set(handles.text5,'String',['xy ',num2str(handles.xy)]);
 handles = newXY(handles);
 guidata(handles.figure1, handles);
@@ -220,13 +221,21 @@ drawGraph(handles)
 function handles = loadImage(handles)
 % Get new image/masks
 i = handles.xy;
-j = handles.time-handles.shift(handles.xy-min(handles.xys)+1);
-measure_img = checkread([handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
-    eval(handles.parameters.(handles.module).ImageExpr)],handles.parameters.BitDepth);
+xy_idx = find(handles.xys==handles.xy,1,'first');
+j = handles.time-handles.shift(xy_idx);
+img_path = [handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
+    eval(handles.parameters.(handles.module).ImageExpr)];
+% Get bit depth of image, load, and rotate (if necessary)
+if ~isfield(handles.parameters,'BitDepth')
+    imfo = imfinfo(img_path);
+    handles.parameters.BitDepth = imfo.BitDepth;
+end
+measure_img = checkread(img_path,handles.parameters.BitDepth);
 if size(measure_img,1)>size(measure_img,2)
     measure_img = imrotate(measure_img,90);
     flip_flag = 1;
 end
+% Load masks, rotate if necessary
 load([handles.mask_dir,filesep,'xy',num2str(i),filesep,...
     'NuclearLabels',filesep,'NuclearLabel-',numseq(j,4),'.mat'])
 load([handles.mask_dir,'xy',num2str(i),filesep,...
@@ -235,7 +244,7 @@ if exist('flip_flag','var')
     handles.nuc_label = imrotate(NuclearLabel,90);
     handles.cell_label = imrotate(CellLabel,90);
 else
-   handles.nuc_label = NuclearLabel;
+    handles.nuc_label = NuclearLabel;
     handles.cell_label = CellLabel;
 end
 
