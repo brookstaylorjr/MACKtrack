@@ -33,6 +33,8 @@ info.Module = 'nfkbModule';
 
 % Set display parameters
 t_hrs = 12; % Number of hours to display in graphs
+graph.t = 0:1/info.parameters.FramesPerHour:t_hrs;
+
 max_shift = 0; % Max allowable frame shift in XY-specific correction
 info.graph_limits = [-0.1 2.5];
 dendro = 0;
@@ -46,7 +48,7 @@ bright_max = nanmean(bright(bright>bright_min)) + 1.8*nanstd(bright(bright>brigh
 % Filter cells by fate and NFkB expression level
 info.droprows = [];
 info.droprows = [info.droprows, sum(isnan(measure.NFkBCytoplasm(:,1:4)),2)>1]; % Cells existing @ expt start
-info.droprows = [info.droprows, sum(isnan(measure.NFkBNuclear(:,1:54)),2)>3]; % Long-lived cells
+info.droprows = [info.droprows, sum(isnan(measure.NFkBNuclear(:,1:min([54,length(graph.t)]))),2)>3]; % Long-lived cells
 %info.droprows = [info.droprows, info.CellData(:,end)]; % Non-edge cells
 info.droprows = [info.droprows,(bright<bright_min)|(bright>bright_max)]; % Cells within brightness thresholds
 
@@ -214,13 +216,13 @@ disp(['dropped ',num2str(sum(~keep2)),'+',num2str(+sum(~keep3)),' high-variance 
 
 %% Initialize outputs, do final corrections
 
-graph.t = 0:(1/12):t_hrs;
 graph.celldata = info.CellData(info.keep,:);
 graph.opt = maketicks(graph.t,info.graph_limits,0);
 graph.opt.Name = 'NFkB Activation'; 
 
 % Correct for XY positions that activate late
-[graph.var, shift_xy] = alignTrajectories(corr_nuc(:,1:length(graph.t)+2*max_shift), graph.celldata, 60, max_shift);
+[graph.var, shift_xy] = alignTrajectories(corr_nuc(:,1:length(graph.t)+2*max_shift), graph.celldata, ...
+    min([60,length(graph.t)]), max_shift);
 [graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
 
 if diagnos

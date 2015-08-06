@@ -77,18 +77,17 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                         curr_expr = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]);
                     end
                     try
-                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, eval(curr_expr)];
+                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)];
                     catch
                         curr_name = '--';
                     end
                     % Check file and add it into AuxImages
                     if exist(curr_name,'file')
-                        if ~exist('bit_depth','var')
+                        if ~isfield(ModuleData,'BitDepth')
                             imfo = imfinfo(curr_name);
-                            bit_depth = imfo.BitDepth;
                             ModuleData.BitDepth = imfo.BitDepth;
                         end
-                        AuxImages{aux} = checkread(curr_name,bit_depth);   
+                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);   
                     end
                 end
                 % Call measurement function

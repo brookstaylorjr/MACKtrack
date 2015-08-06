@@ -169,8 +169,10 @@ for cycle = 1:length(parameters.TimeRange)
         name1 = name1(1:end-1);
     end
     seps = strfind(name1,filesep);
-    seps = seps(end);
-    name1 = name1(seps+1:end);
+    if ~isempty(seps)
+        seps = seps(end);
+        name1 = name1(seps+1:end);
+    end
     str = '\n- - - - - - - - - - - - - - -';
     if cycle < parameters.StackSize 
         str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)]);

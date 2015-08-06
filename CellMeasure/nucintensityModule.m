@@ -11,7 +11,6 @@ function [CellMeasurements, ModuleData] = nucintensityModule(CellMeasurements,pa
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 iteration  = ModuleData.iter;
-
 % Mode-balance 1st auxililiary image - unimodal distribution assumed
     if ~isfield(ModuleData,'distr')
         [~, ModuleData.distr] = modebalance(AuxImages{1},1,ModuleData.BitDepth,'measure'); 
