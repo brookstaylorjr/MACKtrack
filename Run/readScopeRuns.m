@@ -67,8 +67,7 @@ end
 [~,locs] = ismember(ids, run_rows);
 locs = find(locs);
 
-data.dates = table_data(2:end,strcmpi(table_data(1,:),'date'));
-data.names = table_data(2:end,strcmpi(table_data(1,:),'shortname'));
+data.save_folder = table_data(2:end,strcmpi(table_data(1,:),'folder name'));
 data.image_paths = table_data(2:end,strcmpi(table_data(1,:),'image path'));
 data.xy_ranges = table_data(2:end,strcmpi(table_data(1,:),'xy'));
 data.time_ranges = table_data(2:end,strcmpi(table_data(1,:),'t'));

@@ -151,7 +151,7 @@ metrics.pk2_time = (metrics.pk2_time-1)/12;
 % Envelope width: maximum consecutive time above a threshold (envelope must begin within 1st 6 hrs)
 smoothed2 = medfilt1(metrics.time_series,5,size(metrics.time_series,1),2);
 
-thresholds = baseline:(baseline/10):(baseline*2);
+thresholds = baseline/2:(baseline/8):(baseline*2);
 metrics.envelope = zeros(size(metrics.time_series,1),length(thresholds));
 for j = 1:length(thresholds)
     thresholded = smoothed2>thresholds(j);
@@ -179,7 +179,7 @@ metrics.envelope = metrics.envelope/12;
 
 
 % Number of frames above a given threshold
-thresholds = baseline:(baseline/10):(baseline*3);
+thresholds = baseline/2:(baseline/8):(baseline*3);
 metrics.duration = zeros(size(metrics.time_series,1),length(thresholds));
 for i = 1:length(thresholds)
     metrics.duration(:,i) = nansum(smoothed>thresholds(i),2)/12;

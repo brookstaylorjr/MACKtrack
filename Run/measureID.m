@@ -32,8 +32,8 @@ data = readScopeRuns(locations.spreadsheet, cell2mat(varargin));
 
 
 % Display the sets we're running
-for idx = 1:numel(data.dates)
-    disp(['- ',data.dates{idx},'_',data.names{idx}])
+for idx = 1:numel(data.save_folder)
+    disp(['- ',data.save_folder{idx}])
 end
 
 % Cycle/measure sets
@@ -44,7 +44,7 @@ for idx = 1:numel(data.dates)
     parameters.ImagePath = data.image_paths{idx};
     parameters.TimeRange = eval(data.time_ranges{idx});
     parameters.XYRange = eval(data.xy_ranges{idx});
-    parameters.SaveDirectory = [data.save_dir{idx},filesep,data.dates{idx},'_',data.names{idx}];
+    parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
     clear p;
     eval(data.modify{idx});
     if exist('p','var'); parameters = combinestructures(p,parameters); end;

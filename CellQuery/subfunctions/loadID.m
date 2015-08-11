@@ -32,8 +32,7 @@ load([home_folder(1:slash_idx(end-2)), 'locations.mat'],'-mat')
 tic
 if ~exist(num2str(id), 'file')
     data = readScopeRuns(locations.spreadsheet, id);
-
-    info.name = [data.dates{1},'_',data.names{1}];
+    info.name = [data.save_folder{1}];
     load([locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'])
     info.savename = [locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'];
 else
