@@ -37,7 +37,7 @@ for idx = 1:numel(data.save_folder)
 end
 
 % Cycle/measure sets
-for idx = 1:numel(data.dates)
+for idx = 1:numel(data.save_folder)
     
     % PARAMETERS
     load([home_folder,'Parameters',filesep,data.parameter_files{idx}])

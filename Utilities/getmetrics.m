@@ -1,4 +1,4 @@
-function [metrics,fourier] = getmetrics(id, baseline)
+function [metrics,fourier,graph] = getmetrics(id, baseline)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % metrics = getmetrics(id, baseline)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
