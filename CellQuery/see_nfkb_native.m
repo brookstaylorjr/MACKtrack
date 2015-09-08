@@ -6,9 +6,9 @@ function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
 % a nuclear-translocating species (it looks for NFkBdimNuclear and NFkBdimCytoplasm measurements).
 %
 % id             experiment ID (from Google Spreadsheet specigied in "loadID.m")
-% show_graphs    boolean flag; specifies whether standard behavioral graphs will be shown
-% diagnos        boolean flag; specifies whether optional diagnostic graphs will be shown
-%
+% show_graphs    (optional) boolean flag; specifies whether standard behavioral graphs will be shown
+% diagnos        (optional) boolean flag; specifies whether optional diagnostic graphs will be shown
+% shift          (optional)
 % 
 % graph          primary output structure; must specify
 %                   1) filtered/processed data (graph.var) 
@@ -22,12 +22,12 @@ function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
 
 
 %% Setup
-if nargin<3
-    diagnos=0;
-    if nargin<2
-        show_graphs = 0;
+    if nargin<3
+        diagnos=0;
+        if nargin<2
+            show_graphs = 0;
+        end
     end
-end
 
 % Load data
 [measure, info] = loadID(id);
@@ -39,11 +39,32 @@ info.Module = 'nfkbdimModule';
 % Set display parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
-if id > 270 % switched to +/+ cells at this point
-    info.graph_limits = [-0.5 9];
-else
-    info.graph_limits = [-0.5 6];
+
+% Experiment-sepcific visualization settings (and tweaks, if necessary)
+start_thresh = 1.5; % Maximal allowable start level above baseline
+load locations
+if strcmp(locations.spreadsheet,'https://docs.google.com/spreadsheets/d/10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY/pubhtml')
+    if id > 270 % switched to +/+ cells at this point
+        info.graph_limits = [-0.25 8];
+        if (id >= 315) && (id<=318)
+            info.graph_limits = [-0.2 4];
+        end
+    else
+        info.graph_limits = [-0.25 6];
+    end
+
+    if id==283
+        measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
+        measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+        disp('Adjusted start point for this CpG expmt')
+    end
+    
+    if id>270; start_thresh = 2; end % Homozygous mice imaged from this point fwd    
+    if ismember(id,[267:270, 323, 324]); start_thresh = 10; end % Prestimulated cell experiments - nuclear translocation @ start is allowable.
+    
 end
+
+
 dendro = 0;
 colors = setcolors;
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
@@ -82,9 +103,7 @@ droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl)
 keep = max(droprows,[],2) == 0;
 start_lvl = nanmin(nfkb(keep,1:3),[],2);
 
-start_thresh = 1.5;%(nanmedian(start_lvl)+4*robuststd(start_lvl(:),2.5));
-if id>266; start_thresh = 10; end % Late-timepoint experiments (ids 267-270)
-if id>270; start_thresh = 2; end % Homozygous mice imaged from this point fwd
+
 
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2.5*robuststd(nuc_lvl(:),2);

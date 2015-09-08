@@ -19,7 +19,7 @@ handles.Options = options;
 
 
 % Modify colormap so that time values outside of cell lifetime display as gray
-mod_colormap = divergingmap(0:1/1023:1,[12 12 77]/255,[158 4 0]/255);
+mod_colormap = divergingmap(0:1/1023:1,[14 28 77]/255,[158 27 2]/255);
 mod_colormap(1,:) = [0.1 0.1 0.1];
 
 % Make plot, setting axes and other options

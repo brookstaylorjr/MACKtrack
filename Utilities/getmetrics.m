@@ -56,6 +56,12 @@ metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
 
 % 4) calculated metrics
+% MAX/MIN metrics
+metrics.max_amplitude = nanmax(metrics.time_series,[],2);
+metrics.max_integral = nanmax(metrics.integrals,[],2);
+metrics.max_derivative = nanmax(metrics.derivatives,[],2);
+metrics.min_derivative = nanmin(metrics.derivatives,[],2);
+
 % GENERAL-PURPOSE: Compute off-time for all cells
 metrics.off_times = zeros(size(smoothed,1),1);
 window_sz = 43;
@@ -186,7 +192,7 @@ for i = 1:length(thresholds)
 end
 
 
-%% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 20 hrs (192 frames)
+%% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 21 hrs (252 frames)
 try
     metrics.time_series = metrics.time_series(:,1:252);
     metrics.integrals = metrics.integrals(:,1:252);
