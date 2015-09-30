@@ -85,7 +85,6 @@ elseif ~isempty(strfind(locations.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39
         info.baseline = 1;
     end
 end
-info.baseline
 
 %% Filtering
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
