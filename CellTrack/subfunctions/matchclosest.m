@@ -1,4 +1,4 @@
-function [matches, dists] = matchclosest(candidates, seeds, imageSize)
+function [matches, dists, idx] = matchclosest(candidates, seeds, imageSize)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [matches] = matchclosest(candidates, seeds,imageSize)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -11,6 +11,7 @@ function [matches, dists] = matchclosest(candidates, seeds, imageSize)
 % matches       one match per seed is output (in row/col array), unless imageSize is defined- in that case, 
 %                   matches is a binary array showing chosen candidates
 % dists         [length(seeds) x 1] vector of distances to nearest point
+% idx           indicies of matched candidates (length(seeds) x 1)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Determine format of data: if the data is a 2xn array, keep as is. Otherwise, assume it's a binary mask and format correctly.
@@ -37,12 +38,14 @@ end
 
 % Make structure to hold the output
 matches = zeros(size(seeds));
+idx = zeros(size(seeds,1),1);
 if nargout>1
     dists = zeros(size(seeds,1),1);
 end
 for i = 1:size(seeds,1)
     dist = ( (candidates(:,1)-seeds(i,1)).^2 + (candidates(:,2)-seeds(i,2)).^2 );
-    matches(i,:) = candidates(find(dist == min(dist),1,'first'),:);
+    idx(i) = find(dist == min(dist),1,'first');
+    matches(i,:) = candidates(idx(i),:);
     if nargout>1
         dists(i) = sqrt(min(dist));
     end

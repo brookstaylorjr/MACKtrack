@@ -36,39 +36,59 @@ info.Module = 'nfkbdimModule';
 %     measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
 % end
 
-% Set display parameters
+
+% Set display/filtering parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
 t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
+start_thresh = 2; % Maximal allowable start level above baseline
+info.graph_limits = [-0.25 8]; % Min/max used in graphing
+dendro = 0;
+colors = setcolors;
+info.baseline = 1.75; % Used in metric caluclations (value is based on 99.9th pct response on a ctrl dataset)
 
-% Experiment-sepcific visualization settings (and tweaks, if necessary)
-start_thresh = 1.5; % Maximal allowable start level above baseline
+
+% Experiment-specific visualization settings/tweaks
 load locations
-if strcmp(locations.spreadsheet,'https://docs.google.com/spreadsheets/d/10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY/pubhtml')
-    if id > 270 % switched to +/+ cells at this point
-        info.graph_limits = [-0.25 8];
-        if (id >= 315) && (id<=318)
-            info.graph_limits = [-0.2 4];
-        end
-    else
-        info.graph_limits = [-0.25 6];
-    end
 
+% BT's experiments
+if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
+    % a) early experiments; heterozygous cells
+    if id <= 270
+        start_thresh = 1.5;
+        info.graph_limits = [-0.25 6];
+        info.baseline = 1;
+    end
+    
+    % b) bad light guide (4 experiments from same day)
+    if ismember(id,315:318)
+        info.graph_limits = [-0.2 4];
+    end
+    
+    % c) 100uM CpG - delayed activation from slow mixing
     if id==283
         measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
         measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
         disp('Adjusted start point for this CpG expmt')
     end
     
-    if id>270; start_thresh = 2; end % Homozygous mice imaged from this point fwd    
-    if ismember(id,[267:270, 323, 324]); start_thresh = 10; end % Prestimulated cell experiments - nuclear translocation @ start is allowable.
+    % d) prestimulated sets; don't filter pre-activated cells
+    if ismember(id,[267:270, 323, 324]); 
+        start_thresh = 10; 
+    end
     
+% AA's experiments    
+elseif ~isempty(strfind(locations.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39m4tHa9nJ7ok'))
+    % a) early experiments; heterozygous cells
+    if id <= 60
+        start_thresh = 1.5;
+        info.graph_limits = [-0.25 6];
+        info.baseline = 1;
+    end
 end
+info.baseline
 
-
-dendro = 0;
-colors = setcolors;
-robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
 %% Filtering
+robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
 
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];

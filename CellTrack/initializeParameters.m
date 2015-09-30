@@ -113,9 +113,6 @@ set(handles.edit7G,'String',handles.parameters.MinCellWidth)
 set(handles.edit7H,'String',handles.parameters.FramesPerHour)
 set(handles.edit7J,'String',handles.parameters.ScaledStimulusName)
 
-
-% Measurement parameters
-
 % Get contents of 'CellMeasure' folder (the one stored with UCSDcellTrack)
 contents = dir([handles.home_folder,filesep, 'CellMeasure']);
 
@@ -150,7 +147,6 @@ for i = 1:length(testnames)
          end
      end
 end
-
 
 % Initialize GUI values
 if ~isfield(handles.parameters.(contents(1).name),'ImageExpr2') 

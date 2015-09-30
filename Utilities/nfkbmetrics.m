@@ -1,35 +1,27 @@
-function [metrics,fourier,graph] = getmetrics(id, baseline)
+function [metrics,fourier,graph] = nfkbmetrics(id)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% metrics = getmetrics(id, baseline)
+% metrics = nfkbmetrics(id)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% GETMETRICS uses the see_nfkb_native function to filter and preprocess NFkB trajectories,
-% then calculates related metrics regarding activation.
+% NFKBMETRICS uses the see_nfkb_native function to filter and preprocess NFkB trajectories,
+% then calculates related metrics regarding activation. Metric types include:
 % 
 % 1) time series (base NFkB dynamics, resampled to 12 frames/hr
 % 2) integrated activity
 % 3) differentiated activity
-% 4) calculated metrics: measuring aspects of oscillation, duration timing ,and amplitude
+% 4) calculated metrics: measuring aspects of oscillation, duration, timing ,and amplitude
+%
+% INPUT:
+% id         ID number (from a spreadsheet) or AllMeasurements.mat file location
+%
+% OUTPUT: 
+% metrics   structure with output fields
+% fourier   fourier information (FFT, power, frequencies)
+% graph     main structure output from see_nfkb_native
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-% Define baseline, if not passed
-if nargin <2
-    if id <= 270
-        baseline = 1;
-    else
-        baseline = 1.75;
-    end
-end
-
-% If user passes baseline of 0, reacluclate it from an "off" set (best one is currently #215)
-if baseline==0
-    [graph] = see_nfkb_native(274); %0.33ng/mL LPS - no activation observed.
-    robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
-    baseline = nanmedian(graph.var(:))+2.5*robuststd(graph.var(:),3);
-end
-
 % Load/filter/normalize data. Calculate time vector (as function of hrs)
-[graph] = see_nfkb_native(id);
+[graph,info] = see_nfkb_native(id);
 t = min(graph.t):1/12:max(graph.t);
 
 % 1) basic time series. Interpolate over "normal" interval (12 frames per hr) if required
@@ -65,7 +57,7 @@ metrics.min_derivative = nanmin(metrics.derivatives,[],2);
 % GENERAL-PURPOSE: Compute off-time for all cells
 metrics.off_times = zeros(size(smoothed,1),1);
 window_sz = 43;
-tmp = smoothrows(smoothed<(baseline),(window_sz*2)-5);
+tmp = smoothrows(smoothed<(info.baseline),(window_sz*2)-5);
 for j = 1:size(tmp,1)
     thresh_time = find(tmp(j,:)>(1-2/window_sz),1,'first');
     if isempty(thresh_time) 
@@ -99,7 +91,6 @@ for i = 1:size(metrics.time_series,1)
 end
 % Find the point of peak (secondary) power
 metrics.peakfreq = nan(size(fourier.power,1),1);
-metrics.oscfrac = nan(size(fourier.power,1),1);
 
 for i =1:size(metrics.time_series,1)
     [~,locs] = globalpeaks(fourier.power(i,:),2);
@@ -111,43 +102,46 @@ for i =1:size(metrics.time_series,1)
     else
         metrics.peakfreq(i) = 3600*fourier.freq(1);
     end
-    metrics.oscfrac(i) = nansum(fourier.power(i,(3600*fourier.freq) > 0.5)) /nansum(fourier.power(i,:));
-    if isnan(metrics.oscfrac(i))
-        metrics.oscfrac(i) = 0;
+end
+
+% Find total oscillatory content of particular cells (using thresholds from 0.35 to 0.7 hrs^(-1))
+freq_thresh = fourier.freq( (fourier.freq >= (0.35/3600)) & (fourier.freq <= (0.7/3600)));
+metrics.oscfrac = nan(size(fourier.power,1),length(freq_thresh));
+for j = 1:length(freq_thresh)
+    for i =1:size(metrics.time_series,1)
+        metrics.oscfrac(i,j) = nansum(fourier.power(i,fourier.freq >= freq_thresh(j))) /nansum(fourier.power(i,:));
+        if isnan(metrics.oscfrac(i,j))
+            metrics.oscfrac(i,j) = 0;
+        end
     end
 end
 
 
 
-
 % METRICS OF AMPLITUDE AND TIMING
 % 1st + 2nd peak time/amplitude
-metrics.pk1_time = nan(size(smoothed,1),1);
-metrics.pk1_amp =  nan(size(smoothed,1),1);
-metrics.pk2_time = nan(size(smoothed,1),1);
-metrics.pk2_amp =  nan(size(smoothed,1),1);
-tmp = smoothed(:,1:96); % restrict to 1st 8 hours
-
-for i = 1:size(tmp,1)
-    [amp, time] = globalpeaks(tmp(i,:), 2);
-    amp(time<5) = [];
-    time(time<5) = [];
-    if (~isempty(amp))&&(~isempty(time))
-        metrics.pk1_time(i) = min(time);
-        metrics.pk1_amp(i) = amp(time==min(time));        
-        if length(time)>1
-            metrics.pk2_time(i) = max(time);
-            metrics.pk2_amp(i) = amp(time==max(time));
-        else
-            cap_time = max([time+15, depth-1]);
-            if ~isempty(nanmax(smoothed(i,cap_time:depth)))
-                [metrics.pk2_amp(i), metrics.pk2_time(i)] = nanmax(smoothed(i,cap_time:depth));
-            end
-            
-        end
-    
+metrics.pk1_time = nan(size(metrics.time_series,1),1);
+metrics.pk1_amp =  nan(size(metrics.time_series,1),1);
+metrics.pk2_time = nan(size(metrics.time_series,1),1);
+metrics.pk2_amp =  nan(size(metrics.time_series,1),1);
+endframe = 90;
+for i = 1:size(metrics.pk1_time,1)    
+    [pks, locs] = globalpeaks(metrics.time_series(i,1:endframe),5);
+    % Supress any peaks that are within 6 frames of each other.
+    [locs, order] = sort(locs,'ascend');
+    pks = pks(order);
+    while min(diff(locs))<6
+        tmp = find(diff(locs)==min(diff(locs)),1,'first');
+        tmp = tmp + (pks(tmp)>=pks(tmp+1));
+        pks(tmp) = [];
+        locs(tmp) = [];  
     end
-
+    pks(locs<4) = [];
+    locs(locs<4) = [];
+    metrics.pk1_time(i) = locs(1);
+    metrics.pk2_time(i) = locs(2);
+    metrics.pk1_amp(i) = pks(1);
+    metrics.pk2_amp(i) = pks(2);    
 end
 metrics.pk1_time = (metrics.pk1_time-1)/12;
 metrics.pk2_time = (metrics.pk2_time-1)/12;
@@ -157,7 +151,7 @@ metrics.pk2_time = (metrics.pk2_time-1)/12;
 % Envelope width: maximum consecutive time above a threshold (envelope must begin within 1st 6 hrs)
 smoothed2 = medfilt1(metrics.time_series,5,size(metrics.time_series,1),2);
 
-thresholds = baseline/2:(baseline/8):(baseline*2);
+thresholds = info.baseline/2:(info.baseline/8):(info.baseline*2);
 metrics.envelope = zeros(size(metrics.time_series,1),length(thresholds));
 for j = 1:length(thresholds)
     thresholded = smoothed2>thresholds(j);
@@ -185,7 +179,7 @@ metrics.envelope = metrics.envelope/12;
 
 
 % Number of frames above a given threshold
-thresholds = baseline/2:(baseline/8):(baseline*3);
+thresholds = info.baseline/2:(info.baseline/8):(info.baseline*3);
 metrics.duration = zeros(size(metrics.time_series,1),length(thresholds));
 for i = 1:length(thresholds)
     metrics.duration(:,i) = nansum(smoothed>thresholds(i),2)/12;
