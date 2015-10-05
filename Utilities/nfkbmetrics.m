@@ -138,10 +138,14 @@ for i = 1:size(metrics.pk1_time,1)
     end
     pks(locs<4) = [];
     locs(locs<4) = [];
-    metrics.pk1_time(i) = locs(1);
-    metrics.pk2_time(i) = locs(2);
-    metrics.pk1_amp(i) = pks(1);
-    metrics.pk2_amp(i) = pks(2);    
+    if ~isempty(locs)
+        metrics.pk1_time(i) = locs(1);
+        metrics.pk1_amp(i) = pks(1);
+    end
+    if length(locs)>1
+        metrics.pk2_time(i) = locs(2);
+        metrics.pk2_amp(i) = pks(2);
+    end
 end
 metrics.pk1_time = (metrics.pk1_time-1)/12;
 metrics.pk2_time = (metrics.pk2_time-1)/12;

@@ -36,6 +36,7 @@ if ~exist(num2str(id), 'file')
     load([locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'])
     info.savename = [locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'];
 else
+    id = namecheck(id);
     load(id)
     info.savename = id;
 end

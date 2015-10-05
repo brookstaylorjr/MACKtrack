@@ -137,7 +137,11 @@ handles.shift = graph.shift;
 handles.ylim = info.graph_limits;
 handles.parameters = info.parameters;
 handles.module = info.Module;
-handles.mask_dir = info.savename(1:max(strfind(info.savename,filesep)));
+if ~isempty(strfind(info.savename,filesep))
+    handles.mask_dir = info.savename(1:max(strfind(info.savename,filesep)));
+else
+    handles.mask_dir = [pwd,filesep];
+end
 
 % Initialize slider + popup values
 handles.xys =  info.parameters.XYRange;

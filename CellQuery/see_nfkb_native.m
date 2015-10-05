@@ -47,8 +47,11 @@ colors = setcolors;
 info.baseline = 1.75; % Used in metric caluclations (value is based on 99.9th pct response on a ctrl dataset)
 
 
-% Experiment-specific visualization settings/tweaks
-load locations
+% Experiment-specific visualization settings/tweaks (load spreadsheet URL)
+home_folder = mfilename('fullpath');
+slash_idx = strfind(home_folder,filesep);
+home_folder = home_folder(1:slash_idx(end-1));
+load([home_folder, 'locations.mat'],'-mat')
 
 % BT's experiments
 if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
@@ -72,8 +75,13 @@ if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZW
     end
     
     % d) prestimulated sets; don't filter pre-activated cells
-    if ismember(id,[267:270, 323, 324]); 
-        start_thresh = 10; 
+    if ismember(id,[267:270, 323:324, 337:339,342:343]); 
+        start_thresh = 10;
+    end
+    
+    % 09/23/2015 Missed an early timepoint; don't allow back-shifting
+    if ismember(id,337:343) 
+        max_shift = 0;
     end
     
 % AA's experiments    
