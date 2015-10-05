@@ -72,13 +72,19 @@ handles.home_folder = mfilename('fullpath');
 slash_idx = strfind(handles.home_folder,filesep);
 handles.home_folder = handles.home_folder(1:slash_idx(end-1));
 
+
 % Set locations
 load([handles.home_folder, 'locations.mat'],'-mat')
-if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
+
+try
+    locations.scope = namecheck(locations.scope,'');
+    locations.data = namecheck(locations.data,'');
+catch me
     h = specifyLocations;
     uiwait(h);
     load([handles.home_folder, 'locations.mat'],'-mat')
 end
+
 handles.locations = locations;
 set(handles.text1A,'String',locations.scope);
 set(handles.text3A,'String',locations.data);

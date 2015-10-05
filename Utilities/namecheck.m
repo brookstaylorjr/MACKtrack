@@ -2,7 +2,8 @@ function name_out = namecheck(name_in,default_empty)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % name_out = namecheck(name_in)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% NAMECHECK   provides system-specific checking of a file name/path.
+% NAMECHECK   provides system-specific checking of a file name/path. If input name doesn't 
+% exit, will exit with error.
 %
 % INPUT:
 % name_in         input filename

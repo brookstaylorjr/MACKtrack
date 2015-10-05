@@ -61,7 +61,7 @@ guidata(hObject, handles);
 % Set colors
 handles.blue = [0.051 0.329 0.671];
 handles.orange = [207 79 51]/255;
-handles.gray = [0.816 0.812 0.722];
+handles.gray = [0.816 0.812 0.722]/2;
 
 
 % Load existing tracking.mat structure and populate edit fields
@@ -69,12 +69,15 @@ p = mfilename('fullpath');
 slash_idx = strfind(p,filesep);
 handles.save_loc = [p(1:slash_idx(end-1)), 'locations.mat'];
 load(handles.save_loc,'-mat')
-if isempty(locations.scope) || ~strcmp(locations.scope(end),filesep)
-    locations.scope = [locations.scope,filesep];
+try
+    locations.scope = namecheck(locations.scope,'');
+catch me; locations.scope = '';
 end
-if isempty(locations.data) || ~strcmp(locations.data(end),filesep)
-    locations.data = [locations.data,filesep];
+try
+    locations.data = namecheck(locations.data,'');
+catch me; locations.data = '';
 end
+
 handles.locations = locations;
 
 set(handles.edit1,'String',handles.locations.scope,'ForegroundColor',handles.gray);
@@ -115,9 +118,7 @@ function edit1_Callback(hObject, eventdata, handles)
 try
     newfolder = get(hObject,'String');
     if exist(newfolder,'dir')
-        if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-            newfolder = [newfolder,filesep];
-        end
+        newfolder = namecheck(newfolder,'');
         set(handles.edit1,'String',newfolder,'ForegroundColor',handles.blue)
         handles.locations.scope = newfolder;
         handles.Locked1 = 0;
@@ -149,9 +150,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 newfolder = uigetdir();
 
 if (newfolder~=0)
-    if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-        newfolder = [newfolder,filesep];
-    end
+    newfolder = namecheck(newfolder,'');
     set(handles.edit1,'String',newfolder)
     set(handles.edit1,'ForegroundColor',handles.blue)
     handles.locations.scope = newfolder;
@@ -172,9 +171,7 @@ function edit2_Callback(hObject, eventdata, handles)
 try
     newfolder = get(hObject,'String');
     if exist(newfolder,'dir')
-        if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-            newfolder = [newfolder,filesep];
-        end
+        newfolder = namecheck(newfolder,'');
         set(handles.edit2,'String',newfolder, 'ForegroundColor',handles.blue)
         handles.locations.data = newfolder;
         handles.Locked2 = 0;
@@ -207,9 +204,7 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 newfolder = uigetdir();
 if (newfolder~=0)
-    if ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-        newfolder = [newfolder,filesep];
-    end
+    newfolder = namecheck(newfolder,'');
     set(handles.edit2,'String',newfolder)
     set(handles.edit2,'ForegroundColor',handles.blue)
     handles.locations.data = newfolder;
@@ -225,7 +220,7 @@ end
 
 function edit3_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT3: set URL of Google Spreadsheet that holds 
+% EDIT3: set URL of Google Spreadsheet that holds scope run information
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newaddr = get(hObject,'String');
