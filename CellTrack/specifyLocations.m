@@ -61,7 +61,7 @@ guidata(hObject, handles);
 % Set colors
 handles.blue = [0.051 0.329 0.671];
 handles.orange = [207 79 51]/255;
-handles.gray = [0.816 0.812 0.722]/2;
+handles.gray = [0.816 0.812 0.722]/1.3;
 
 
 % Load existing tracking.mat structure and populate edit fields
