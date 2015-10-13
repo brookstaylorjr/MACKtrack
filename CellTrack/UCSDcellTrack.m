@@ -100,7 +100,9 @@ handles.Locked2 = 1;
 
 % Load from parent directory and update handles structure
 load_listbox(handles.parameters.ImagePath, handles)
+handles = guidata(handles.figure1);
 check_savedir(handles.parameters.SaveDirectory,handles);
+handles = guidata(handles.figure1);
 
 % OSX-specific formatting
 os = computer;
@@ -261,7 +263,6 @@ function load_listbox(dir_path, handles)
 if ~exist([handles.locations.scope,dir_path],'dir')
     dir_path = '';
 end
-
 dir_struct = dir([handles.locations.scope,dir_path]);
 % Clean directory of any invisible files
 drop_ind = 1;
@@ -283,7 +284,6 @@ set(handles.listbox1A,'String',handles.file_names,...
 set(handles.edit1A,'String',dir_path)
 handles.parameters.ImagePath= dir_path;
 check_expr(handles);
-    
 % ========================================================================================
 
 
