@@ -251,6 +251,7 @@ set(handles.text3A,'String',handles.locations.data);
 drawnow;
 load_listbox(handles.parameters.ImagePath,handles)
 check_savedir(handles.parameters.SaveDirectory,handles)
+
 % ========================================================================================
 
 
@@ -467,7 +468,7 @@ end
 handles.parameters.SaveDirectory = newfolder;
 set(handles.edit3A,'String',newfolder)
 check_expr(handles)
-
+guidata(handles.figure1,handles)
 
 function pushbutton3B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -482,7 +483,6 @@ set(handles.text3A,'String',locations.data);
 drawnow;
 load_listbox(handles.parameters.ImagePath,handles)
 check_savedir(handles.parameters.SaveDirectory,handles)
-guidata(handles.figure1,handles)
 guidata(handles.figure1,handles)
 % ========================================================================================
 
