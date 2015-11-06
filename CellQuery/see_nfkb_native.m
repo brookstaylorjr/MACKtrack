@@ -54,43 +54,51 @@ home_folder = home_folder(1:slash_idx(end-1));
 load([home_folder, 'locations.mat'],'-mat')
 
 % BT's experiments
-if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
-    % a) early experiments; heterozygous cells
-    if id <= 270
-        start_thresh = 1.5;
-        info.graph_limits = [-0.25 6];
-        info.baseline = 1;
-    end
-    
-    % b) bad light guide (4 experiments from same day)
-    if ismember(id,315:318)
-        info.graph_limits = [-0.2 4];
-    end
-    
-    % c) 100uM CpG - delayed activation from slow mixing
-    if id==283
-        measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
-        measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-        disp('Adjusted start point for this CpG expmt')
-    end
-    
-    % d) prestimulated sets; don't filter pre-activated cells
-    if ismember(id,[267:270, 323:324, 337:339,342:343]); 
-        start_thresh = 10;
-    end
-    
-    % 09/23/2015 Missed an early timepoint; don't allow back-shifting
-    if ismember(id,337:343) 
-        max_shift = 0;
-    end
-    
-% AA's experiments    
-elseif ~isempty(strfind(locations.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39m4tHa9nJ7ok'))
-    % a) early experiments; heterozygous cells
-    if id <= 60
-        start_thresh = 1.5;
-        info.graph_limits = [-0.25 6];
-        info.baseline = 1;
+if isnumeric(id)
+    if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
+        % a) early experiments; heterozygous cells
+        if id <= 270
+            start_thresh = 1.5;
+            info.graph_limits = [-0.25 6];
+            info.baseline = 1;
+        end
+
+        % b) bad light guide (4 experiments from same day)
+        if ismember(id,315:318)
+            info.graph_limits = [-0.2 4];
+        end
+
+        % c) 0.33ng TNF - delayed activation from slow mixing
+        if id==290
+            measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
+            measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            disp('Adjusted start point for this TNF expmt')
+        end
+        % d) 100uM CpG - delayed activation from slow mixing
+        if id==283
+            measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
+            measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            disp('Adjusted start point for this CpG expmt')
+        end
+
+        % e) prestimulated sets; don't filter pre-activated cells
+        if ismember(id,[267:270, 323:324, 337:339,342:343, 356:360]); 
+            start_thresh = 10;
+        end
+
+        % 09/23/2015 Missed an early timepoint; don't allow back-shifting
+        if ismember(id,337:343) 
+            max_shift = 0;
+        end
+
+    % AA's experiments    
+    elseif ~isempty(strfind(locations.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39m4tHa9nJ7ok'))
+        % a) early experiments; heterozygous cells
+        if id <= 60
+            start_thresh = 1.5;
+            info.graph_limits = [-0.25 6];
+            info.baseline = 1;
+        end
     end
 end
 
@@ -238,9 +246,8 @@ if show_graphs
     ypos =  max(graph.opt.MeasurementBounds) - 0.26*diff(graph.opt.MeasurementBounds);
     for i =1:length(graph.smult.order)
         plot(graph.smult.h(i),graph.t,graph.var(graph.smult.order(i),:),'Color',colors.grays{3}, 'LineWidth',2)
-        set(graph.smult.h(i),'XLim',[min(graph.opt.Times) max(graph.opt.Times)],'YLim',graph.opt.MeasurementBounds)
-        set(graph.smult.h(i),'XTickLabel',{[]}) 
-        set(graph.smult.h(i),'YTickLabel',{[]}) 
+        set(graph.smult.h(i),'XLim',[min(graph.opt.Times)-(range(graph.opt.Times)*0.02) max(graph.opt.Times)],...
+            'YLim',graph.opt.MeasurementBounds,'XTickLabel',{},'YTickLabel',{})
         text(xpos,ypos,['XY ',num2str(graph.celldata(graph.smult.order(i),1)),...
             ', cell ',num2str(graph.celldata(graph.smult.order(i),2))],'Parent',graph.smult.h(i))
             

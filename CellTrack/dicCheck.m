@@ -1,11 +1,15 @@
 function [output, diagnos] = dicCheck(data,cell_image,p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [output, diagnos] = dicCheck(data,cell_image,p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % DICCHECK   Extract more information from original cell image to improve segmentation result
 %
+% INPUTS:
 % data         structure with other output info (label_nuc and mask_cell)
 % p            parameters struture
 % aux          auxiliary info (TBD) 
 %
+% OUTPUTS:
 % label_out    modified nuclear label
 % data         output structure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -

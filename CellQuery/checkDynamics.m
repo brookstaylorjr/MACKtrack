@@ -77,6 +77,7 @@ end
 set(handles.popupmenu2,'String',viz_fcns,'Value',1)
 handles.DataFcn = viz_fcns(1);
 
+
 % Get directory locations - locations.mat is one directory up.
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
@@ -91,6 +92,10 @@ handles.locations = locations;
 handles.id = varargin{1};
 handles = load_vizdata(handles);
 guidata(handles.figure1, handles)
+
+
+hZoom = zoom(gcf);
+set(hZoom,'ActionPostCallback',{@customZoom,handles});
 
 
 % Set output function
@@ -187,13 +192,18 @@ guidata(handles.figure1, handles);
 
 
 function popupmenu2_Callback(hObject, eventdata, handles)
-% Change function in use - on selection change, recalculate and reassign
-% measurements into handles.
+% Change function in use - on selection change, recalculate and reassign measurements into handles.
 % Load visualization data into handles
 handles = load_vizdata(handles);
 guidata(handles.figure1, handles);
 
 
+function customZoom(fig,evd,handles) %#ok<INUSL>
+% Modify zoom behavior to make sure that axes are reset to full image on double click (either zoom in or zoom out)
+if strcmp(get(fig,'SelectionType'),'open')
+    xlim(handles.axes1,[1 size(handles.nuc_label,2)])
+    ylim(handles.axes1,[1 size(handles.nuc_label,1)])
+end
 
 % Update information in axes1 and axes2 as needed
 function handles = newXY(handles)
@@ -270,7 +280,6 @@ handles.centroids(isnan(handles.centroids(:,1)),:) = [];
 handles.text_labels = unique(NuclearLabel(NuclearLabel>0));
 handles.centroids(~ismember(handles.text_labels,handles.cell_list),:)=[];
 handles.text_labels = cellstr(num2str(handles.text_labels(ismember(handles.text_labels,handles.cell_list))));
-
 
 
 

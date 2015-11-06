@@ -1,6 +1,6 @@
 function [matches, dists, idx] = matchclosest(candidates, seeds, imageSize)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [matches] = matchclosest(candidates, seeds,imageSize)
+% [matches, dists, idx] = matchclosest(candidates, seeds,imageSize)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % MATCHCLOSEST Match a single point from a group of 'candidates' to its nearest 'seed' location.
 %

@@ -51,9 +51,12 @@ for i = parameters.XYRange
     end
 end % [end (xy) loop]
 
-% Add parameters (drop X) to AllMeasurements
+% Add parameters (drop extraneous fields) to AllMeasurements
 if isfield(parameters,'X')
     parameters = rmfield(parameters,'X');
+end
+if isfield(parameters,'XYDir')
+    parameters = rmfield(parameters,'XYDir');
 end
 AllMeasurements.parameters = parameters;
 AllMeasurements.parameters.locations = locations;

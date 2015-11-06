@@ -1,8 +1,15 @@
 function handlesOut = loadImages(handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% LOADIMAGES: use nucleus/cell image expressions to load up images for parameter determination and testing
+% handlesOut = loadImages(handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% LOADIMAGES: use nucleus/cell image expressions to load up images for parameter 
+% determination and testing
+% 
+% INPUTS:
+% handles        master structure with object handles and parameters
 %
-% handles     master structure with object handles and parameters
+% OUTPUTS:
+% handlesOut     (updated) master structure with object handles and parameters
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % SETUP - clear all axes.

@@ -157,7 +157,8 @@ function listbox1A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % LISTBOX1A: trigger directory update on double click/enter
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% First determine user input
+handles  = guidata(handles.figure1);
+% Determine user input
 get(handles.figure1,'SelectionType');
 % If user input is a double click, proceed
 if strcmp(get(handles.figure1,'SelectionType'),'open')
@@ -166,7 +167,6 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
-    
     if handles.is_dir(handles.sorted_index(index_selected))
         newfolder = [get(handles.edit1A,'String'),filename];
         % Remove leading slash, add trailing slash
@@ -186,6 +186,7 @@ function pushbutton1A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1A: go up one directory level
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+handles  = guidata(handles.figure1);
 newfolder = get(handles.edit1A,'String');
 
 if ~isempty(newfolder) && strcmp(newfolder(end),filesep)
