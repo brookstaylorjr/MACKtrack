@@ -32,8 +32,8 @@ handles.h2 = imagesc(options.TimeBounds, [1 size(measure1,1)],measure1DOWN,optio
 handles.h3 = imagesc(options.TimeBounds, [1 size(measure1,1)],measure1,options.MeasurementBounds); 
 hold off
 colormap(mod_colormap)
-c = colorbar('YTick',options.MeasurementTicks,'YTickLabel',options.MeasurementTickLabels,...
-    'TickLength',[0.003 0.003]);
+c = colorbar('YTick',options.MeasurementTicks,'YTickLabel',options.MeasurementTickLabels);
+set(c,'TickLength',0.003*ones(size(get(c,'TickLength'))))
 ylabel(c,[options.Name],'FontSize',14);set(handles.h3,'Parent',handles.axes1)
 set(handles.axes1,'YTick',[],'XTick',options.TimeTicks,'TickLength',[0.005 0.005])
 % - - - - - - - 4) Set fonts, labels, and data cursor callback - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
