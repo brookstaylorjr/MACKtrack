@@ -14,20 +14,20 @@ iteration = ModuleData.iter;
 % On first call, initialize all new CellMeasurements fields 
 if ~isfield(CellMeasurements,'Area')
     % Morphology-based cell measurements
-    CellMeasurements.Area = zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.Compactness = zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.AxisRatio = zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.Perimeter = zeros(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.Area = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.Compactness = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.AxisRatio = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.Perimeter = nan(parameters.TotalCells,parameters.TotalImages);
     % Movement measurements
-    CellMeasurements.MovementCell = zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MovementNucleus = zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.CellChange = zeros(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.MovementCell = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.MovementNucleus = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.CellChange = nan(parameters.TotalCells,parameters.TotalImages);
     % Track each cell's location
-    CellMeasurements.CentroidX = zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.CentroidY = zeros(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.CentroidX = nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.CentroidY = nan(parameters.TotalCells,parameters.TotalImages);
     % Create tmp storage files for multiple time-point measurements
-    CellMeasurements.tmp.CentroidCell = zeros(parameters.TotalCells,2);
-    CellMeasurements.tmp.CentroidNuc = zeros(parameters.TotalCells,2);
+    CellMeasurements.tmp.CentroidCell = nan(parameters.TotalCells,2);
+    CellMeasurements.tmp.CentroidNuc = nan(parameters.TotalCells,2);
     CellMeasurements.tmp.PrevLabel = [];
 end
 

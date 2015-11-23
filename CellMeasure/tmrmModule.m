@@ -28,10 +28,10 @@ mask1 = tmrm > ModuleData.tmrm_thresh;
 % Initialize all new CellMeasurements fields 
 if ~isfield(CellMeasurements,'TMRM_cytoMean')
     % Intensity-based measurement initialization
-    CellMeasurements.TMRM_cytoMean =  zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.TMRM_cytoMedian =  zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.TMRM_nucMean =  zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.TMRM_nucMedian =  zeros(parameters.TotalCells,parameters.TotalImages);    
+    CellMeasurements.TMRM_cytoMean =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.TMRM_cytoMedian =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.TMRM_nucMean =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.TMRM_nucMedian =  nan(parameters.TotalCells,parameters.TotalImages);    
 end
 
 % Cycle through each cell and assign measurements
