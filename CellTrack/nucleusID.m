@@ -30,7 +30,8 @@ if sum(tmp(:)) < sum(cell_mask(:))
 end
 % Construct smoothed images + watershed image
 nucleus1 = medfilt2(nucOrig,[p.MedianFilterSize, p.MedianFilterSize]); % Median-filtered
-diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(floor(p.MinNucleusRadius/4)),'replicate'); % Gaussian filtered
+
+diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/4),'replicate'); % Gaussian filtered
 diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
 
 %- - - - - - - - - - - - - - - - - - - Label1 - - - - - - - - - - - - - - - - - - - - - - -
