@@ -57,7 +57,7 @@ load([home_folder, 'locations.mat'],'-mat')
 if isnumeric(id)
     if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
         % a) early experiments; heterozygous cells
-        if id <= 270
+        if (id <= 270) || ismember(id,370:379)
             start_thresh = 1.5;
             info.graph_limits = [-0.25 6];
             info.baseline = 1;
@@ -127,7 +127,6 @@ if diagnos
 end
 
 nfkb = nfkb/mean(info.parameters.adj_distr(2,:));
-
 
 % Filtering, part 2: eliminate outlier cells (based on mean value)
 nfkb_lvl = reshape(nfkb(max(droprows,[],2) == 0,:),[1 numel(nfkb(max(droprows,[],2) == 0,:))]);

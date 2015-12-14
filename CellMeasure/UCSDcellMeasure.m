@@ -1,6 +1,8 @@
 function [] = UCSDcellMeasure(parameters,parallel_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% UCSDcellMeasure calculates morphological features and optional
+% [] = UCSDcellMeasure(parameters,parallel_flag)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% UCSDCELLMEASURE calculates morphological features and optional
 % additional-channel data from a UCSDcellTrack output set.
 %
 % Takes in a UCSDcellTrack output directory, loops through all xy positions,
