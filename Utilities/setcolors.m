@@ -4,11 +4,21 @@ function [colors] = setcolors(graph_flag)
 %
 % graph_flag    (optional) if true, show colors on heatmap
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+% W-qbio theme - used darker variants of these for info theory (Selimkhanov, Science 2014)
 colors.blue = [62 107 133]/255;
 colors.green = [0 195 169]/255;
 colors.light_blue = [29 155 184]/255;
-colors.red = [231 76 60]/255;
 
+
+% TRAIL color schema
+colors.orange = [248 152 29]/255;
+colors.lavender = [168 180 204]/255;
+colors.navy = [30 50 72]/255;
+
+
+% Miscellaneous colors
+colors.red = [231 76 60]/255;
 colors.grays = {[40 40 42]/255,...
     [74 76 79]/255,...
    [113 115 118]/255,...
@@ -51,12 +61,12 @@ if nargin>0
 
         h = tight_subplot(rows,1,0.1);
         disp_vect = 1:length(tick_names);
-
         for i = 1:rows
             axes(h(i))
-            imagesc(disp_vect((i-1)*4+1:(i-1)*4+4),[1 length(tick_names)])
+            imagesc(disp_vect((i-1)*4+1:min([end,(i-1)*4+4])),[1 length(tick_names)])
             set(h(i),'YTick',[])
-            set(h(i),'XTick',1:4,'XTickLabel',tick_names((i-1)*4+1:(i-1)*4+4))
+            names = tick_names((i-1)*4+1:min([end,(i-1)*4+4]));
+            set(h(i),'XTick',1:length(names),'XTickLabel',names)
             colormap(all_colors)            
         end
     end

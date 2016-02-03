@@ -69,7 +69,6 @@ info.fields = fieldnames(measure);
 % Read in 1st image from each XY position, calculate background mean/std (resave AllParameters)
 
 p = AllMeasurements.parameters;
-
 if isfield(AllMeasurements,'NFkBNuclear')
     if ~isfield(p, 'nfkb_thresh')
         disp('Measuring and saving initial image distributions')

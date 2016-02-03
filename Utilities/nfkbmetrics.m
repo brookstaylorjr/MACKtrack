@@ -45,8 +45,6 @@ end
 smoothed = smoothrows(metrics.time_series,3);
 metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
-
-
 % 4) calculated metrics
 % MAX/MIN metrics
 metrics.max_amplitude = nanmax(metrics.time_series,[],2);
@@ -189,12 +187,11 @@ for i = 1:length(thresholds)
     metrics.duration(:,i) = nansum(smoothed>thresholds(i),2)/12;
 end
 
-
 %% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 21 hrs (252 frames)
 try
-    metrics.time_series = metrics.time_series(:,1:252);
-    metrics.integrals = metrics.integrals(:,1:252);
-    metrics.derivatives = metrics.derivatives(:,1:250);
+    metrics.time_series = metrics.time_series(:,1:254);
+    metrics.integrals = metrics.integrals(:,1:254);
+    metrics.derivatives = metrics.derivatives(:,1:252);
 catch me
-    disp('Note: vectors too short to cap @ 252 frames')
+    disp('Note: vectors too short to cap @ 257 frames')
 end

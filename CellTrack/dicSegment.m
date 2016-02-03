@@ -72,44 +72,49 @@ diagnos.edge_straight = bwareaopen(diagnos.edge_straight,small);
 diagnos.modifier_mask = imdilate(diagnos.modifier_mask,ones(3));
 diagnos.modifier_mask = removemarked(bwlabel(diagnos.modifier_mask),diagnos.edge_straight)> 0;
 diagnos.modifier_mask = removemarked(bwlabel(diagnos.modifier_mask),nuc_mask)> 0;
-%%
-% Use straight edges to further break up mask
-cell_mask = bwareaopen(cell_mask,round(pi*p.MinNucleusRadius.^2));
-cell_broken = cell_mask&~imdilate(diagnos.edge_straight,ones(3));
+%% Use straight edges to further break up mask
+
+try
+    cell_mask = bwareaopen(cell_mask,round(pi*p.MinNucleusRadius.^2));
+    cell_broken = cell_mask&~imdilate(diagnos.edge_straight,ones(3));
 
 
-obj1 = bwconncomp(cell_mask);
-obj2 = bwlabel(bwareaopen(cell_broken,round(pi*p.MaxNucleusRadius.^2)));
-obj2 = removemarked(obj2,nuc_mask,'keep');
-edgeobj = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(5)));
-edgeobj2 = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(3)));
+    obj1 = bwconncomp(cell_mask);
+    obj2 = bwlabel(bwareaopen(cell_broken,round(pi*p.MaxNucleusRadius.^2)));
+    obj2 = removemarked(obj2,nuc_mask,'keep');
+    edgeobj = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(5)));
+    edgeobj2 = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(3)));
 
-find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
-unique_obj = cellfun(find_uniques,obj1.PixelIdxList,'UniformOutput',0);
-test_length = @(vals) numel(vals(vals>0))>1;
-idx = cellfun(test_length,unique_obj);
-broken_obj = cell2mat(unique_obj(idx));
-obj2(~ismember(obj2,broken_obj(broken_obj>0))) = 0;
+    find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
+    unique_obj = cellfun(find_uniques,obj1.PixelIdxList,'UniformOutput',0);
+    test_length = @(vals) numel(vals(vals>0))>1;
+    idx = cellfun(test_length,unique_obj);
+    broken_obj = cell2mat(unique_obj(idx));
+    obj2(~ismember(obj2,broken_obj(broken_obj>0))) = 0;
 
-find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
-unique_obj = cellfun(find_uniques,edgeobj.PixelIdxList,'UniformOutput',0);
-idx = cellfun(test_length,unique_obj);
+    find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
+    unique_obj = cellfun(find_uniques,edgeobj.PixelIdxList,'UniformOutput',0);
+    idx = cellfun(test_length,unique_obj);
 
-keep_edges = cell2mat(edgeobj2.PixelIdxList(idx));
-keep_edges = imerode(keep_edges,ones(3));
-diagnos.modifier_mask(keep_edges) = 1;
+    keep_edges = cell2mat(edgeobj2.PixelIdxList(idx));
+    keep_edges = imerode(keep_edges,ones(3));
+    diagnos.modifier_mask(keep_edges) = 1;
 
-% Turn off pixels from modifier mask, do initial segmentation
-cell_mask(diagnos.modifier_mask) = 0;
-cell_mask = imopen(cell_mask,diskstrel(2));
-output.img_straight = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
-output.img_straight(output.img_straight<0) = 0; output.img_straight(output.img_straight>1) = 1;
-output.img_straight(imdilate(diagnos.edge_straight,ones(3))) = 1;
-output.img_straight(diagnos.edge_straight) = 0;
+    % Turn off pixels from modifier mask, do initial segmentation
+    cell_mask(diagnos.modifier_mask) = 0;
+    cell_mask = imopen(cell_mask,diskstrel(2));
+    output.img_straight = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
+    output.img_straight(output.img_straight<0) = 0; output.img_straight(output.img_straight>1) = 1;
+    output.img_straight(imdilate(diagnos.edge_straight,ones(3))) = 1;
+    output.img_straight(diagnos.edge_straight) = 0;
 
-diagnos.image_segment = output.img_straight;
-lambda = .02;
-diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(output.img_straight),cell_mask,lambda);
+    diagnos.image_segment = output.img_straight;
+    lambda = .02;
+    diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(output.img_straight),cell_mask,lambda);
+catch me
+    diagnos.seeds1 = data.nuclei;
+    output.img_straight = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
+end
 
 % Perform segmentation and correct
 output.seeds2 = propagatesegment(diagnos.seeds1, data.mask_cell>0, image_in,...

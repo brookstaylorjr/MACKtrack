@@ -45,7 +45,8 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
         if isfield(labels,'Cell')
             cells = unique(labels.Cell(:));
             nuclei = unique(labels.Nucleus(:));
-
+            cells(cells==0) = [];
+            nuclei(nuclei==0) = [];
             nocell = nuclei(~ismember(nuclei,cells));
             nonuc = cells(~ismember(cells,nuclei));
             labels.Nucleus(ismember(labels.Nucleus,nocell)) = 0;

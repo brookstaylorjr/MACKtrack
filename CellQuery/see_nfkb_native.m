@@ -39,7 +39,8 @@ info.Module = 'nfkbdimModule';
 
 % Set display/filtering parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
-t_hrs = min([21,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); % Number of hours to display in graphs
+t_hrs = min([23,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); 
+% ^(Number of hours to display in graphs)
 start_thresh = 2; % Maximal allowable start level above baseline
 info.graph_limits = [-0.25 8]; % Min/max used in graphing
 dendro = 0;
@@ -59,7 +60,7 @@ if isnumeric(id)
         % a) early experiments; heterozygous cells
         if (id <= 270) || ismember(id,370:379)
             start_thresh = 1.5;
-            info.graph_limits = [-0.25 6];
+            info.graph_limits = [-0.25 5.5];
             info.baseline = 1;
         end
 
@@ -72,12 +73,14 @@ if isnumeric(id)
         if id==290
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            t_hrs = t_hrs-0.25;
             disp('Adjusted start point for this TNF expmt')
         end
         % d) 100uM CpG - delayed activation from slow mixing
         if id==283
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            t_hrs = t_hrs-0.25;
             disp('Adjusted start point for this CpG expmt')
         end
 
@@ -86,11 +89,15 @@ if isnumeric(id)
             start_thresh = 10;
         end
 
-        % 09/23/2015 Missed an early timepoint; don't allow back-shifting
+        % f) 09/23/2015 Missed an early timepoint; don't allow back-shifting
         if ismember(id,337:343) 
             max_shift = 0;
         end
-
+        % g) IkBa KO set: poor nuclear staining (weak nuclei predominate): use eroded version of nuclear NFkB
+        if ismember(id, 366:369)
+            measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
+            disp('(Using eroded nuclei)')
+        end
     % AA's experiments    
     elseif ~isempty(strfind(locations.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39m4tHa9nJ7ok'))
         % a) early experiments; heterozygous cells

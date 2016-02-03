@@ -1,4 +1,4 @@
-function pos = positionfig(x_width, y_height)
+function pos = positionfig(x_width, y_height,tiles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % pos = positionfig(size)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -12,9 +12,12 @@ function pos = positionfig(x_width, y_height)
 % OUTPUTS:
 % pos          [4 x 1] figure position vector
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+if nargin<3
+    tiles = [2 3];
+end
 
 % Display parameters
-margin = 30; % allowable distance to nearest edge of screen
+margin = 20; % allowable distance to nearest edge of screen
 
 
 % Get primary monitor position - we'll put everything on this monitor, working left-to-right
@@ -33,14 +36,14 @@ end
 % Divide the screen into 6 regions (either 2x3 or 3x2, depending on monitor orientation) (Leave clearance
 % top and bottom, left and right)
 if monitor_pos(3)>=monitor_pos(4)
-    x_origins = round(linspace(margin,monitor_pos(3)-margin,7));
+    x_origins = round(linspace(margin,monitor_pos(3)-margin,tiles(2)*2 +1));
     x_origins = x_origins(2:2:end);
-    y_origins = round(linspace(margin,monitor_pos(4)-margin,5));
+    y_origins = round(linspace(margin,monitor_pos(4)-margin,tiles(1)*2 +1));
     y_origins = y_origins(2:2:end);
 else
-    x_origins = round(linspace(margin,monitor_pos(3)-margin,5));
+    x_origins = round(linspace(margin,monitor_pos(3)-margin,tiles(1)*2 +1));
     x_origins = x_origins(2:2:end);
-    y_origins = round(linspace(margin,monitor_pos(4)-margin,7));
+    y_origins = round(linspace(margin,monitor_pos(4)-margin,tiles(2)*2 +1));
     y_origins = y_origins(2:2:end);
 end
 
@@ -66,7 +69,7 @@ if ~isempty(all_figs)
         recent_center = [recent_pos(1) + recent_pos(3)/2 , recent_pos(2) + recent_pos(4)/2];
         [~,~,tile_idx] = matchclosest([tile_x,tile_y],recent_center);
     end
-    tile_idx  = mod(tile_idx,6)+1;
+    tile_idx  = mod(tile_idx,tiles(1)*tiles(2))+1;
 else
     tile_idx  = 1;
 end
