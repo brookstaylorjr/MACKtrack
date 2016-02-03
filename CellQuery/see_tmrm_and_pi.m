@@ -1,6 +1,6 @@
-function [graph, info, measure] = see_tmrm(id,show_graphs, diagnos)
+function [graph, info, measure] = see_tmrm_and_pi(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [graph, info, measure] = see_tmrm(id,show_graphs, diagnos)
+% [graph, info, measure] = see_tmrm_and_pi(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % SEE_TMRM is a visualization function to see measured TMRM dye 
 %
@@ -27,7 +27,7 @@ if nargin<3
         show_graphs = 0;
     end
 end
-
+%%
 
 % Load data; set parameters
 [measure, info] =loadID(id);
@@ -35,6 +35,7 @@ info.parameters.FramesPerHour = 40; % 1.5 min between frames
 info.Module = 'tmrmModule';
 t_max = (size(measure.TMRM_cytoMean,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 info.graph_limits = [-20 120];
+info.graph_limits2 = [200 400];
 
 
 
@@ -46,10 +47,14 @@ info.keep = max(droprows,[],2) == 0;
 
 
 %% Outputs
-% Extract measurement and apply filtering
+% Extract TMRM measurement, apply filtering, and subtract baseline for each cell
 graph.var = measure.TMRM_cytoMean(info.keep,:);
 baseline = nanmean(graph.var(:,1:4),2); % caluclate baseline from avg of 1st 4 frames
 graph.var = graph.var - repmat(baseline,1, size(graph.var,2)); % copy baseline for each timepoint and subtract
+
+% Extract PI data (no normalization)
+graph.var2 = measure.MeanIntensityNuc(info.keep,:);
+
 
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
 
@@ -58,4 +63,5 @@ graph.shift = zeros(length(unique(info.CellData(:,1))),1);
 
 if show_graphs
     figure,imagesc(graph.var,info.graph_limits)
+    figure,imagesc(graph.var2,info.graph_limits2)
 end

@@ -30,11 +30,11 @@ end
 
 
 % Load data; set parameters
-[measure, info] =loadID(id);
+[measure, info] = loadID(id);
 info.parameters.FramesPerHour = 40; % 1.5 min between frames
 info.Module = 'tmrmModule';
 t_max = (size(measure.TMRM_cytoMean,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
-info.graph_limits = [-20 120];
+info.graph_limits = [-20 1000];
 
 
 
