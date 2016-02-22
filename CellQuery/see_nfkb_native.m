@@ -1,15 +1,19 @@
-function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
+function [graph, info, measure] = see_nfkb_native(id,varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
+% [graph, info, measure] = see_nfkb_native(id,graph_flag, verbose_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % SEE_NFKB_NATIVE is a data processing.and visualization script specialized to handle
 % a nuclear-translocating species (it looks for NFkBdimNuclear and NFkBdimCytoplasm measurements).
 %
-% id             experiment ID (from Google Spreadsheet specigied in "loadID.m")
-% show_graphs    (optional) boolean flag; specifies whether standard behavioral graphs will be shown
-% diagnos        (optional) boolean flag; specifies whether optional diagnostic graphs will be shown
-% shift          (optional)
-% 
+% INPUTS (required):
+% id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
+%
+% INPUT PARAMETERS (optional; specify with name-value pairs)
+% 'Display'      'on' or 'off' - show graphs (default: process data only; no graphs)
+% 'Verbose'      'on' or 'off' - show verbose output
+% 'Endframe'     final frame used to filter for long-lived cells (default = 100)
+%
+% OUTPUTS:  
 % graph          primary output structure; must specify
 %                   1) filtered/processed data (graph.var) 
 %                   2) time vector for all images (graph.t) 
@@ -20,32 +24,34 @@ function [graph, info, measure] = see_nfkb_native(id,show_graphs, diagnos)
 % measure         full output structure from loadID
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+%% Create input parser object, add required params from function input
+p = inputParser;
+% Required: ID input
+valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
+    'ID input must be spreadsheet ID or full file path');
+addRequired(p,'id',valid_id);
 
-%% Setup
-    if nargin<3
-        diagnos=0;
-        if nargin<2
-            show_graphs = 0;
-        end
-    end
+% Optional parameters
+expectedFlags = {'on','off'};
+addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
+addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
+addParameter(p,'Endframe',100, @isnumeric);
 
-% Load data
+% Parse parameters, assign to variables
+parse(p,id, varargin{:})
+if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
+if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
+endframe = p.Results.Endframe;
+%% Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
-% if isfield(measure, 'NFkBdimNuclear_erode')
-%     measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
-% end
-
 
 % Set display/filtering parameters
 max_shift = 1; % Max allowable frame shift in XY-specific correction
-t_hrs = min([23,(size(measure.NFkBdimNuclear,2)-(1+2*max_shift))/info.parameters.FramesPerHour]); 
-% ^(Number of hours to display in graphs)
 start_thresh = 2; % Maximal allowable start level above baseline
 info.graph_limits = [-0.25 8]; % Min/max used in graphing
 dendro = 0;
 colors = setcolors;
-info.baseline = 1.75; % Used in metric caluclations (value is based on 99.9th pct response on a ctrl dataset)
 
 
 % Experiment-specific visualization settings/tweaks (load spreadsheet URL)
@@ -61,7 +67,6 @@ if isnumeric(id)
         if (id <= 270) || ismember(id,370:379)
             start_thresh = 1.5;
             info.graph_limits = [-0.25 5.5];
-            info.baseline = 1;
         end
 
         % b) bad light guide (4 experiments from same day)
@@ -73,14 +78,12 @@ if isnumeric(id)
         if id==290
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-            t_hrs = t_hrs-0.25;
             disp('Adjusted start point for this TNF expmt')
         end
         % d) 100uM CpG - delayed activation from slow mixing
         if id==283
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-            t_hrs = t_hrs-0.25;
             disp('Adjusted start point for this CpG expmt')
         end
 
@@ -104,7 +107,6 @@ if isnumeric(id)
         if id <= 60
             start_thresh = 1.5;
             info.graph_limits = [-0.25 6];
-            info.baseline = 1;
         end
     end
 end
@@ -115,7 +117,7 @@ robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanst
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
 droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:4)),2)>2]; % Cells existing @ expt start
-droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:100)),2)>3]; % Long-lived cells
+droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:endframe)),2)>3]; % Long-lived cells
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
 
@@ -125,14 +127,19 @@ nfkb_smooth = nan(size(nfkb));
 for i = 1:size(nfkb,1)
     nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
 end
+% If default end frame is specified, use entire vector for baseline calculation. Otherwise use specified baseline.
+if ismember('Endframe',p.UsingDefaults)
+    nfkb_min = prctile(nfkb_smooth,2,2);
+else
+    nfkb_min = prctile(nfkb_smooth(:,1:endframe),4,2);
+end
 
-nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),prctile(nfkb_smooth,5,2)],[],2);
-nfkb = nfkb- repmat(nfkb_baseline,1,size(nfkb,2));
-if diagnos
+nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),nfkb_min],[],2);
+nfkb = nfkb - repmat(nfkb_baseline,1,size(nfkb,2));
+if verbose_flag
     figure,imagesc(nfkb,prctile(nfkb(:),[5,99])),colormap parula, colorbar
     title('All (baseline-subtracted) trajectories')
 end
-
 nfkb = nfkb/mean(info.parameters.adj_distr(2,:));
 
 % Filtering, part 2: eliminate outlier cells (based on mean value)
@@ -143,9 +150,6 @@ droprows =  [droprows, (nanmean(abs(nfkb-nanmean(nfkb_lvl)),2)./nanstd(nfkb_lvl)
 % Filtering, part 3: nuclear stain intensity and starting NFkB value
 keep = max(droprows,[],2) == 0;
 start_lvl = nanmin(nfkb(keep,1:3),[],2);
-
-
-
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2.5*robuststd(nuc_lvl(:),2);
 area_thresh = 90;
@@ -156,7 +160,7 @@ droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thres
 droprows =  [droprows, nanmedian(measure.Area,2) < area_thresh];
 
 % Show some filter information
-if diagnos
+if verbose_flag
     filter_str = {'didn''t exist @ start', 'short-lived cells', 'NFkB<background',...
         'outliers [mean val >3*std]','extreme val [mean>1.7*std]', 'active @ start', 'high nuclear stain','low area'};
     disp(['INITIAL: ', num2str(size(droprows,1)),' cells'])
@@ -190,29 +194,30 @@ nfkb = nfkb(info.keep,:);
 
 %% Initialize outputs, do final corrections
 
-graph.t = 0:(1/info.parameters.FramesPerHour):t_hrs;
 graph.celldata = info.CellData(info.keep,:);
-graph.opt = maketicks(graph.t,info.graph_limits,0);
-graph.opt.Name = 'NFkB Activation'; 
+
 % Correct for XY positions that activate late
-[graph.var, shift_xy] = alignTrajectories(nfkb(:,1:length(graph.t)+2*max_shift), graph.celldata, 60, max_shift);
+[graph.var, shift_xy] = alignTrajectories(nfkb, graph.celldata, 60, max_shift);
 if dendro
     [graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
 else
     [~,graph.order] = sort(nansum(graph.var(:,1:min([size(graph.var,2),150])),2),'descend');
 end
-if diagnos
+if verbose_flag
     for i = 1:length(shift_xy)
         disp(['xy ',num2str(i),' shift : ',num2str(shift_xy(i))])
     end
 end
 graph.shift = shift_xy;
 
-
+graph.t = 0:(1/info.parameters.FramesPerHour):48;
+graph.t = graph.t(1:min([length(graph.t),size(graph.var,2)]));
+graph.opt = maketicks(graph.t,info.graph_limits,0);
+graph.opt.Name = 'NFkB Activation'; 
 
 
 %% Graphing
-if show_graphs
+if graph_flag
     % Colormap stack
     figs.a = figure('name','ColormapStack');
     set(figs.a,'Position', [500 700 1200 600])

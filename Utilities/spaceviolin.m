@@ -15,9 +15,11 @@ function violin = spaceviolin(vects, places, varargin)
 % 'Area'         Total area of graph taken up by each shape (default = 0.01)
 % 'BinScale'     Scaling factor for number of bins (default # is given by Freedman-Diaconis rule) (scalar or vector)
 % 'Bins'         Vector of bin centers - if provided, 'BinScale' will be ignored
-% 'XSpace'       Axis whitespace before the first violin plot, and after the last (defalut = 0.1)
+% 'XSpace'       Axis whitespace before the first violin plot, and after the last (default = 0.1)
 % 'Axes'         Axes handle of axes where new violin figure will be plotted (default: create new figure)
 % 'Smoothing'    Smoothing of violin shapes (such that histogram bars are evident, or smoothed out). Default = 'on'
+% 'Connect'      Add connecting line between shapes (default = 'on')
+% 'LineWidth'    Line width around shape - default = 0.5 (can be 0)
 %
 % OUTPUTS
 % violin        Axes handle of violin figure
@@ -45,10 +47,14 @@ addParameter(p,'ShowBins','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Area',0.01,@isnumeric);
 addParameter(p,'XSpace',0.1,@isnumeric);
 addParameter(p,'BinScale',1,@isnumeric);
+valid_width = @(x) assert(isnumeric(x)&&(x>=0),'Line width must be >= 0');
+addParameter(p,'LineWidth',0.5,valid_width);
 valid_bins = @(x) assert((length(x)>1) && isnumeric(x) && issorted(x), 'Bins must be monotonically increasing vector');
 addParameter(p,'Bins',nan,valid_bins);
 addParameter(p,'Axes',nan,@ishandle);
 addParameter(p,'Smoothing','on', @(x) any(validatestring(x,expectedFlags)));
+addParameter(p,'Connect','on', @(x) any(validatestring(x,expectedFlags)));
+
 
 % Parse inputs, save some to variables
 parse(p,vects,places, varargin{:})
@@ -82,7 +88,6 @@ end
 tot_area = abs(diff(ylim(1:2)))*abs(diff(x_lim));
 
 % Make bins
-
 bin_scale = repmat(bin_scale,1,length(vects));
 bin_scale = bin_scale(1:length(vects));
 
@@ -101,11 +106,25 @@ for i = 1:length(vects)
     y = hist(vects{i},x);
     
     % Cap histogram with zero values (keep spline from spiking @ end) and interpolate to get shape
+    if y(1)==0
+        pos = find(y>0,1,'first');
+        y(1:(pos-1)) = [];
+        x(1:(pos-1)) = [];
+    end
+    if y(end)==0
+        pos = find(y>0,1,'last');
+        y((pos+1):end) = [];
+        x((pos+1):end) = [];
+    end
+    
+    
     x = [min(x)-bin_width, x, max(x)+bin_width];
     y = [0 y/sum(y) 0];
     
+    
+    
     if strcmpi(p.Results.Smoothing,'on')
-        xx = min(x):bin_width/100:max(x);
+        xx = min(x):bin_width/10:max(x);
         yy = spline(x, y, xx);
         yy(yy<0) = 0;
     else
@@ -127,15 +146,30 @@ for i = 1:length(vects)
     obj_width = p.Results.Area*tot_area/(sum(y)*diff(x(1:2))*2);
 
     % Make main violin plot
+    if p.Results.LineWidth==0
+        lnstyl = 'none';
+        lnwid = 0.5;
+    else
+        lnstyl = '-';
+        lnwid = p.Results.LineWidth;
+    end
+    
     hold(violin,'on')
     fill([places(i)+obj_width*yy,places(i)-obj_width*yy(end:-1:1)],[xx,xx(end:-1:1)],...
-        colors{mod(i-1,length(colors))+1},'LineWidth',1,'Parent',violin)
+        colors{mod(i-1,length(colors))+1},'LineWidth',1,'Parent',violin,'LineStyle',lnstyl,'LineWidth',lnwid,...
+        'EdgeColor',[0.4431 0.4510 0.4627])
     hold(violin,'off')
 end
 % Plot medians and set graph properties
 hold(violin,'on')
-    plot(violin, places,medians,'-o','MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0 0 0],...
-        'Color', [0 0 0],'LineWidth',2,'MarkerSize',8)
+if strcmpi(p.Results.Connect,'on')
+    lnstyl = '-o';
+else
+    lnstyl = 'o';
+end
+
+plot(violin, places,medians,lnstyl,'MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0 0 0],...
+    'Color', [0 0 0],'LineWidth',1.2,'MarkerSize',7)
 hold(violin,'off')
 set(violin,'YLim',ylim,'XLim',x_lim);
 

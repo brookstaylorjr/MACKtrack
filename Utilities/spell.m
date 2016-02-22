@@ -16,16 +16,23 @@ end
 
 tot_length = 6+precision;
 
-
-disp('[...')
-
-for i=1:size(n,1)
+if size(n,1)>1
+    disp('[...')
+    for i=1:size(n,1)
+        str = [];
+        for j = 1:size(n,2)
+            substr = num2str(n(i,j),precision);
+            str = [str,substr,repmat(' ',1,tot_length-length(substr))];
+        end
+        disp(str)
+    end
+    disp('];')
+else
     str = [];
     for j = 1:size(n,2)
-        substr = num2str(n(i,j),precision);
+        substr = num2str(n(1,j),precision);
         str = [str,substr,repmat(' ',1,tot_length-length(substr))];
     end
-    disp(str)
+    disp(['[ ', str,' ]'])
     
 end
-disp('];')

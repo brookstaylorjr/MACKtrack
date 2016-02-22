@@ -38,6 +38,17 @@ colors.pam = [230 130 57]/255;
 colors.off = [217 210 200]/255;
 colors.pic = [101 76 125]/255;
 colors.bglu = [222 201 52]/255;
+colors.bg_gray = [175 176 179
+                  212 213 216
+                  232 233 239
+                  255 255 255]/255;
+
+% rando theme
+colors.theme1{1} = colors.red;
+colors.theme1{2} = colors.light_blue;
+colors.theme1{3} = colors.blue;
+colors.theme1{4} = colors.grays{2};
+
 
 if nargin>0
     if graph_flag

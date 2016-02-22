@@ -27,7 +27,7 @@ valley_amps = nan(size(cell_trajectories,1),2);
 
 % Sample graph (show peak-finding performace)
 if show_graph
-    fig1 = figure('PaperPositionMode','auto','Position',positionfig(880, 90));
+    fig1 = figure('PaperPositionMode','auto','Position',positionfig(920, 94));
     ha = tight_subplot(2,6,[0.01 0.01]);
 end
 

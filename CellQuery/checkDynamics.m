@@ -115,7 +115,7 @@ flag = 0;
 while flag == 0
     try
         fcn_name = fcn_names{start_val};
-        [graph, info] = eval([fcn_name,'(id,0,0)']);
+        [graph, info] = eval([fcn_name,'(id)']);
         set(handles.popupmenu2,'Value',start_val);
         flag = 1;
     catch ME
@@ -132,7 +132,7 @@ while flag == 0
 end
 
 handles.times = info.parameters.TimeRange;
-handles.xys = info.parameters.XYRange;
+handles.xys = unique(graph.celldata,:,1);
 handles.celldata = graph.celldata;
 handles.var = graph.var;
 handles.mu = nanmean(handles.var);
