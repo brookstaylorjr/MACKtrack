@@ -107,6 +107,10 @@ if isnumeric(id)
         if id <= 60
             start_thresh = 1.5;
             info.graph_limits = [-0.25 6];
+        else
+            start_thresh = 1.8;
+            info.graph_limits = [-0.25 5.5];
+            info.baseline = 0.75;
         end
     end
 end
