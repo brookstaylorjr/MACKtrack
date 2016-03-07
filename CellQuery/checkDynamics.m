@@ -132,7 +132,7 @@ while flag == 0
 end
 
 handles.times = info.parameters.TimeRange;
-handles.xys = unique(graph.celldata,:,1);
+%handles.xys = unique(graph.celldata,:,1); %% This line generates erros
 handles.celldata = graph.celldata;
 handles.var = graph.var;
 handles.mu = nanmean(handles.var);
