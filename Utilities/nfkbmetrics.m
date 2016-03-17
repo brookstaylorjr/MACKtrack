@@ -68,8 +68,8 @@ for i = 1:size(metrics.integrals,1)
     metrics.integrals(i,:) = cumtrapz(t,metrics.time_series(i,:));
 end
 
-% 3) differentiated activity - use central finite difference
-smoothed = medfilt1(metrics.time_series,3,[],1);
+% 3) differentiated activity - use central fininte difference
+smoothed = medfilt1(metrics.time_series,1,[],3);
 metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
 % 4) calculated metrics

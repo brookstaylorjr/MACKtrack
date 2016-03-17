@@ -131,8 +131,8 @@ while flag == 0
     end
 end
 
-handles.times = info.parameters.TimeRange;
-%handles.xys = unique(graph.celldata,:,1); --generate erros
+handles.times = info.parameters.TimeRange; --generates errors
+%handles.xys = unique(graph.celldata,:,1);
 handles.celldata = graph.celldata;
 handles.var = graph.var;
 handles.mu = nanmean(handles.var);
