@@ -115,7 +115,6 @@ ylabel ('Probability')
 legend ('Ctrl (100nM CpG)', '10 ng/ml IL4 pretreatment (100nM CpG)','Location', 'northeast') 
 
 
-
 %Duration above threshold
 figure ('Name', 'Duration above Threshold')
 x = 0:0.5:20;
