@@ -132,7 +132,7 @@ while flag == 0
 end
 
 handles.times = info.parameters.TimeRange;
-%handles.xys = unique(graph.celldata,:,1); --generate erros
+handles.xys = unique(graph.celldata(:,1));
 handles.celldata = graph.celldata;
 handles.var = graph.var;
 handles.mu = nanmean(handles.var);
@@ -149,7 +149,6 @@ else
 end
 
 % Initialize slider + popup values
-handles.xys =  info.parameters.XYRange;
 set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
 handles.xy = handles.xys(1);
 set(handles.text5,'String',['xy ',num2str(handles.xy)]);
