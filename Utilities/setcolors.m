@@ -10,12 +10,10 @@ colors.blue = [62 107 133]/255;
 colors.green = [0 195 169]/255;
 colors.light_blue = [29 155 184]/255;
 
-
 % TRAIL color schema
 colors.orange = [248 152 29]/255;
 colors.lavender = [168 180 204]/255;
 colors.navy = [30 50 72]/255;
-
 
 % Miscellaneous colors
 colors.red = [231 76 60]/255;
@@ -43,11 +41,20 @@ colors.bg_gray = [175 176 179
                   232 233 239
                   255 255 255]/255;
 
-% rando theme
+% "4th of July" theme - 2 bright, 2 dark.
 colors.theme1{1} = colors.red;
-colors.theme1{2} = colors.light_blue;
-colors.theme1{3} = colors.blue;
-colors.theme1{4} = colors.grays{2};
+colors.theme1{2} = [52 152 219]/255;
+colors.theme1{3} = [61 89 117]/255;
+colors.theme1{4} = colors.grays{1};
+
+
+% 'TRAIL' theme - purple to orange
+colors.trail{1} = [30 50 72]/255;
+colors.trail{2} = [168 180 204]/255;
+colors.trail{3} = [255 255 255]/255;
+colors.trail{4} = [90 90 91]/255;
+colors.trail{5} = [248 152 29]/255;
+
 
 
 if nargin>0
@@ -59,6 +66,11 @@ if nargin>0
             if iscell(colors.(names{i}))
                 for j=1:length(colors.(names{i}))
                     all_colors = cat(1,all_colors,colors.(names{i}){j});
+                    tick_names = cat(1,tick_names,[names{i},'(',num2str(j),')']);
+                end
+            elseif size(colors.(names{i}),1)>1
+                for j=1:size(colors.(names{i}),1)
+                    all_colors = cat(1,all_colors,colors.(names{i})(j,:));
                     tick_names = cat(1,tick_names,[names{i},'(',num2str(j),')']);
                 end
             else

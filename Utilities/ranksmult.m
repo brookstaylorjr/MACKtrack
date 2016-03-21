@@ -1,22 +1,45 @@
-function varargout = ranksmult(graph_data, rankfactor, xvect)
+function varargout = ranksmult(graph_data, rankfactor, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % ha = ranksmult(graph_data, rankfactor)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % RANKSMULT will create a small-multiples line graph, where individual trajectories are
 % ordered and sorted using a separately-passed value 
 %
-% INPUT:
+% INPUT (REQUIRED)
 % graph_data    [n x m] matrix of n trajectories, each consisting of m dimensions/timepts
 % rankfactor    [n x 1] vector, where each value corresponds to its respective trajectory
 % xvect         (optional) time vector used in plotting
-% 
+% INPUT (OPTIONAL)
+% 'x'           x vector used in plotting (i.e. horizontal axis)
+% 'YLim'        enforced Y limits of graph
+%
 % OUTPUT:
 % varargout     (1 argument only) handles to tight_sublplot axes 
 %-- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-if nargin<3
-    xvect = 1:size(graph_data,2);
-end
+%% Create input parser object, add required params from function input
+p = inputParser;
+% Required: graph_data
+valid_data = @(x) assert((isnumeric(x)&&ismatrix(x)),...
+    'graph_data must be a matrix (where rows correspond to a set measurements for one individual');
+addRequired(p,'graph_data',valid_data);
+% Required: rankfactor
+valid_rank = @(x) assert((isvector(x)&&(length(x)==size(graph_data,1))),...
+    'rankfactor must be vector (with one entry per individual in graph_data)');
+addRequired(p,'rankfactor',valid_rank);
+
+
+
+% Optional parameters
+addParameter(p,'x',1:size(graph_data,2),@(x) assert(isvector(x)&&(length(x)==size(graph_data,2)),...
+    'Length of X vector needs to match observations (columns) in graph_data'));
+addParameter(p,'YLim',prctile(graph_data(:),[5 99]), @(x) assert(numel(x)==2,'YLim must be in form [y_min y_max'));
+
+% Parse parameters, assign to variables
+parse(p,graph_data, rankfactor, varargin{:})
+measure_bounds = p.Results.YLim;
+xvect = p.Results.x;
+%%
 
 % Rank on rank factors; scale 0 to 100
 [rank_val,idx] = sort(rankfactor,'ascend');
@@ -35,7 +58,6 @@ end
 
 % Set graph characteristics
 line_colors = jet(101);
-measure_bounds = prctile(graph_data(:),[5 99]);
 xpos = max(xvect)-0.02*(max(xvect)-min(xvect));
 ypos =  max(measure_bounds) - 0.26*diff(measure_bounds);
 

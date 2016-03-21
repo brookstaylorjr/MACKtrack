@@ -30,7 +30,7 @@ imfo = imfinfo([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr
 bit_depth = imfo.BitDepth;
 
 nucOrig = checkread(nucleusFile,bit_depth);
-parameters.ImageSize = size(nucOrig);
+parameters.ImageSize = [size(nucOrig,1),size(nucOrig,2)];
 if ~strcmp(parameters.ImageType,'None')
 	cellFile = [locations.scope,parameters.ImagePath,eval(parameters.CellExpr)];
 	cellOrig = checkread(cellFile,bit_depth);

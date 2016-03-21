@@ -97,7 +97,7 @@ if isnumeric(id)
             max_shift = 0;
         end
         % g) IkBa KO set: poor nuclear staining (weak nuclei predominate): use eroded version of nuclear NFkB
-        if ismember(id, 366:369)
+        if ismember(id, 366:379)
             measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
             disp('(Using eroded nuclei)')
         end
