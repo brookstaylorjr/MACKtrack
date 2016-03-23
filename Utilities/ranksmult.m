@@ -33,7 +33,7 @@ addRequired(p,'rankfactor',valid_rank);
 % Optional parameters
 addParameter(p,'x',1:size(graph_data,2),@(x) assert(isvector(x)&&(length(x)==size(graph_data,2)),...
     'Length of X vector needs to match observations (columns) in graph_data'));
-addParameter(p,'YLim',prctile(graph_data(:),[5 99]), @(x) assert(numel(x)==2,'YLim must be in form [y_min y_max'));
+addParameter(p,'YLim',prctile(graph_data(:),[5 99]), @(x) assert(numel(x)==2,'YLim must be in form [y_min y_max]'));
 
 % Parse parameters, assign to variables
 parse(p,graph_data, rankfactor, varargin{:})
