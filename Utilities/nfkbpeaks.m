@@ -11,7 +11,7 @@ function [peak_times, peak_amps, valley_times, valley_amps, fig1] = nfkbpeaks(tr
 % 'ShowGraph'      boolean flag to show sampling of found peaks on graphed trajectories (2x6 examples) - default is 0
 % 'NumPeaks'       peaks to look for in trajectory - default is 16
 % 'BeginFrame'     supress peaks that are found before this point (default =3)
-% 'EndFrame'       supress peaks that are found after this point (default = 216)
+% 'EndFrame'       supress peaks that are found after this point (default = cols in trajectories - 2)
 % 'MinDist'        supress peaks that are within n frames of one another (default = 6)
 % 'MinHeight'      supress peaks whose absolute amplitude falls below this value (default = 0.75)
 % 'SmoothSize'     window to smooth trajectories slightly (using 'smoothrows' - default = 3 frames)
@@ -41,7 +41,7 @@ valid_lim = @(x) assert(isnumeric(x)&&(numel(x)==2), 'input must be vector speci
 addParameter(p,'ShowGraph',0,valid_val);
 addParameter(p,'NumPeaks',16,valid_val);
 addParameter(p,'BeginFrame',3,valid_val);
-addParameter(p,'EndFrame',216,valid_val);
+addParameter(p,'EndFrame',size(trajectories,2)-2,valid_val);
 addParameter(p,'MinHeight',0.75,valid_val);
 addParameter(p,'MinDist',9,valid_val);
 addParameter(p,'SmoothSize',3,valid_val);
