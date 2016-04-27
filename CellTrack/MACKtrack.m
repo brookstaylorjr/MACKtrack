@@ -855,32 +855,6 @@ end
 % ========================================================================================
 
 
-function edit5G_Callback(hObject, eventdata, handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5G: set minimum nuclear eccentricity for obling cells (default = 1.5)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-try
-    newVal = eval(get(hObject,'String'));
-    set(hObject,'String',num2str(newVal))
-    handles.parameters.Eccentricity = newVal;
-    handles.Locked2 = 0;
-    set(handles.pushbutton4C,'ForegroundColor',handles.blue)
-    set(handles.pushbutton4D,'ForegroundColor',handles.blue)
-    guidata(handles.figure1,handles)
-catch ME
-    set(hObject,'String','err')
-    handles.Locked2 = 1;
-    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
-    set(handles.pushbutton4D,'ForegroundColor',handles.gray)
-    rethrow(ME)
-end
-% ========================================================================================
-
-
-    
-    
-% ========================================================================================
-
 % %%%%%%%%%%%%%%%%%%%%%% UIPANEL 6 : Phase/DIC PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function slider6A_Callback(hObject, ~, handles)

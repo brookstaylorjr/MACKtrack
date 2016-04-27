@@ -19,7 +19,6 @@ function [output, diagnos] =  nucleusID(nuc_orig,p,data)
 %- - - - - - - - - - - - - - - - - - - SETUP - - - - - - - - - - - - - - - - - - - - - - -
 % Set cutoffs for nuclear shape
 cutoff.Area = [floor(pi*(p.MinNucleusRadius-1)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
-cutoff.Eccentricity = p.Eccentricity;
 cutoff.Compactness = p.Compactness;
 
 % Pull out existing mask of cells
