@@ -1,11 +1,11 @@
-function [] = UCSDcellMeasure(parameters,parallel_flag)
+function [] = MACKmeasure(parameters,parallel_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [] = UCSDcellMeasure(parameters,parallel_flag)
+% [] = MACKmeasure(parameters,parallel_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% UCSDCELLMEASURE calculates morphological features and optional
-% additional-channel data from a UCSDcellTrack output set.
+% MACKMEASURE calculates morphological features and optional
+% additional-channel data from a MACKtrack output set.
 %
-% Takes in a UCSDcellTrack output directory, loops through all xy positions,
+% Takes in a MACKtrack output directory, loops through all xy positions,
 % creating individual measurement sets (using the primarymeasure
 % subfunction) for each.
 % 

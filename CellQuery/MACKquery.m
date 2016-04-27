@@ -1,26 +1,26 @@
-function varargout = UCSDcellQuery(varargin)
-% UCSDcellQuery M-file for UCSDcellQuery.fig
-%      UCSDCELLQUERY, by itself, creates a new UCSDCELLQUERY or raises the existing
+function varargout = MACKquery(varargin)
+% MACKquery M-file for MACKquery.fig
+%      MACKQUERY, by itself, creates a new MACKQUERY or raises the existing
 %      singleton*.
 %
-%      H = UCSDCELLQUERY returns the handle to a new UCSDCELLQUERY or the handle to
+%      H = MACKQUERY returns the handle to a new MACKQUERY or the handle to
 %      the existing singleton*.
 %
-%      UCSDCELLQUERY('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in UCSDCELLQUERY.M with the given input arguments.
+%      MACKQUERY('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in MACKQUERY.M with the given input arguments.
 %
-%      UCSDCELLQUERY('Property','Value',...) creates a new UCSDCELLQUERY or raises the
+%      MACKQUERY('Property','Value',...) creates a new MACKQUERY or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before UCSDcellQuery_OpeningFcn gets called.  An
+%      applied to the GUI before MACKquery_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to UCSDcellQuery_OpeningFcn via varargin.
+%      stop.  All inputs are passed to MACKquery_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help UCSDcellQuery
+% Edit the above text to modify the response to help MACKquery
 
 % Last Modified by GUIDE v2.5 10-Apr-2015 13:43:06
 
@@ -30,8 +30,8 @@ function varargout = UCSDcellQuery(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @UCSDcellQuery_OpeningFcn, ...
-                   'gui_OutputFcn',  @UCSDcellQuery_OutputFcn, ...
+                   'gui_OpeningFcn', @MACKquery_OpeningFcn, ...
+                   'gui_OutputFcn',  @MACKquery_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -49,18 +49,18 @@ end
 
 % ______________________________________________ OPENING/OUTPUT FUNCTIONS ______________________________________________
 
-function UCSDcellQuery_OpeningFcn(hObject, eventdata, handles, varargin)
+function MACKquery_OpeningFcn(hObject, eventdata, handles, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% Executes just before UCSDcellQuery is made visible
+% Executes just before MACKquery is made visible
 %
 % This function has no output args, see ExportFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to UCSDcellQuery (see VARARGIN)
+% varargin   command line arguments to MACKquery (see VARARGIN)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-% Choose default command line output for UCSDcellQuery
+% Choose default command line output for MACKquery
 handles.output = hObject;
 
 % Load up default locations
@@ -93,7 +93,7 @@ end
 
 % ========================================================================================
 
-function varargout = UCSDcellQuery_OutputFcn(hObject, eventdata, handles) 
+function varargout = MACKquery_OutputFcn(hObject, eventdata, handles) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Set default command line output from handles structure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

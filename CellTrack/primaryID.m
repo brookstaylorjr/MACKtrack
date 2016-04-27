@@ -1,5 +1,7 @@
 function [output, diagnos] = primaryID(nucOrig,p,~)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [output, diagnos] = primaryID(nucOrig,p,~)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PRIMARYID:     Identify nuclei in fluorescent image (Hoechst stain) for NF-kB tracing
 %
 % nucOrig        original fluorescent nuclear image
@@ -14,7 +16,9 @@ cutoff.Area = [min_area, max_area];
 cutoff.Eccentricity = p.Eccentricity;
 cutoff.Compactness = p.Compactness;
 diagnos.nucleus1 = nucOrig;
-
+if ~isfield(p,'debug')
+    p.debug = 0;
+end
 
 %- - - - - - - - - - - - - - - - - - - MASK1 - - - - - - - - - - - - - - - - - - - - - - -
 % Initial Otsu threshold on image
@@ -34,7 +38,7 @@ dist_smoothed = medfilt2(dist_smoothed,[5 5]);
 diagnos.label1a = imdilate(watershedalt(dist_smoothed,diagnos.mask1b,4),ones(3));
 
 % Try to bridge back watershed-split nuclei, then remove all small objects
-diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff);
+diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff,p.debug);
 
 %- - - - - - - - - - - - - - - - - - - MASK2 - - - - - - - - - - - - - - - - - - - - - - -
 diagnos.nucleus2 = imfilter(diagnos.nucleus1,gauss2D(p.MinNucleusRadius/4),'replicate'); % Gaussian filtered
@@ -53,7 +57,7 @@ markers = bwmorph(diagnos.label1>0,'shrink',15);
 diagnos.label2b = imdilate(removemarked(diagnos.label2a,markers,'remove'),ones(3));
 
 % Try to bridge back watershed-split nuclei, then remove all small objects
-diagnos.label2 = bridgenuclei(diagnos.label2b,cutoff);
+diagnos.label2 = bridgenuclei(diagnos.label2b,cutoff,p.debug);
 
 % Combine label matricies
 diagnos.label2(diagnos.label1>0) = 0; % Double check and make sure there's no overlap

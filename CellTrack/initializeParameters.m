@@ -113,7 +113,7 @@ set(handles.edit7G,'String',handles.parameters.MinCellWidth)
 set(handles.edit7H,'String',handles.parameters.FramesPerHour)
 set(handles.edit7J,'String',handles.parameters.ScaledStimulusName)
 
-% Get contents of 'CellMeasure' folder (the one stored with UCSDcellTrack)
+% Get contents of 'CellMeasure' folder (the one stored with MACKtrack)
 contents = dir([handles.home_folder,filesep, 'CellMeasure']);
 
 % Find all 'modules' in directory, list

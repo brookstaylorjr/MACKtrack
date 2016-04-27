@@ -1,26 +1,26 @@
-function varargout = UCSDcellTrack(varargin)
-% UCSDCELLTRACK MATLAB code for UCSDcellTrack.fig
-%      UCSDCELLTRACK, by itself, creates a new UCSDCELLTRACK or raises the existing
+function varargout = MACKtrack(varargin)
+% MACKTRACK MATLAB code for MACKtrack.fig
+%      MACKTRACK, by itself, creates a new MACKTRACK or raises the existing
 %      singleton*.
 %
-%      H = UCSDCELLTRACK returns the handle to a new UCSDCELLTRACK or the handle to
+%      H = MACKTRACK returns the handle to a new MACKTRACK or the handle to
 %      the existing singleton*.
 %
-%      UCSDCELLTRACK('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in UCSDCELLTRACK.M with the given input arguments.
+%      MACKTRACK('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in MACKTRACK.M with the given input arguments.
 %
-%      UCSDCELLTRACK('Property','Value',...) creates a new UCSDCELLTRACK or raises the
+%      MACKTRACK('Property','Value',...) creates a new MACKTRACK or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before UCSDcellTrack_OpeningFcn gets called.  An
+%      applied to the GUI before MACKtrack_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to UCSDcellTrack_OpeningFcn via varargin.
+%      stop.  All inputs are passed to MACKtrack_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help UCSDcellTrack
+% Edit the above text to modify the response to help MACKtrack
 
 % Last Modified by GUIDE v2.5 08-Jun-2015 12:09:45
 
@@ -31,8 +31,8 @@ set(0,'defaultuicontrolfontname','Sans Serif');
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @UCSDcellTrack_OpeningFcn, ...
-                   'gui_OutputFcn',  @UCSDcellTrack_OutputFcn, ...
+                   'gui_OpeningFcn', @MACKtrack_OpeningFcn, ...
+                   'gui_OutputFcn',  @MACKtrack_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -48,18 +48,18 @@ end
 % End initialization code - DO NOT EDIT
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
-function UCSDcellTrack_OpeningFcn(hObject, eventdata, handles, varargin)
+function MACKtrack_OpeningFcn(hObject, eventdata, handles, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% Executes just before UCSDcellQuery is made visible
+% Executes just before MACKquery is made visible
 %
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to UCSDcellQuery (see VARARGIN)
+% varargin   command line arguments to MACKquery (see VARARGIN)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-% Choose default command line output for UCSDcellTrack
+% Choose default command line output for MACKtrack
 handles.output = hObject;
 
 % Set colors
@@ -67,7 +67,7 @@ handles.blue = [0.051 0.329 0.671];
 handles.orange = [207 79 51]/255;
 handles.gray = [0.816 0.812 0.722];
 
-% Specify UCSDcellTrack home folder (one level above)
+% Specify MACKtrack home folder (one level above)
 handles.home_folder = mfilename('fullpath');
 slash_idx = strfind(handles.home_folder,filesep);
 handles.home_folder = handles.home_folder(1:slash_idx(end-1));
@@ -118,7 +118,7 @@ if strcmp(os(1:4),'MACI')
 end
 % ========================================================================================
 
-function varargout = UCSDcellTrack_OutputFcn(hObject, eventdata, handles) 
+function varargout = MACKtrack_OutputFcn(hObject, eventdata, handles) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Set default command line output from handles structure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -565,7 +565,7 @@ if ~handles.Locked2
             end        
             % 3) Measure loop (AllMeasurements.mat output)
             disp('Measuring...')
-            UCSDcellMeasure(parameters,1);
+            MACKmeasure(parameters,1);
 
             set(handles.pushbutton4C,'ForegroundColor',handles.blue)
             set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
@@ -581,7 +581,7 @@ if ~handles.Locked2
             end        
             % 3) Measure loop (AllMeasurements.mat output)
             disp('Measuring...')
-            UCSDcellMeasure(parameters,0);
+            MACKmeasure(parameters,0);
         end
 
         set(handles.pushbutton4C,'ForegroundColor',handles.blue)

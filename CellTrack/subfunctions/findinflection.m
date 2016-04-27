@@ -7,7 +7,7 @@ function [inflection] = findinflection(cell_mask, nuc_mask,p)
 % INPUT:
 % mask_cell        mask of cells (try to find inflection points here)
 % label_nuc        label matrix of nuclei
-% p                parameters structure from UCSDcellTrack
+% p                parameters structure from MACKtrack
 % 
 % OUTPUT:
 % inflection      output matrix (sized as original image) with inflection lines marked

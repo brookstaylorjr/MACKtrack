@@ -6,7 +6,7 @@ function [measure_out,shift_xy] = alignTrajectories(measurement, celldata, align
 % [measure_out,shift_xy] = alignTrajectories(measurement, celldata, max_shift)
 %
 % measurement    input NxM matrix (M cells, N timepoint measurements)
-% celldata       Nx6 cell information matrix (output from UCSDcellTrack)
+% celldata       Nx6 cell information matrix (output from MACKtrack)
 % align_win      (opt) window to use in calculating pairwise distances
 % max_shift      (opt) maximum allowable shift for a given XY pos - defualts to 3
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

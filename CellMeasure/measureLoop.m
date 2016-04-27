@@ -2,7 +2,7 @@ function [] = measureLoop(xy, parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [] = measureLoop(xy, parameters) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% MEASURELOOP is called in a parfor loop inside UCSDcellMeasure.mat - it measures the full
+% MEASURELOOP is called in a parfor loop inside MACKmeasure.mat - it measures the full
 % sequence of images from on XY position.
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

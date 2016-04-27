@@ -4,7 +4,7 @@ function  visualizeCell(handles)
 % VISUALIZECELL makes new figure to show/cycle outlined cell on user's choice of images
 %
 % INPUT:
-% handles      main data structure provided by UCSDcellQuery GUI
+% handles      main data structure provided by MACKquery GUI
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Pull off necessary data from handles, and create a new figure

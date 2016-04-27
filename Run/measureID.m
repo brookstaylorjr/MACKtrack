@@ -52,7 +52,7 @@ for idx = 1:numel(data.save_folder)
     % MEASUREMENT
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        UCSDcellMeasure(parameters);      
+        MACKmeasure(parameters);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)
