@@ -53,7 +53,7 @@ for cycle = 1:length(parameters.TimeRange)
     tic
     nucName1 = eval(parameters.NucleusExpr);
     images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
-    data = primaryID(images.nuc,parameters,[]);
+    data = primaryID(images.nuc,parameters);
     tocs.NucMasking = toc;
     
     % Update stacks/structs with each iteration      

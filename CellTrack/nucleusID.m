@@ -1,8 +1,10 @@
-function [output, diagnos] =  nucleusID(nucOrig,p,data,~)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+function [output, diagnos] =  nucleusID(nuc_orig,p,data)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% [output, diagnos] =  nucleusID(nuc_orig,p,data,~) 
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % NUCLEUSID  Find nuclei from images of nuclear-localized fluorophore. Creates separated mask of identified nuclei.
 % 
-% nucOrig        input fluorescent image
+% nuc_orig        input fluorescent image
 % p              parameters struture
 % data           contains final cell mask from phaseID/ dicID (mask_cell)
 %
@@ -11,8 +13,8 @@ function [output, diagnos] =  nucleusID(nucOrig,p,data,~)
 %
 %
 % Subfunctions
-% watershedalt.m, removemarked.m
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% watershedalt.m, removemarked.m, bridgenuclei.m
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 %- - - - - - - - - - - - - - - - - - - SETUP - - - - - - - - - - - - - - - - - - - - - - -
 % Set cutoffs for nuclear shape
@@ -23,13 +25,13 @@ cutoff.Compactness = p.Compactness;
 % Pull out existing mask of cells
 cell_mask = data.mask_cell;
 % Add any strong nuclei (in case they weren't included in cell mask)
-diagnos.thresh1 = otsuthresh(nucOrig,~cell_mask,'none');
-tmp = nucOrig>diagnos.thresh1;
+diagnos.thresh1 = otsuthresh(nuc_orig,~cell_mask,'none');
+tmp = nuc_orig>diagnos.thresh1;
 if sum(tmp(:)) < sum(cell_mask(:))
     cell_mask = ~bwareaopen(~(cell_mask|tmp),p.NoiseSize,4);
 end
 % Construct smoothed images + watershed image
-nucleus1 = medfilt2(nucOrig,[p.MedianFilterSize, p.MedianFilterSize]); % Median-filtered
+nucleus1 = medfilt2(nuc_orig,[p.MedianFilterSize, p.MedianFilterSize]); % Median-filtered
 
 diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/4),'replicate'); % Gaussian filtered
 diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);

@@ -42,7 +42,7 @@ for k = 1:length(imgnames)
 end
 
 % - - - - 1st label: make label matrix from nuclear image - - - -
-[data, diag_tmp] = primaryID(images.nucleus,p,[]);
+[data, diag_tmp] = primaryID(images.nucleus,p);
 % Save information
 handles.diagnostics.nuclei = diag_tmp;
 
@@ -64,10 +64,14 @@ for k = 1:length(overlayList)
     x = [-2 5];
     disp_img(disp_img<x(1)) = x(1);
     disp_img(disp_img>x(2)) = x(2);
-    disp_img = (disp_img - x(1))/(x(2)-x(1))*255;
+    disp_img = (disp_img - x(1))/(x(2)-x(1))*255;  
+    % Overlay nuclear borders as orange
+    border1 = (imdilate(data.nuclei,ones(3))-data.nuclei)>0;
+    R = disp_img; R(border1) = R(border1)*0.25 + 0.75*248;
+    G = disp_img; G(border1) = G(border1)*0.25 + 0.75*152;
+    B = disp_img; B(border1) = B(border1)*0.25 + 0.75*29;
+    disp_img = cat(3,R,G,B);
     disp_img = uint8(round(disp_img));
-    % Overlay nuclear borders (from Check module)
-    disp_img((imdilate(data.nuclei,ones(3))-data.nuclei)>0) = 0;
     handles.overlays.(overlayList{k}) = disp_img;
     display_list = cat(2,display_list,['overlay-',overlayList{k}]);
 end
@@ -109,7 +113,7 @@ ylim = get(gca,'ylim');
 structType = newStr(1:strfind(newStr,'-')-1);
 switch structType
     case 'overlay'
-        imagesc(handles.overlays.(newStr(strfind(newStr,'-')+1:end)),'Parent',handles.diagnosticAxes), colormap gray
+        imshow(handles.overlays.(newStr(strfind(newStr,'-')+1:end)),'Parent',handles.diagnosticAxes), colormap gray
     otherwise
         imagesc(handles.diagnostics.(structType).(newStr(strfind(newStr,'-')+1:end)),'Parent',handles.diagnosticAxes), colormap jet
 end

@@ -1,8 +1,9 @@
 function lvl = otsuthresh(inImg,dropPixels,logComp)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%  [lvl] = otsuthresh(inImg,dropPixels,logComp)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % OTSUTHRESH Perform Otsu thresholding on image using modified form of 'graythresh' function
 %
-%  [lvl] = otsuthresh(inImg,dropPixels,logComp)
 %
 % inImg        the input image to be thresholded
 % dropPixels   any image pixels that are not included in the calculation

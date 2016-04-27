@@ -66,7 +66,7 @@ handles.diagnostics.cell = diag_tmp;
 tocs.CellMasking = toc;
 
 % - - - - 1st label: make label matrix from nuclear image - - - -
-[data_tmp, diag_tmp] = nucleusID(images.nucleus,p,data,X);
+[data_tmp, diag_tmp] = nucleusID(images.nucleus,p,data);
 % Save information
 handles.diagnostics.nuclei = diag_tmp;
 data = combinestructures(data,data_tmp);
@@ -163,7 +163,7 @@ ylim = get(gca,'ylim');
 structType = newStr(1:strfind(newStr,'-')-1);
 switch structType
     case 'overlay'
-        imagesc(handles.overlays.(newStr(strfind(newStr,'-')+1:end)),'Parent',handles.diagnosticAxes), colormap gray
+        imshow(handles.overlays.(newStr(strfind(newStr,'-')+1:end)),'Parent',handles.diagnosticAxes), colormap gray
     otherwise
         imagesc(handles.diagnostics.(structType).(newStr(strfind(newStr,'-')+1:end)),'Parent',handles.diagnosticAxes), colormap jet
 end

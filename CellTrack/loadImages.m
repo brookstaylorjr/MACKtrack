@@ -61,35 +61,36 @@ set(handles.NucleusOverlay,'AlphaData',double(diskNuc>0)*0.6)
 hold(handles.axes5B,'off')
 
 
-if ~strcmp(parameters.ImageType,'None')
 % NUCLEUS EDGE PLOT: do initial noisecount search for parameter picking (axes5B)
-	nucSmooth = medfilt2(nucOrig,[parameters.MedianFilterSize, parameters.MedianFilterSize]);
-	nucEdgeHor = imfilter(nucSmooth,fspecial('sobel') /8,'replicate');
-	nucEdgeVert = imfilter(nucSmooth,fspecial('sobel')'/8,'replicate');
-	nucEdge = sqrt(nucEdgeHor.^2 + nucEdgeVert.^2);
-	levelStart = otsuthresh(nucEdge,false(size(nucEdge)),'none');
-	imgSubsetNuc = imdilate(nucEdge>(levelStart), ones(80));
-	initialSearch = prctile(nucEdge(:),[5, 99]); % Use 5th and 99th percentile as starting point for nuclei
-	[noiseCount1, val1]  = noisecount(nucEdge,~imgSubsetNuc,initialSearch ,64);
-	set(handles.figure1,'CurrentAxes',handles.axes5A)
-	plot(handles.axes5A,val1,noiseCount1,'LineWidth',3,'Color',handles.orange)
-	set(handles.axes5A,'YTick',[])
-    % Keep starting value, unless it's way out of 5/95th prctile range.
-    nuc_edge = parameters.NucleusEdgeThreshold;
-    if (nuc_edge>(initialSearch(2)*2))||(nuc_edge<(initialSearch(1)/2))
-        nuc_edge = mean(initialSearch);
-        parameters.NucleusEdgeThreshold = nuc_edge;
-        disp('Note: nuclear edge threshold was out of range; reset to middle of search range')
-    end
-	% Display line indicating initial search value
-    x_lims = [floor(min(initialSearch(1),nuc_edge)), ceil(max(initialSearch(2),nuc_edge))];
-    hold(handles.axes5A,'on')
-	handles.LineNuc1 = plot(handles.axes5A,ones(1,2)*nuc_edge,get(handles.axes5A,'YLim'),'Color',handles.blue);
-	hold(handles.axes5A,'off')
-	set(handles.slider5A,'Min',x_lims(1),'Max',x_lims(2),'Value',nuc_edge)
-	set(handles.edit5A,'String',num2str(nuc_edge))
+nucSmooth = medfilt2(nucOrig,[parameters.MedianFilterSize, parameters.MedianFilterSize]);
+nucEdgeHor = imfilter(nucSmooth,fspecial('sobel') /8,'replicate');
+nucEdgeVert = imfilter(nucSmooth,fspecial('sobel')'/8,'replicate');
+nucEdge = sqrt(nucEdgeHor.^2 + nucEdgeVert.^2);
+levelStart = otsuthresh(nucEdge,false(size(nucEdge)),'none');
+imgSubsetNuc = imdilate(nucEdge>(levelStart), ones(80));
+initialSearch = prctile(nucEdge(:),[5, 99]); % Use 5th and 99th percentile as starting point for nuclei
+[noiseCount1, val1]  = noisecount(nucEdge,~imgSubsetNuc,initialSearch ,64);
+set(handles.figure1,'CurrentAxes',handles.axes5A)
+plot(handles.axes5A,val1,noiseCount1,'LineWidth',3,'Color',handles.orange)
+set(handles.axes5A,'YTick',[])
+% Keep starting value, unless it's way out of 5/95th prctile range.
+nuc_edge = parameters.NucleusEdgeThreshold;
+if (nuc_edge>(initialSearch(2)*2))||(nuc_edge<(initialSearch(1)/2))
+    nuc_edge = mean(initialSearch);
+    parameters.NucleusEdgeThreshold = nuc_edge;
+    disp('Note: nuclear edge threshold was out of range; reset to middle of search range')
+end
+% Display line indicating initial search value
+x_lims = [floor(min(initialSearch(1),nuc_edge)), ceil(max(initialSearch(2),nuc_edge))];
+hold(handles.axes5A,'on')
+handles.LineNuc1 = plot(handles.axes5A,ones(1,2)*nuc_edge,get(handles.axes5A,'YLim'),'Color',handles.blue);
+hold(handles.axes5A,'off')
+set(handles.slider5A,'Min',x_lims(1),'Max',x_lims(2),'Value',nuc_edge)
+set(handles.edit5A,'String',num2str(nuc_edge))
+
 
 % CELL OVERLAY (axes6B)
+if ~strcmp(parameters.ImageType,'None')
 	% Phase contrast/DIC image: balance mode at 90.
 	cellMin = cellOrig - min(cellOrig(:));
 	[n, x] = hist(cellMin(:),2^bit_depth);

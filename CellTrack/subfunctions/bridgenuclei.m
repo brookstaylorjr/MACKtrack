@@ -36,7 +36,6 @@ while (obj_cc.NumObjects>0) && (iter<10000)
     if verbose
         disp(['Testing obj containing [',num2str(unique(label_in(obj_cc.PixelIdxList{1}))'),']'])
         fprintf(['e =',num2str(e), ', a = ',num2str(a),', c = ',num2str(c)])
-
     end
     
     if (a < cutoff.Area(2)) && (a > cutoff.Area(1)) && ( (c<cutoff.Compactness(1)) ...
@@ -130,4 +129,5 @@ while (obj_cc.NumObjects>0) && (iter<10000)
     obj_cc.NumObjects = obj_cc.NumObjects-1;
     obj_rprops(1) = [];
     iter = iter+1;
+    if iter==9999; warning('Max iterations reached'); end
 end

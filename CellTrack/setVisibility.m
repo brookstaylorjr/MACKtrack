@@ -10,26 +10,7 @@ if strcmp(handles.parameters.ImageType,'None')
     set(handles.axes6A,'Visible','off')
     set(handles.pushbuttonSwitch2,'Visible','off') % Pushbutton "tab" for panel 6
     set(handles.text2B,'String','Aux') % Used for display output
-    
-    % Panel 5 - Nuclear parameters
-    set(handles.slider5A,'Visible','off')
-    set(handles.text5A,'Visible','off')
-    set(handles.edit5A,'Visible','off')
-    set(handles.text5B,'Visible','off')
-    set(handles.edit5B,'Visible','off')
-    axes_children = get(handles.axes5A,'children');
-    set(axes_children,'Visible','off')
-    set(handles.axes5A,'Visible','off')
 else
-    % Panel 5 - Nuclear parameters
-    set(handles.slider5A,'Visible','on')
-    set(handles.text5A,'Visible','on')
-    set(handles.edit5A,'Visible','on')
-    set(handles.text5B,'Visible','on')
-    set(handles.edit5B,'Visible','on')
-    set(handles.axes5A,'Visible','on')
-    axes_children = get(handles.axes5A,'children');
-    set(axes_children,'Visible','on')
     
     if strcmp(handles.parameters.ImageType,'DIC')
         % Panel 6 - Cell parameters. Set to DIC-specific fields
