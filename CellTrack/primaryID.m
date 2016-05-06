@@ -27,7 +27,6 @@ diagnos.search = nuc_orig>thresh1;
 diagnos.search_dilate = imdilate(diagnos.search,ones(p.MaxNucleusRadius*1.5));
 
 
-
 %- - - - - - - - - - - - - - - - - - - SETUP - - - - - - - - - - - - - - - - - - - - - - -
 % Set cutoffs for nuclear shape
 cutoff.Area = [floor(pi*(p.MinNucleusRadius-1)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
