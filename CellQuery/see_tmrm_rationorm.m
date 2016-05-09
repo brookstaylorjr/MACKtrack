@@ -1,9 +1,8 @@
-function [graph, info, measure] = see_pi(id,show_graphs, diagnos)
+function [graph, info, measure] = see_tmrm(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [graph, info, measure] = see_pi(id,show_graphs, diagnos)
+% [graph, info, measure] = see_tmrm(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SEE_PI is a visualization function to see measured vital cell dye levels
-% (like P.I. or sytox green)
+% SEE_TMRM is a visualization function to see measured TMRM dye 
 %
 %
 % id             experiment ID (from Google Spreadsheet specigied in "loadID.m")
@@ -31,24 +30,27 @@ end
 
 
 % Load data; set parameters
-[measure, info] = loadID(id);
+[measure, info] =loadID(id);
 info.parameters.FramesPerHour = 40; % 1.5 min between frames
-info.Module = 'nucintensityModule';
-t_max = (size(measure.MeanIntensityNuc,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
-info.graph_limits = [200 400];
+info.Module = 'tmrmModule';
+t_max = (size(measure.TMRM_cytoMean,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+info.graph_limits = [-20 120];
 
 
 
 %% Filtering
 droprows = [];
-droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:4)),2)>2]; % Cells existing @ expt start
-droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:120)),2)>3]; % Long-lived cells
+droprows = [droprows, sum(isnan(measure.TMRM_cytoMean(:,1:4)),2)>2]; % Cells existing @ expt start
+droprows = [droprows, sum(isnan(measure.TMRM_cytoMean(:,1:120)),2)>3]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
 
 %% Outputs
 % Extract measurement and apply filtering
-graph.var = measure.MeanIntensityNuc(info.keep,:);
+graph.var = measure.TMRM_cytoMean(info.keep,:);
+baseline = nanmean(graph.var(:,1:4),2); % caluclate baseline from avg of 1st 4 frames
+graph.var = graph.var ./ repmat(baseline,1, size(graph.var,2)); % copy baseline for each timepoint and calculate ratio
+
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
 
 graph.celldata = info.CellData(info.keep,:);
