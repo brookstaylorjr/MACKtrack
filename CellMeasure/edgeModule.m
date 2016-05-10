@@ -34,8 +34,8 @@ for i = 1:length(cells)
     cell_mask = labels.Cell==cells(i);
     % Assign measurements
     CellMeasurements.MedianEdge(cells(i),ModuleData.iter) = median(EdgeMag(cell_mask));
-    CellMeasurements.MedianEdge_erode3(cells(i),ModuleData.iter) = median(EdgeMag(imerode(cell_mask),ones(3)));
-    CellMeasurements.MedianEdge_erode5(cells(i),ModuleData.iter) = median(EdgeMag(imerode(cell_mask),ones(5)));
+    CellMeasurements.MedianEdge_erode3(cells(i),ModuleData.iter) = median(EdgeMag(imerode(cell_mask,ones(3))));
+    CellMeasurements.MedianEdge_erode5(cells(i),ModuleData.iter) = median(EdgeMag(imerode(cell_mask,ones(5))));
 end
 
 ModuleDataOut = ModuleData;
