@@ -65,8 +65,7 @@ diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff,p.debug);
 
 % ID nuclei w/ strong edges tends to be over-generous. Erode things somewhat, then remove super-small objects again
 borders = (imdilate(diagnos.label1,ones(3))-diagnos.label1)>0;
-strelsize = floor(p.MinNucleusRadius/3);
-diagnos.label1(imdilate(borders,diskstrel(strelsize))) = 0;
+diagnos.label1(imdilate(borders,ones(2))) = 0;
 diagnos.label1(~bwareaopen(diagnos.label1>0,cutoff.Area(1),4)) = 0;
 
 %- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
