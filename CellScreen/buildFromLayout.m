@@ -60,7 +60,7 @@ for i = 1:length(layout_dir)
                 end
             end
         end
-        final_name = ['ScreenData.(''',strjoin(fieldnames(1:(j-1)),''').('''), ''')'];
+        final_name = ['ScreenData.(''',strjoin(fieldnames(1:(j)),''').('''), ''')'];
     
     end
     
