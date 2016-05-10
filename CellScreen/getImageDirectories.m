@@ -54,8 +54,8 @@ for i = 1:length(layout_dir)
         else % No .tif files - keep searching
             dir_idx = filter_dir(dir_cell);
             % Add all directories to be searched
-            for i = 1:length(dir_idx)
-                search_dir = cat(1,search_dir,[curr_dir,filesep,dir_cell{1,dir_idx(i)}]);
+            for j = 1:length(dir_idx)
+                search_dir = cat(1,search_dir,[curr_dir,filesep,dir_cell{1,dir_idx(j)}]);
             end
         end
         search_dir(1) = [];

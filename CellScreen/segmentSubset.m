@@ -92,7 +92,7 @@ for i = 1:length(well_subset)
             tmp_name = image_names{nuc_id(j)};
             imwrite(tmp_img,[save_dir,filesep,tmp_name(1:end-3),'.jpg'])
         end
-        all_msg = ['Segmented ''', image_dir,filesep,image_names{nuc_id(j)},'''. Elapsed time = ',num2str(t),' sec\n'];
+        all_msg = ['Segmented ''', image_names{nuc_id(j)},'''. Elapsed time = ',num2str(t),' sec\n'];
         
         % (Make sure output mask is relabeled contiguously)
         nuc_cc = label2cc(output.nuclei,'true');

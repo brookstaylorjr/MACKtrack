@@ -8,7 +8,8 @@ function [cond_names, cond_wells] = parseLayout(layout_dir)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
     
 % Read in spreadsheet, ignoring letter/number row & col headers
-[~,~,raw] = xlsread([layout_dir,filesep,'layout.xlsx'],'B2:M13');
+[~,~,raw] = xlsread([layout_dir,filesep,'layout.xlsx']);
+raw(1,:) = []; raw(:,1) = [];
 % Blank wells will be read as 'NaN' - grab/group all conditions
 cond_names = {};
 cond_wells = {};
