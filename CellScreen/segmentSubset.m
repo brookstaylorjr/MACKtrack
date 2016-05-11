@@ -133,3 +133,5 @@ for i = 1:length(well_subset)
     SegmentData.measurements = cat(1,SegmentData.measurements,cell2mat(well_measurements));
     SegmentData.nuclei = cat(1,SegmentData.nuclei,well_nuclei);
 end
+% Add other supporting information
+SegmentData.image_dir = image_dir;

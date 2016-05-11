@@ -23,9 +23,11 @@ for i = 1:num_measurements
     bins = linspace(bin_range(1),bin_range(2),60);
     for j= 1:num_images
         g_idx = j+(i-1)*num_images;
-        histogram(struct1.measurements(struct1.image_id==j,i),bins,'FaceColor',clr(j,:),'Parent',ha(g_idx),...
-            'EdgeColor','none')
-        set(ha(g_idx),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_range,'YGrid','on')
+        if sum(~isnan(struct1.measurements(struct1.image_id==j,i)))>0
+            histogram(struct1.measurements(struct1.image_id==j,i),bins,'FaceColor',clr(j,:),'Parent',ha(g_idx),...
+                'EdgeColor','none')
+            set(ha(g_idx),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_range,'YGrid','on')
+        end
         if j == 1
             ylabel(ha(g_idx),['Measure ',num2str(i)],'FontSize',11,'FontWeight','normal','interpreter','none')
         end

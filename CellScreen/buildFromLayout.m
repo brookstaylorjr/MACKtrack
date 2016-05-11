@@ -1,18 +1,14 @@
-% Build measurment sets from layout files
-
-
-% Specify staring directory - we'll find ALL layouts in any subdirectories under this one
-start_dir = '/Volumes/labdata/prat';
-
-
-% Specify channels and measurements
-nuclear_channel = 'w1';
-measurement_channels = {'w2','w5'};
-measurement_type = {@mean,@median};
-
-
-% Load parameters
-load('OP9_prat.mat')
+function [ScreenData, layout_dir, image_dir] = buildFromLayout(start_dir, nuclear_channel, measurement_channels, measurement_type, parameters)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% [ScreenData, layout_dir, image_dir] = buildFromLayout(start_dir, nuclear_channel, measurement_channels, measurement_type, parameters)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% BUILDFROMLAYOUT crawls through all subdirectories under start_dir, looking for layout.xlsx files that correspond
+% to plate screener images. Nuclear images will be segmented, and boundaries are used to measure intensity values
+% (or other attribuites) of single cells in images specified in 'measurement_channels'
+%
+% A note about parameters - OP9_default works well for the 'standard' imaging conditions (20x, 2x2 binning, moderate 
+% exposure), but you can modify/create new parameters by running the MACKtrack GUI
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 % Crawl down from starting directory - find all plate layouts (and corresponding image folders)
 [layout_dir, image_dir, all_dir] = getImageDirectories(start_dir);
@@ -70,6 +66,3 @@ for i = 1:length(layout_dir)
     end
     
 end
-
-save([start_dir,filesep,'ScreenData_',date,'.mat'],'ScreenData')
-disp('... saved file')
