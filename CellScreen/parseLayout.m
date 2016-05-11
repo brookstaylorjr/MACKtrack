@@ -31,6 +31,9 @@ for j = 1:length(ltr)
 end  
 disp(['- - - - - - Measuring following conditions from images under directory ''',layout_dir,'''- - - - - '])
 for i = 1:length(cond_names)
+    if ~iscell(cond_wells{i})
+        cond_wells{i} = {cond_wells{i}};
+    end
     disp(['''',cond_names{i},''': from wells ' strjoin(cond_wells{i},', ')])
 end    
 disp('- - - - - - - - - - - - - - ')

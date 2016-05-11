@@ -37,7 +37,7 @@ for i = 1:length(layout_dir)
     AllNames{i} = CondName;
 end
 
-%%
+
 % Write data into structure that matches folder hierarchy 
 ScreenData= struct;
 for i = 1:length(layout_dir)
@@ -48,14 +48,14 @@ for i = 1:length(layout_dir)
     final_name = 'SegmentData';
     % Make final structure
     if length(fieldnames)>0
-        if ~isfield(fieldnames{1},ScreenData)
+        if ~isfield(ScreenData,fieldnames{1})
             ScreenData.(fieldnames{1}) = struct;
         end
         if length(fieldnames)>1
             for j = 2:length(fieldnames)
                 structname = ['ScreenData.(''',strjoin(fieldnames(1:(j-1)),''').(''')];
                 structname = [structname,''')'];
-                if ~isfield(fieldnames{j},eval(structname))
+                if ~isfield(eval(structname),fieldnames{j})
                     eval([structname,'.(''',fieldnames{j},''') = struct;'])
                 end
             end
@@ -72,4 +72,4 @@ for i = 1:length(layout_dir)
 end
 
 save([start_dir,filesep,'ScreenData_',date,'.mat'],'ScreenData')
-
+disp('... saved file')
