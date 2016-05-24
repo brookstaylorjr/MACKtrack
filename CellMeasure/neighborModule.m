@@ -55,7 +55,7 @@ for n = 1:length(cells)
     CellMeasurements.OccupiedPerimeter(cells(n),ModuleData.iter) = sum(touch_mask(cc1.PixelIdxList{n})) / sum(border_mask(cc1.PixelIdxList{n}));
 end
 
-% Nearby cells: count number of cells within a certain cistance of starting cells
+% Nearby cells: count number of cells within a certain distance of starting cells
 % Pair cells, and look at (discretized) distance between their nearest edges
 all_dist = nan(length(cells),length(cells));
 for m = 1:(length(centroidx)-1)

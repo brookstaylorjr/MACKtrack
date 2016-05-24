@@ -23,10 +23,10 @@ for i = 1:length(layout_dir)
     % DO MEASUREMENT HERE - assign to cell mat that matches layout_dir order (for assignment later)
     CondData = cell(size(conditions));
     CondName = cell(size(conditions));
-    parfor j = 1:length(conditions)
-        CondData{j} = segmentSubset(wells{j}, nuclear_channel, measurement_channels, ...
+    parfor k = 1:length(conditions)
+        CondData{k} = segmentSubset(wells{k}, nuclear_channel, measurement_channels, ...
             measurement_type, image_dir{i}, parameters, [layout_dir{i},filesep,'output_img']);
-        CondName{j} = conditions{j};
+        CondName{k} = conditions{k};
     end
     % Need to combine into a larger structure...
     AllData{i} = CondData;

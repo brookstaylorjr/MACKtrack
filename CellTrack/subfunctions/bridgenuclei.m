@@ -83,7 +83,6 @@ while (obj_cc.NumObjects>0) && (iter<10000)
             disp(' -> (fail)')
         end
         % FALSE; see if object contains >1 unique subobject
-        
         if (length(subobj)>1)
             if (length(subobj)<12) % Keep object numbers down so combinatorial approach doesn't overwhelm                 
                 % Step through all combinations of objects; exit if we find an object that fits critera
@@ -126,7 +125,6 @@ while (obj_cc.NumObjects>0) && (iter<10000)
    
                             end
                             % If object passed, take remaining subobjects in cluster and add (as new object(s)) back into stack
-     
                             if obj_pass    
                                 tmp_mask2 = false(size(label_in));
                                 tmp_mask2(cat(1,input_cc.PixelIdxList{subobj})) = 1;
