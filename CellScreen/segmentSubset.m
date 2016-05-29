@@ -52,6 +52,8 @@ for i = 1:length(well_subset)
     % Identify nuclear images using well names and nuclear channel
     nuc_id = ~cellfun(@isempty,strfind(image_names,['_',well_subset{i},'_']));
     nuc_id = nuc_id & ~cellfun(@isempty,strfind(image_names,['_',nuclear_channel]));
+    % Drop anything with the name "thumb"
+    nuc_id = nuc_id & cellfun(@isempty,strfind(image_names,'thumb'));
     nuc_id = find(nuc_id);
     if isempty(nuc_id)
         warning(['No corresponding images found for well ', well_subset{i}])
