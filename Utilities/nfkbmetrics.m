@@ -16,7 +16,8 @@ function [metrics,aux, graph, info, measure] = nfkbmetrics(id,varargin)
 % INPUT PARAMETERS (optional; specify with name-value pairs)
 % 'Display'      'on' or 'off' - show graphs (default: process data only; no graphs)
 % 'Verbose'      'on' or 'off' - show verbose output
-% 'Endframe'     final frame used to filter for long-lived cells (default = 100)
+% 'MinLifetime'  final frame used to filter for long-lived cells (default = 100)
+% 'TrimFrame'    trim sets to common length (default = 254 timepoints) 
 %
 % OUTPUT: 
 % metrics   structure with output fields
@@ -32,7 +33,9 @@ valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
 addRequired(p,'id',valid_id);
 % Optional parameters
 addParameter(p,'Baseline', 1.9,@isnumeric);
-addParameter(p,'Endframe',100, @isnumeric);
+addParameter(p,'MinLifetime',100, @isnumeric);
+addParameter(p,'TrimFrame',254, @isnumeric);
+
 parse(p,id, varargin{:})
 
 %% PARAMETETERS for finding off times - chosen using 'scan_off_params.m'
@@ -43,11 +46,11 @@ cutoff_time = 4; % time to look for cell activity before declaring it "off" (hrs
 off_pad = 6; % Signal time added to trajectory in  FFT calculation (keeps transients from being recorded as osc.)
 
 %% INITIALIZATION. Load and process data. Interpolate time series, calculate deriv/integral approximations
-if ismember('Endframe',p.UsingDefaults)
+if ismember('MinLifetime',p.UsingDefaults)
     [graph, info, measure] = see_nfkb_native(id);
 else
-   [graph, info, measure] = see_nfkb_native(id,'Endframe',p.Results.Endframe);
-   graph.var = graph.var(:,1:p.Results.Endframe);
+   [graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime);
+   graph.var = graph.var(:,1:p.Results.MinLifetime);
    graph.t = graph.t(1:size(graph.var,2));
 end
 
@@ -177,7 +180,7 @@ metrics.pk1_amp =  nan(size(metrics.time_series,1),1);
 metrics.pk2_time = nan(size(metrics.time_series,1),1);
 metrics.pk2_amp =  nan(size(metrics.time_series,1),1);
 for i = 1:size(metrics.pk1_time,1)    
-    [pks, locs] = globalpeaks(metrics.time_series(i,1:min([90,p.Results.Endframe])),5);
+    [pks, locs] = globalpeaks(metrics.time_series(i,1:min([90,p.Results.MinLifetime])),5);
     % Supress any peaks that are within 6 frames of each other.
     [locs, order] = sort(locs,'ascend');
     pks = pks(order);
@@ -238,11 +241,12 @@ for i = 1:length(aux.thresholds)
     metrics.duration(:,i) = nansum(smoothed>aux.thresholds(i),2)/12;
 end
 
+
 %% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 21 hrs (252 frames)
 try
-    metrics.time_series = metrics.time_series(:,1:254);
-    metrics.integrals = metrics.integrals(:,1:254);
-    metrics.derivatives = metrics.derivatives(:,1:252);
+    metrics.time_series = metrics.time_series(:,1:p.Results.TrimFrame);
+    metrics.integrals = metrics.integrals(:,1:p.Results.TrimFrame);
+    metrics.derivatives = metrics.derivatives(:,1:(p.Results.TrimFrame-2));
 catch me
-    disp('Note: vectors too short to cap @ 257 frames')
+    disp(['Note: vectors too short to cap @ ',num2str(p.Results.TrimFrame),' frames'])
 end

@@ -11,7 +11,7 @@ function [graph, info, measure] = see_nfkb_native(id,varargin)
 % INPUT PARAMETERS (optional; specify with name-value pairs)
 % 'Display'      'on' or 'off' - show graphs (default: process data only; no graphs)
 % 'Verbose'      'on' or 'off' - show verbose output
-% 'Endframe'     final frame used to filter for long-lived cells (default = 100)
+% 'MinLifetime'     final frame used to filter for long-lived cells (default = 100)
 %
 % OUTPUTS:  
 % graph          primary output structure; must specify
@@ -35,13 +35,13 @@ addRequired(p,'id',valid_id);
 expectedFlags = {'on','off'};
 addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
-addParameter(p,'Endframe',100, @isnumeric);
+addParameter(p,'MinLifetime',100, @isnumeric);
 
 % Parse parameters, assign to variables
 parse(p,id, varargin{:})
 if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
 if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
-endframe = p.Results.Endframe;
+MinLifetime = p.Results.MinLifetime;
 %% Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
@@ -121,7 +121,7 @@ robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanst
 % Filtering, part 1 cell fate and cytoplasmic intensity
 droprows = [];
 droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:4)),2)>2]; % Cells existing @ expt start
-droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:endframe)),2)>3]; % Long-lived cells
+droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:MinLifetime)),2)>3]; % Long-lived cells
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
 
@@ -132,10 +132,10 @@ for i = 1:size(nfkb,1)
     nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
 end
 % If default end frame is specified, use entire vector for baseline calculation. Otherwise use specified baseline.
-if ismember('Endframe',p.UsingDefaults)
+if ismember('MinLifetime',p.UsingDefaults)
     nfkb_min = prctile(nfkb_smooth,2,2);
 else
-    nfkb_min = prctile(nfkb_smooth(:,1:endframe),4,2);
+    nfkb_min = prctile(nfkb_smooth(:,1:MinLifetime),4,2);
 end
 
 nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),nfkb_min],[],2);
