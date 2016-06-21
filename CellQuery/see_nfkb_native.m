@@ -197,7 +197,6 @@ info.keep = max(droprows,[],2) == 0;
 nfkb = nfkb(info.keep,:);
 
 %% Initialize outputs, do final corrections
-
 graph.celldata = info.CellData(info.keep,:);
 
 % Correct for XY positions that activate late

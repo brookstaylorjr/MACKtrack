@@ -25,7 +25,7 @@ switch parameters.ImageType
     case 'phase'
         % Set function names
         fnstem = 'phase';
-        X = backgroundcalculate(patameters.ImageSize);
+        X = backgroundcalculate(parameters.ImageSize);
 end
 
 % Get image bit depth
