@@ -35,7 +35,7 @@ colors.cpg = [136 180 69]/255;
 colors.pam = [230 130 57]/255;
 colors.off = [217 210 200]/255;
 colors.pic = [101 76 125]/255;
-colors.bglu = [222 201 52]/255;
+colors.bglu = [243 193 24]/255;
 colors.bg_gray = [175 176 179
                   212 213 216
                   232 233 239

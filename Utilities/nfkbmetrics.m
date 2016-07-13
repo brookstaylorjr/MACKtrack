@@ -71,11 +71,24 @@ for i = 1:size(metrics.integrals,1)
     metrics.integrals(i,:) = cumtrapz(t,metrics.time_series(i,:));
 end
 
-% 3) differentiated activity - use central finite difference
+% 3) Integrals within one-hour windows (0-1, 1-2, 2-3) and three hour windows (0-3, 1-4, etc) of activity
+max_hr = floor(max(t));
+metrics.intwin1 = nan(size(metrics.time_series,1),max_hr);
+metrics.intwin3 = nan(size(metrics.time_series,1),max_hr-2);
+for i = 1:(max_hr)
+    win = t>=(i-1) & t<(i);
+    metrics.intwin1(:,i) = trapz(t(win),metrics.time_series(:,win),2);
+    if i<= (max_hr-2)
+        win = t>=(i-1) & t<(i+2);
+        metrics.intwin3(:,i) = trapz(t(win),metrics.time_series(:,win),2);
+    end
+end
+
+% 4) differentiated activity - use central finite difference
 smoothed = medfilt1(metrics.time_series,3,[],1);
 metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
-% 4) calculated metrics
+% 5) calculated metrics
 % MAX/MIN metrics
 metrics.max_amplitude = nanmax(metrics.time_series,[],2);
 metrics.max_integral = nanmax(metrics.integrals,[],2);
