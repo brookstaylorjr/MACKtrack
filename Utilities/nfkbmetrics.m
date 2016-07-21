@@ -14,10 +14,11 @@ function [metrics,aux, graph, info, measure] = nfkbmetrics(id,varargin)
 % id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
-% 'Display'      'on' or 'off' - show graphs (default: process data only; no graphs)
-% 'Verbose'      'on' or 'off' - show verbose output
-% 'MinLifetime'  final frame used to filter for long-lived cells (default = 100)
-% 'TrimFrame'    trim sets to common length (default = 254 timepoints) 
+% 'Display'         'on' or 'off' - show graphs (default: process data only; no graphs)
+% 'Verbose'          'on' or 'off' - show verbose output
+% 'MinLifetime'      final frame used to filter for long-lived cells (default = 100)
+% 'TrimFrame'        trim sets to common length (default = 254 timepoints) 
+% 'ConvectionShift'  max allowed time shift between scenes (to correct for poor mixing - default is no shift allowed)
 %
 % OUTPUT: 
 % metrics   structure with output fields
@@ -35,7 +36,9 @@ addRequired(p,'id',valid_id);
 addParameter(p,'Baseline', 1.9,@isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
 addParameter(p,'TrimFrame',254, @isnumeric);
-
+valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
+    'Convection correction parameter must be single integer >= 0');
+addParameter(p,'ConvectionShift',0, valid_conv);
 parse(p,id, varargin{:})
 
 %% PARAMETETERS for finding off times - chosen using 'scan_off_params.m'
@@ -46,10 +49,9 @@ cutoff_time = 4; % time to look for cell activity before declaring it "off" (hrs
 off_pad = 6; % Signal time added to trajectory in  FFT calculation (keeps transients from being recorded as osc.)
 
 %% INITIALIZATION. Load and process data. Interpolate time series, calculate deriv/integral approximations
-if ismember('MinLifetime',p.UsingDefaults)
-    [graph, info, measure] = see_nfkb_native(id);
-else
-   [graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime);
+[graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime,...
+                            'ConvectionShift',p.Results.ConvectionShift);
+if ~ismember('MinLifetime',p.UsingDefaults)
    graph.var = graph.var(:,1:p.Results.MinLifetime);
    graph.t = graph.t(1:size(graph.var,2));
 end

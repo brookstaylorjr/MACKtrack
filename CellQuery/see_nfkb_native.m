@@ -9,9 +9,10 @@ function [graph, info, measure] = see_nfkb_native(id,varargin)
 % id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
-% 'Display'      'on' or 'off' - show graphs (default: process data only; no graphs)
-% 'Verbose'      'on' or 'off' - show verbose output
+% 'Display'         'on' or 'off' - show graphs (default: process data only; no graphs)
+% 'Verbose'         'on' or 'off' - show verbose output
 % 'MinLifetime'     final frame used to filter for long-lived cells (default = 100)
+% 'ConvectionShift'  Maximum allowable time-shift between different XYs (to correct for poor mixing)
 %
 % OUTPUTS:  
 % graph          primary output structure; must specify
@@ -35,6 +36,9 @@ addRequired(p,'id',valid_id);
 expectedFlags = {'on','off'};
 addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
+valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
+    'Convection correction parameter must be single integer >= 0');
+addParameter(p,'ConvectionShift',1, valid_conv);
 addParameter(p,'MinLifetime',100, @isnumeric);
 
 % Parse parameters, assign to variables
@@ -42,12 +46,13 @@ parse(p,id, varargin{:})
 if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
 if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
 MinLifetime = p.Results.MinLifetime;
+max_shift = p.Results.ConvectionShift; % Max allowable frame shift in XY-specific correction
+
 %% Load data
 [measure, info] = loadID(id);
 info.Module = 'nfkbdimModule';
 
 % Set display/filtering parameters
-max_shift = 1; % Max allowable frame shift in XY-specific correction
 start_thresh = 2; % Maximal allowable start level above baseline
 info.graph_limits = [-0.25 8]; % Min/max used in graphing
 dendro = 0;
@@ -187,7 +192,7 @@ if verbose_flag
     h = suptitle(['x = Nuclear stain level. Threshold = ',num2str(nuc_thresh)]);
     set(h,'FontSize',14)
     
-    ranksmult(nfkb(keep,:),nanmedian(measure.Area(keep,:),2))
+    ranksmult(nfkb(keep,:),nanmedian(measure.Area(keep,:),2));
     h = suptitle(['x = Median area. Threshold = ',num2str(area_thresh)]);
     set(h,'FontSize',14)
 
