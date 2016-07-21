@@ -35,7 +35,7 @@ addRequired(p,'id',valid_id);
 % Optional parameters
 addParameter(p,'Baseline', 1.9,@isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
-addParameter(p,'TrimFrame',254, @isnumeric);
+addParameter(p,'TrimFrame',255, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
     'Convection correction parameter must be single integer >= 0');
 addParameter(p,'ConvectionShift',0, valid_conv);
