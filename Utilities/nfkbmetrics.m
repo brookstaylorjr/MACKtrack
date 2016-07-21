@@ -35,7 +35,7 @@ addRequired(p,'id',valid_id);
 % Optional parameters
 addParameter(p,'Baseline', 1.9,@isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
-addParameter(p,'TrimFrame',255, @isnumeric);
+addParameter(p,'TrimFrame',258, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
     'Convection correction parameter must be single integer >= 0');
 addParameter(p,'ConvectionShift',0, valid_conv);
@@ -73,7 +73,25 @@ for i = 1:size(metrics.integrals,1)
     metrics.integrals(i,:) = cumtrapz(t,metrics.time_series(i,:));
 end
 
-% 3) Integrals within one-hour windows (0-1, 1-2, 2-3) and three hour windows (0-3, 1-4, etc) of activity
+% 3) differentiated activity - use central finite difference
+smoothed = medfilt1(metrics.time_series,3,[],1);
+metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
+
+
+%% TRIM EVERYBODY to a common length (of "good" sets, current minimum is roughly 21.25 hrs)
+try
+    metrics.time_series = metrics.time_series(:,1:p.Results.TrimFrame);
+    metrics.integrals = metrics.integrals(:,1:p.Results.TrimFrame);
+    metrics.derivatives = metrics.derivatives(:,1:(p.Results.TrimFrame-2));
+    smoothed = smoothed(:,1:p.Results.TrimFrame);
+    t = t(1:p.Results.TrimFrame);
+
+catch me
+    disp(['Note: vectors too short to cap @ ',num2str(p.Results.TrimFrame),' frames'])
+end
+%% MISC METRICS
+
+% 4) Integrals within one-hour windows (0-1, 1-2, 2-3) and three hour windows (0-3, 1-4, etc) of activity
 max_hr = floor(max(t));
 metrics.intwin1 = nan(size(metrics.time_series,1),max_hr);
 metrics.intwin3 = nan(size(metrics.time_series,1),max_hr-2);
@@ -86,18 +104,14 @@ for i = 1:(max_hr)
     end
 end
 
-% 4) differentiated activity - use central finite difference
-smoothed = medfilt1(metrics.time_series,3,[],1);
-metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
-
-% 5) calculated metrics
+% 5) amplitude/peak/on-vs-off metrics
 % MAX/MIN metrics
 metrics.max_amplitude = nanmax(metrics.time_series,[],2);
 metrics.max_integral = nanmax(metrics.integrals,[],2);
 metrics.max_derivative = nanmax(metrics.derivatives,[],2);
 metrics.min_derivative = nanmin(metrics.derivatives,[],2);
 
-%% DURATION(1) Compute an off-time for all cells
+% DURATION(1) Compute an off-time for all cells
 metrics.off_times = zeros(size(smoothed,1),1);
 inactive = [repmat(nanmin(smoothed(:,1:7),[],2),1,window_sz*2+1),smoothed(:,:),...
     repmat(nanmedian(smoothed(:,(end-window_sz:end)),2),1,window_sz*2)];
@@ -257,11 +271,4 @@ for i = 1:length(aux.thresholds)
 end
 
 
-%% TRIM EVERYBODY to a common length (of "good" sets, our current minimum is about 21 hrs (252 frames)
-try
-    metrics.time_series = metrics.time_series(:,1:p.Results.TrimFrame);
-    metrics.integrals = metrics.integrals(:,1:p.Results.TrimFrame);
-    metrics.derivatives = metrics.derivatives(:,1:(p.Results.TrimFrame-2));
-catch me
-    disp(['Note: vectors too short to cap @ ',num2str(p.Results.TrimFrame),' frames'])
-end
+
