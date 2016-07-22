@@ -23,9 +23,9 @@ iteration  = ModuleData.iter;
 % Initialize all new CellMeasurements fields 
 if ~isfield(CellMeasurements,'MeanIntensity')
     % Intensity-based measurement initialization
-    CellMeasurements.MeanIntensity =  zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntegratedIntensity =  zeros(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MedianIntensity = zeros(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.MeanIntensity =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.IntegratedIntensity =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.MedianIntensity = nan(parameters.TotalCells,parameters.TotalImages);
 end
 
 % Cycle through each cell and assign measurements
