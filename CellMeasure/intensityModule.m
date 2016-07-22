@@ -13,11 +13,11 @@ function [CellMeasurements, ModuleData] = intensityModule(CellMeasurements,param
 iteration  = ModuleData.iter;
 
 % Mode-balance 1st auxililiary image - bimodal distribution assumed
-    if ~isfield(ModuleData,'distr')
-        [AuxImages{1}, ModuleData.distr] = modebalance(AuxImages{1},2,ModuleData.BitDepth,'measure'); 
-    else
-        AuxImages{1} = modebalance(AuxImages{1},2,ModuleData.BitDepth,'correct',ModuleData.distr);
-    end
+if ~isfield(ModuleData,'distr')
+    [AuxImages{1}, ModuleData.distr] = modebalance(AuxImages{1},2,ModuleData.BitDepth,'measure'); 
+else
+    AuxImages{1} = modebalance(AuxImages{1},2,ModuleData.BitDepth,'correct',ModuleData.distr);
+end
 
 
 % Initialize all new CellMeasurements fields 
@@ -34,6 +34,35 @@ for n = 1:length(cells)
     CellMeasurements.MeanIntensity(cells(n),iteration) = mean(AuxImages{1}(labels.Cell==cells(n)));
     CellMeasurements.IntegratedIntensity(cells(n),iteration) = sum(AuxImages{1}(labels.Cell==cells(n)));
     CellMeasurements.MedianIntensity(cells(n),iteration) = median(AuxImages{1}(labels.Cell==cells(n)));
+end
+
+
+% Measure cells in 2nd auxiliary image, if it is specified
+if ~isempty(AuxImages{2})
+    % Mode-balance
+    if ~isfield(ModuleData,'distr2')
+        [~, ModuleData.distr2] = modebalance(AuxImages{2},2,ModuleData.BitDepth,'measure'); 
+    else
+        AuxImages{2} = modebalance(AuxImages{2},2,ModuleData.BitDepth,'correct',ModuleData.distr2);
+    end
+
+
+    % On first call, initialize all new CellMeasurements fields 
+    if ~isfield(CellMeasurements,'MeanIntensityNuc2')
+        % Intensity-based measurement initialization
+        CellMeasurements.MeanIntensity2 =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.IntegratedIntensity2 =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.MedianIntensity2 = nan(parameters.TotalCells,parameters.TotalImages);
+    end
+
+    % Cycle through each cell and assign measurements
+    cells = unique(labels.Cell(labels.Cell>0));
+    for n = 1:length(cells)
+        CellMeasurements.MeanIntensity2(cells(n),iteration) = mean(AuxImages{2}(labels.Cell==cells(n)));
+        CellMeasurements.IntegratedIntensity2(cells(n),iteration) = sum(AuxImages{2}(labels.Cell==cells(n)));
+        CellMeasurements.MedianIntensity2(cells(n),iteration) = median(AuxImages{2}(labels.Cell==cells(n)));
+    end
+
 end
 
 ModuleDataOut = ModuleData;
