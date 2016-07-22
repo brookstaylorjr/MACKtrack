@@ -130,7 +130,7 @@ droprows = [droprows, sum(isnan(measure.NFkBdimNuclear(:,1:MinLifetime)),2)>3]; 
 droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim cells
 %droprows = [droprows, info.CellData(:,end)]; % Non-edge cells
 
-% NFkB normalization - subtract baseline for each cell; divide y background distribution width
+% NFkB normalization - subtract baseline for each cell (either starting value or 4th percentile of smoothed trajectory)
 nfkb = measure.NFkBdimNuclear(:,:);
 nfkb_smooth = nan(size(nfkb));
 for i = 1:size(nfkb,1)
