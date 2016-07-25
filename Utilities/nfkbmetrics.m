@@ -33,9 +33,9 @@ valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
     'ID input must be spreadsheet ID or full file path');
 addRequired(p,'id',valid_id);
 % Optional parameters
-addParameter(p,'Baseline', 1.9,@isnumeric);
+addParameter(p,'Baseline', 1.85, @isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
-addParameter(p,'TrimFrame',258, @isnumeric);
+addParameter(p,'TrimFrame',255, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
     'Convection correction parameter must be single integer >= 0');
 addParameter(p,'ConvectionShift',0, valid_conv);
@@ -43,10 +43,10 @@ parse(p,id, varargin{:})
 
 %% PARAMETETERS for finding off times - chosen using 'scan_off_params.m'
 baseline = p.Results.Baseline; % Minimum activity required for cell to register as 'on'
-window_sz = 14; % 1+ hr windows (on either side of a given timepoint)
+window_sz = 14; % ~1 hr windows (on either side of a given timepoint)
 thresh = 0.9; % Pct of inactivity allowed in a given window
 cutoff_time = 4; % time to look for cell activity before declaring it "off" (hrs)
-off_pad = 6; % Signal time added to trajectory in  FFT calculation (keeps transients from being recorded as osc.)
+off_pad = 12; % Signal time added to trajectory in  FFT calculation (keeps transients from being recorded as osc.)
 
 %% INITIALIZATION. Load and process data. Interpolate time series, calculate deriv/integral approximations
 [graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime,...
@@ -55,7 +55,7 @@ if ~ismember('MinLifetime',p.UsingDefaults)
    graph.var = graph.var(:,1:p.Results.MinLifetime);
    graph.t = graph.t(1:size(graph.var,2));
 end
-
+%%
 % 1) basic time series. Interpolate over "normal" interval (12 frames per hr) if required
 t = min(graph.t):1/12:max(graph.t);
 if length(t)~=length(graph.t)
@@ -74,11 +74,11 @@ for i = 1:size(metrics.integrals,1)
 end
 
 % 3) differentiated activity - use central finite difference
-smoothed = medfilt1(metrics.time_series,3,[],1);
+smoothed = medfilt1(metrics.time_series,3,[],2);
 metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
 
-%% TRIM EVERYBODY to a common length (of "good" sets, current minimum is roughly 21.25 hrs)
+%% TRIM EVERYBODY to a common length (of "good" sets, current minimum is roughly 21 hrs)
 try
     metrics.time_series = metrics.time_series(:,1:p.Results.TrimFrame);
     metrics.integrals = metrics.integrals(:,1:p.Results.TrimFrame);
@@ -111,7 +111,7 @@ metrics.max_integral = nanmax(metrics.integrals,[],2);
 metrics.max_derivative = nanmax(metrics.derivatives,[],2);
 metrics.min_derivative = nanmin(metrics.derivatives,[],2);
 
-% DURATION(1) Compute an off-time for all cells
+% ACTIVITY Compute an off-time for all cells
 metrics.off_times = zeros(size(smoothed,1),1);
 inactive = [repmat(nanmin(smoothed(:,1:7),[],2),1,window_sz*2+1),smoothed(:,:),...
     repmat(nanmedian(smoothed(:,(end-window_sz:end)),2),1,window_sz*2)];
@@ -199,8 +199,6 @@ for j = 1:length(freq_thresh)
         end
     end
 end
-
-
 
 %% METRICS OF AMPLITUDE AND TIMING
 % 1st + 2nd peak time/amplitude
