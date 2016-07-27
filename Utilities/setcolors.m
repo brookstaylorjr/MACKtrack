@@ -55,6 +55,12 @@ colors.trail{3} = [255 255 255]/255;
 colors.trail{4} = [90 90 91]/255;
 colors.trail{5} = [248 152 29]/255;
 
+% Peacock theme
+colors.peacock{1} = [140 178 2]/255;
+colors.peacock{2} = [0 140 116]/255;
+colors.peacock{3} = [0 76 102]/255;
+colors.peacock{4} = [51 43 64]/255;
+
 
 
 if nargin>0
