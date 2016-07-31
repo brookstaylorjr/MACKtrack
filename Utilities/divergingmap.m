@@ -1,9 +1,15 @@
 function[map] = divergingmap(s,rgb1,rgb2)
-%This function is based on Kenneth Moreland's code for greating Diverging
+% - - - - - - - - - - - - - - - - - - - - - - - - -
+% function[map] = divergingmap(s,rgb1,rgb2)
+% - - - - - - - - - - - - - - - - - - - - - - - - -
+%
+%This function is based on Kenneth Moreland's code for creating Diverging
 %Colormaps.  Created by Andy Stein.
 %
-%s is a vector that goes between zero and one 
-
+% rgb1 is color assigned to lowest value ([R G B]/255)
+% rgb2 is color assigned to highest value ([R G B]/255)
+% s is a vector that goes between zero and one - gives spacing between adjacent colors
+%
 map = zeros(length(s),3);
 for i=1:length(s)
     map(i,:) = diverging_map_1val(s(i),rgb1,rgb2);

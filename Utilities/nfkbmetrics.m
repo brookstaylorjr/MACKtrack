@@ -49,11 +49,13 @@ cutoff_time = 4; % time to look for cell activity before declaring it "off" (hrs
 off_pad = 12; % Signal time added to trajectory in  FFT calculation (keeps transients from being recorded as osc.)
 
 %% INITIALIZATION. Load and process data. Interpolate time series, calculate deriv/integral approximations
-[graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime,...
-                            'ConvectionShift',p.Results.ConvectionShift);
 if ~ismember('MinLifetime',p.UsingDefaults)
+   [graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime,...
+                            'ConvectionShift',p.Results.ConvectionShift);
    graph.var = graph.var(:,1:p.Results.MinLifetime);
    graph.t = graph.t(1:size(graph.var,2));
+else
+   [graph, info, measure] = see_nfkb_native(id, 'ConvectionShift',p.Results.ConvectionShift);
 end
 %%
 % 1) basic time series. Interpolate over "normal" interval (12 frames per hr) if required

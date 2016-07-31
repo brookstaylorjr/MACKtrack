@@ -84,18 +84,19 @@ if nargin>0
                 tick_names = cat(1,tick_names,names{i});
             end
         end
-        % Split colors up into groups of 4
+        % Split colors up into groups of 6
         figure('Position',[224         913        800         600]);
-        rows = ceil(length(tick_names)/4);
+        n = 8;
+        rows = ceil(length(tick_names)/n);
 
         h = tight_subplot(rows,1,0.1);
         disp_vect = 1:length(tick_names);
         for i = 1:rows
             axes(h(i))
-            imagesc(disp_vect((i-1)*4+1:min([end,(i-1)*4+4])),[1 length(tick_names)])
+            imagesc(disp_vect((i-1)*n+1:min([end,(i-1)*n+n])),[1 length(tick_names)])
             set(h(i),'YTick',[])
-            names = tick_names((i-1)*4+1:min([end,(i-1)*4+4]));
-            set(h(i),'XTick',1:length(names),'XTickLabel',names)
+            names = tick_names((i-1)*n+1:min([end,(i-1)*n+n]));
+            set(h(i),'XTick',1:length(names),'XTickLabel',names,'FontSize',10)
             colormap(all_colors)            
         end
     end

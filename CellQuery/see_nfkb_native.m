@@ -57,7 +57,7 @@ start_thresh = 2; % Maximal allowable start level above baseline
 info.graph_limits = [-0.25 8]; % Min/max used in graphing
 dendro = 0;
 colors = setcolors;
-
+baseline_length = size(measure.NFkBdimNuclear,2); % Endframe for baseline calculation (default: use entire vector)
 
 % Experiment-specific visualization settings/tweaks (load spreadsheet URL)
 home_folder = mfilename('fullpath');
@@ -136,12 +136,8 @@ nfkb_smooth = nan(size(nfkb));
 for i = 1:size(nfkb,1)
     nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
 end
-% If default end frame is specified, use entire vector for baseline calculation. Otherwise use specified baseline.
-if ismember('MinLifetime',p.UsingDefaults)
-    nfkb_min = prctile(nfkb_smooth,2,2);
-else
-    nfkb_min = prctile(nfkb_smooth(:,1:MinLifetime),4,2);
-end
+% If default end frame is specified, use entire vector for baseline calculation. Otherwise, use specified vector.
+nfkb_min = prctile(nfkb_smooth(:,1:baseline_length),2,2);
 
 nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),nfkb_min],[],2);
 nfkb = nfkb - repmat(nfkb_baseline,1,size(nfkb,2));
