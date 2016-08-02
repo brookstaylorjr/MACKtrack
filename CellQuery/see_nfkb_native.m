@@ -83,12 +83,14 @@ if isnumeric(id)
         if id==290
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            baseline_length = size(measure.NFkBdimNuclear,2);
             disp('Adjusted start point for this TNF expmt')
         end
         % d) 100uM CpG - delayed activation from slow mixing
         if id==283
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            baseline_length = size(measure.NFkBdimNuclear,2);
             disp('Adjusted start point for this CpG expmt')
         end
 
