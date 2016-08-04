@@ -122,7 +122,7 @@ try
                 pStar = (X'*X)\(X')*double(img(:));
                 warning on MATLAB:nearlySingularMatrix
                 % Apply background correction
-                img = reshape((double(img(:) - X*pStar)),size(img));x
+                img = reshape((double(img(:) - X*pStar)),size(img));
                 img = img-min(img(:)); % Set minimum to zero
                 [~,p.adj_distr(:,ind)] = modebalance(img,1,bit_depth,'measure');
             end
