@@ -24,7 +24,7 @@ cutoff.Compactness = p.Compactness;
 % Pull out existing mask of cells
 cell_mask = data.mask_cell;
 % Add any strong nuclei (in case they weren't included in cell mask)
-diagnos.thresh1 = otsuthresh(nuc_orig,~cell_mask,'none');
+diagnos.thresh1 = quickthresh(nuc_orig,~cell_mask,'none');
 tmp = nuc_orig>diagnos.thresh1;
 if sum(tmp(:)) < sum(cell_mask(:))
     cell_mask = ~bwareaopen(~(cell_mask|tmp),p.NoiseSize,4);

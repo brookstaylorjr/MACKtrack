@@ -71,7 +71,7 @@ for i = 1:length(cells)
 
     % Get secondary (higher) mode of cytoplasmic compartment
     n = hist(nfkb(cytoplasm),bins);
-    thresh1 = otsuthresh(nfkb,~cytoplasm,'none');
+    thresh1 = quickthresh(nfkb,~cytoplasm,'none');
     if ~isempty(thresh1)
         n(bins<=thresh1) = [];
         bins(bins<=thresh1) = [];

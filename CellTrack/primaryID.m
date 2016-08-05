@@ -20,7 +20,7 @@ function [output, diagnos] =  primaryID(nuc_orig,p)
 %- - - - - - - - - - - - - - - - - - - MAKE "CELL" MASK - - - - - - - - - - - - - - - - - - - - - - -
 [~,bg_dist] = modebalance(nuc_orig, 2, 16, 'measure');
 %nuc_filt = imfilter(nuc_orig,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
-thresh1 = (otsuthresh(nuc_orig,false(size(nuc_orig)),'none') + min(bg_dist))/2;
+thresh1 = (quickthresh(nuc_orig,false(size(nuc_orig)),'none') + min(bg_dist))/2;
 
 % Combine two threshold variants (log compressed on smoothed image, non-log compressed on original image)
 diagnos.search = nuc_orig>thresh1;
@@ -35,7 +35,7 @@ cutoff.Compactness = p.Compactness;
 % Pull out existing mask of cells
 cell_mask = diagnos.search_dilate;
 % Add any strong nuclei (in case they weren't included in cell mask)
-diagnos.thresh1 = otsuthresh(nuc_orig,~cell_mask,'none');
+diagnos.thresh1 = quickthresh(nuc_orig,~cell_mask,'none');
 tmp = nuc_orig>diagnos.thresh1;
 if sum(tmp(:)) < sum(cell_mask(:))
     cell_mask = ~bwareaopen(~(cell_mask|tmp),p.NoiseSize,4);

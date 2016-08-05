@@ -89,7 +89,7 @@ try
                     end
                 end
                 img = checkread([locations.scope, p.ImagePath, eval(expr)],bit_depth,1,1);
-                nfkb_thresh(ind) = otsuthresh(img,false(size(img)),'log');
+                nfkb_thresh(ind) = quickthresh(img,false(size(img)),'log');
                 [~,p.img_distr(:,ind)] = modebalance(img,2,bit_depth,'measure');
             end
             p.nfkb_thresh = mean(nfkb_thresh);

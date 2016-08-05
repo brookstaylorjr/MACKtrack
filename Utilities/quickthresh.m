@@ -1,8 +1,8 @@
-function lvl = otsuthresh(inImg,dropPixels,logComp)
+function lvl = quickthresh(inImg,dropPixels,logComp)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-%  [lvl] = otsuthresh(inImg,dropPixels,logComp)
+%  [lvl] = quickthresh(inImg,dropPixels,logComp)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% OTSUTHRESH Perform Otsu thresholding on image using modified form of 'graythresh' function
+% QUICKTHRESH Perform Otsu thresholding on image using modified form of 'graythresh' function
 %
 %
 % inImg        the input image to be thresholded
@@ -26,13 +26,13 @@ im(dropPixels(:)) = [];
 if strcmp(logComp,'log')
     im(im<=0) = min(im>0);
     im = log(im);
-    minval = min (im);
-    maxval = max (im);
+    minval = min(im(:));
+    maxval = max(im(:));
     im = (im - minval) / (maxval - minval);
     lvl = exp(minval + (maxval - minval) * graythresh(im));
 else
-    minval = min (im);
-    maxval = max (im);
+    minval = min(im(:));
+    maxval = max(im(:));
     im = (im - minval) / (maxval - minval);
     lvl = (minval + (maxval - minval) * graythresh(im));
 end

@@ -106,6 +106,6 @@ end
 if ~break_flag
     thresh = bins(K==Kpeaks_drop(1));
 else
-    thresh = otsuthresh(image1,dropPixels,'none');
+    thresh = quickthresh(image1,dropPixels,'none');
 end
 

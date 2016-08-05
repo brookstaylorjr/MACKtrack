@@ -15,7 +15,7 @@ iteration  = ModuleData.iter;
 % Mode-balance 1st auxililiary image - bimodal distribution assumed
 if ~isfield(ModuleData,'distr2')
     [AuxImages{1}, ModuleData.distr2] = modebalance(AuxImages{1},2,ModuleData.BitDepth,'measure');
-    ModuleData.tmrm_thresh = otsuthresh(AuxImages{1},false(size(AuxImages{1})),'log');
+    ModuleData.tmrm_thresh = quickthresh(AuxImages{1},false(size(AuxImages{1})),'log');
 
 else
     AuxImages{1} = modebalance(AuxImages{1},2,ModuleData.BitDepth,'correct',ModuleData.distr2);

@@ -12,7 +12,7 @@ function [output, diagnos] =  dicID(image0,p, ~)
 % Gaussian filter)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Subfunctions
-% otsuthresh.m, noisethresh.m
+% quickthresh.m, noisethresh.m
 %
 % Notes
 % 11/06/2012 - Created, updated CellTrack to include radiobuttons to pick between phase and DIC
@@ -25,7 +25,7 @@ diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_dir = atan(horizontalEdge./verticalEdge);
 
 % Image subset: control for sparsely populated images  
-diagnos.subsetThreshold = otsuthresh(diagnos.edge_mag,false(size(diagnos.edge_mag)),'none');
+diagnos.subsetThreshold = quickthresh(diagnos.edge_mag,false(size(diagnos.edge_mag)),'none');
 diagnos.image_subset = imdilate(diagnos.edge_mag>(diagnos.subsetThreshold), ones(80));
 
 % Edge thresholding: speckle-noise-based  

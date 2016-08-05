@@ -66,7 +66,7 @@ nucSmooth = medfilt2(nucOrig,[parameters.MedianFilterSize, parameters.MedianFilt
 nucEdgeHor = imfilter(nucSmooth,fspecial('sobel') /8,'replicate');
 nucEdgeVert = imfilter(nucSmooth,fspecial('sobel')'/8,'replicate');
 nucEdge = sqrt(nucEdgeHor.^2 + nucEdgeVert.^2);
-levelStart = otsuthresh(nucEdge,false(size(nucEdge)),'none');
+levelStart = quickthresh(nucEdge,false(size(nucEdge)),'none');
 imgSubsetNuc = imdilate(nucEdge>(levelStart), ones(80));
 initialSearch = prctile(nucEdge(:),[5, 99]); % Use 5th and 99th percentile as starting point for nuclei
 [noiseCount1, val1]  = noisecount(nucEdge,~imgSubsetNuc,initialSearch ,64);
@@ -118,7 +118,7 @@ if ~strcmp(parameters.ImageType,'None')
     horizontalEdge = imfilter(cellOrig,fspecial('sobel') /8,'replicate');
     verticalEdge = imfilter(cellOrig,fspecial('sobel')'/8,'replicate');
 	edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
-	levelStart = otsuthresh(edge_mag,false(size(edge_mag)),'none');
+	levelStart = quickthresh(edge_mag,false(size(edge_mag)),'none');
 	imgSubsetCell = imdilate(edge_mag>(levelStart), ones(80));
 	initialSearch = prctile(edge_mag(:),[5, 95]); % Use 5th and 95th percentile as starting point for cells
 	[noiseCount2, val2]  = noisecount(edge_mag,~imgSubsetCell,initialSearch,64);
