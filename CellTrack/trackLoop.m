@@ -71,7 +71,7 @@ for cycle = 1:length(parameters.TimeRange)
         cellName1 = eval(parameters.CellExpr);
         images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
     else
-        images.cell = images.nucleus;
+        images.cell = images.nuc;
     end
     tocs.ImageLoading = toc;
     
