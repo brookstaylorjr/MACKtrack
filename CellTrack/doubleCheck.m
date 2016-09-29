@@ -74,7 +74,7 @@ end
 if strcmpi(p.ImageType,'none')
     % Overwrite cell masks
     output.mask0 = data.label_nuc>0;
-    output.cell_mask = data.label_nuc>0;
+    output.mask_cell = data.label_nuc>0;
 end
 
 % Save all information under diagnostic struct

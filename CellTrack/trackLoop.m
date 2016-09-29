@@ -54,6 +54,9 @@ fid = fopen([outputDirectory,'decisions.txt'],'w','n','UTF-8');
 fwrite(fid, sprintf(['Tracking/checking decisions for xy pos ',num2str(xyPos),':\n']));
 fclose(fid);
 
+% Turn off combine structures warning
+warning('off','MATLAB:combstrct')
+
 
 % Loop all time points
 for cycle = 1:length(parameters.TimeRange)
@@ -110,8 +113,14 @@ for cycle = 1:length(parameters.TimeRange)
         saveCycle = cycle-parameters.StackSize+1; % Value assigned to CellData and tracked label matricies
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Re-read image corresponding to bottom of the stack (for segmentation and saving)
-        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
-            ,bit_depth,1,parameters.debug);       
+        if strcmpi(parameters.ImageType,'none')
+            images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]...
+                ,bit_depth,1,parameters.debug);
+        else
+            images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
+            ,bit_depth,1,parameters.debug);
+        end
+                
         
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic
