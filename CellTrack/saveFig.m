@@ -96,7 +96,6 @@ try % (add fallback for older versions of MATLAB)
     composite = insertText(composite,locs,obj,'FontSize',12,'TextColor',[255,255,255],...
         'Font','Arial','BoxOpacity',0,'AnchorPoint','center');
 catch me
-    spell(locs)
     scale_factor = size(composite,1)/size(NuclearLabel,1);
     nums =  cellstr(num2str(obj(:)))';
     txtInserter = vision.TextInserter(nums,'LocationSource','Input port','FontSize', 12,'Color',[255,255,255]);
