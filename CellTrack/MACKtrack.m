@@ -336,11 +336,12 @@ try
         end
         if exist([handles.locations.scope,handles.parameters.ImagePath,sampleNuc],'file')
             set(handles.text2G,'String',[sampleDirec,sampleNuc],'ForegroundColor',handles.blue);
-            handles.parameters.NucleusExpr = get(handles.edit2A,'String');        
         else
             set(handles.text2G,'String',['"',sampleNuc,'" not found in current directory' ],'ForegroundColor','r');
             handles.Locked = 1;
-        end 
+        end
+            handles.parameters.NucleusExpr = get(handles.edit2A,'String');        
+
     catch ME
          set(handles.text2G,'String','Error in string construction','ForegroundColor','r');
          handles.Locked = 1;
@@ -356,11 +357,11 @@ try
         end
         if exist([handles.locations.scope,handles.parameters.ImagePath,sampleCell],'file')
             set(handles.text2I,'String',[sampleDirec,sampleCell],'ForegroundColor',handles.blue);
-            handles.parameters.CellExpr = get(handles.edit2B,'String');        
         else
             set(handles.text2I,'String',['"',sampleCell,'" not found in current directory' ],'ForegroundColor','r');
             handles.Locked = 1;
-        end 
+        end
+        handles.parameters.CellExpr = get(handles.edit2B,'String');        
     catch ME
          set(handles.text2I,'String','Error in string construction','ForegroundColor','r');
          handles.Locked = 1;
