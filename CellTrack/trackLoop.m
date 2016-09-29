@@ -17,8 +17,8 @@ load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 
 images = struct;
 tocs = struct;
-switch parameters.ImageType
-    case 'DIC'
+switch lower(parameters.ImageType)
+    case 'dic'
         % Set function names
         fnstem = 'dic';
         X = []; 
@@ -26,6 +26,9 @@ switch parameters.ImageType
         % Set function names
         fnstem = 'phase';
         X = backgroundcalculate(parameters.ImageSize);
+    case 'none';
+        fnstem = 'primary';
+        X = [];
 end
 
 % Get image bit depth
@@ -60,27 +63,34 @@ for cycle = 1:length(parameters.TimeRange)
     j =  parameters.TimeRange(cycle);
     parameters.i = i; parameters.j = j;
     
+    % Load in images
+    tic
+    nucName1 = eval(parameters.NucleusExpr);
+    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
+    if ~strcmpi(parameters.ImageType,'none')
+        cellName1 = eval(parameters.CellExpr);
+        images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
+    else
+        images.cell = images.nucleus;
+    end
+    tocs.ImageLoading = toc;
+    
     % CELL MASKING on phase contrast/DIC image
     tic
-    cellName1 = eval(parameters.CellExpr);
-    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
     maskfn = str2func([fnstem,'ID']);
     data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
     tocs.CellMasking = toc;
     
     % NUCLEAR IDENTIFICATION
     tic
-    nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
     present = nucleusID(images.nuc,parameters,data);
-    data = combinestructures(data,present);
+    data = combinestructures(present,data);
     tocs.NucMasking = toc;
     
     % NUCLEUS/CELL CHECKS (preliminary)
     tic
-    checkfn = str2func([fnstem,'Check']);
-    present = checkfn(data,images.cell,parameters);
-    data = combinestructures(data,present);
+    present = doubleCheck(data,images.cell,parameters);
+    data = combinestructures(present,data);
     tocs.CheckCells = toc;
     
     % Update stacks/structs with each iteration      
@@ -117,7 +127,7 @@ for cycle = 1:length(parameters.TimeRange)
         % SEGMENT CELLS (bottom of "future" queue)
         tic
         segmentfn = str2func([fnstem,'Segment']);
-        present = segmentfn(future(1), images.bottom, parameters); % either phaseSegment or dicSegment (5 args)
+        present = segmentfn(future(1), images.bottom, parameters);
         tocs.Segmentation = toc;
 
         % MEMORY CHECKING ("past" queue)

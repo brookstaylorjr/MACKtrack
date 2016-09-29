@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 08-Jun-2015 12:09:45
+% Last Modified by GUIDE v2.5 28-Sep-2016 18:41:01
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -533,11 +533,9 @@ if ~handles.Locked2
     set(handles.pushbutton4C,'ForegroundColor',handles.gray,'String','Testing...')
     set(handles.pushbutton4D,'ForegroundColor',handles.gray)
     drawnow;
-    if strcmp(handles.parameters.ImageType,'None')
-        testPrimary(handles);
-    else
-        testImages(handles) % DIC or phase
-    end
+    % Test images
+    testImages(handles) % DIC or phase
+
     set(handles.pushbutton4C,'ForegroundColor',handles.blue,'String','Test')
     set(handles.pushbutton4D,'ForegroundColor',handles.blue, 'String','Run')
 end
@@ -557,11 +555,7 @@ if ~handles.Locked2
         if get(handles.checkbox4B,'Value')
             parfor i = 1:length(parameters.XYRange)
                 xyPos = parameters.XYRange(i);
-                if strcmp(handles.parameters.ImageType,'None')
-                    trackPrimary(parameters,xyPos)
-                else
-                    trackLoop(parameters,xyPos) % DIC or phase
-                end
+                trackLoop(parameters,xyPos) % DIC or phase
             end        
             % 3) Measure loop (AllMeasurements.mat output)
             disp('Measuring...')
@@ -573,11 +567,7 @@ if ~handles.Locked2
         else
             for i = 1:length(parameters.XYRange)
                 xyPos = parameters.XYRange(i);
-                if strcmp(handles.parameters.ImageType,'None')
-                    trackPrimary(parameters,xyPos)
-                else
-                    trackLoop(parameters,xyPos) % DIC or phase
-                end
+                trackLoop(parameters,xyPos) % DIC or phase
             end        
             % 3) Measure loop (AllMeasurements.mat output)
             disp('Measuring...')
@@ -841,6 +831,33 @@ try
     end
     set(hObject,'String',num2str(newVal))
     handles.parameters.Compactness(2) = newVal;
+    handles.Locked2 = 0;
+    set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+    set(handles.pushbutton4D,'ForegroundColor',handles.blue)
+    guidata(handles.figure1,handles)
+catch ME
+    set(hObject,'String','err')
+    handles.Locked2 = 1;
+    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
+    set(handles.pushbutton4D,'ForegroundColor',handles.gray)
+    rethrow(ME)
+end
+% ========================================================================================
+
+
+function edit5G_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% EDIT5G: set nuclear smoothing size (nan is ok)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+try
+    newVal = eval(get(hObject,'String'));
+    % Parameter checking
+    if ~isnumeric(newVal)
+        warning('Resetting - value must be numeric')
+        newVal = handles.parameters.NuclearSmooth;
+    end
+    set(hObject,'String',num2str(newVal))
+    handles.parameters.NuclearSmooth = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
@@ -1494,3 +1511,6 @@ module = module_list{index_selected};
 
 handles.parameters.(module).Use = get(hObject,'Value');
 guidata(handles.figure1,handles)
+
+
+

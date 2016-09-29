@@ -55,6 +55,7 @@ set(handles.edit5C,'String',num2str(handles.parameters.MinNucleusRadius))
 set(handles.edit5D,'String',num2str(handles.parameters.MaxNucleusRadius))
 set(handles.edit5E,'String',num2str(handles.parameters.Compactness(1)))
 set(handles.edit5F,'String',num2str(handles.parameters.Compactness(2)))
+set(handles.edit5G,'String',num2str(handles.parameters.NuclearSmooth))
 
 %% - - - - - - - - - Phase/DIC parameters - - - - - - - - - - - - 
 set(handles.popupmenu0,'Value',find(strcmp(handles.parameters.ImageType,{'phase','DIC','None'})));

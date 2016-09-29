@@ -19,7 +19,6 @@ if size(inputStack,1)>size(inputStack,2)
 end
 
 
-
 clf(gcf,'reset')
 zlength = size(inputStack,3);
 handles.input = inputStack;

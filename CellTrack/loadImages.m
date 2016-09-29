@@ -71,8 +71,8 @@ imgSubsetNuc = imdilate(nucEdge>(levelStart), ones(80));
 initialSearch = prctile(nucEdge(:),[5, 99]); % Use 5th and 99th percentile as starting point for nuclei
 [noiseCount1, val1]  = noisecount(nucEdge,~imgSubsetNuc,initialSearch ,64);
 set(handles.figure1,'CurrentAxes',handles.axes5A)
-plot(handles.axes5A,val1,noiseCount1,'LineWidth',3,'Color',handles.orange)
-set(handles.axes5A,'YTick',[])
+plot(handles.axes5A,val1,noiseCount1,'LineWidth',2,'Color',handles.orange)
+set(handles.axes5A,'YTick',[],'FontSize',11)
 % Keep starting value, unless it's way out of 5/95th prctile range.
 nuc_edge = parameters.NucleusEdgeThreshold;
 if (nuc_edge>(initialSearch(2)*2))||(nuc_edge<(initialSearch(1)/2))
@@ -122,8 +122,8 @@ if ~strcmp(parameters.ImageType,'None')
 	imgSubsetCell = imdilate(edge_mag>(levelStart), ones(80));
 	initialSearch = prctile(edge_mag(:),[5, 95]); % Use 5th and 95th percentile as starting point for cells
 	[noiseCount2, val2]  = noisecount(edge_mag,~imgSubsetCell,initialSearch,64);
-	plot(handles.axes6A,val2,noiseCount2,'LineWidth',3,'Color',[207 79 51]/255)
-	set(handles.axes6A,'YTick',[])
+	plot(handles.axes6A,val2,noiseCount2,'LineWidth',2,'Color',[207 79 51]/255)
+	set(handles.axes6A,'YTick',[],'FontSize',11)
 	% Keep starting value, unless it's way out of 5/95th prctile range.
     cell_edge1 = min(parameters.CellSearchRange);
     if (cell_edge1<(initialSearch(1)/2))

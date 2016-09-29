@@ -7,7 +7,7 @@ function [output, diagnos] = dicSegment(data, image_in, p)
 %
 % INPUT:
 % data       tracking info structure: cell mask, nucleus label matrix, and supporting information
-% phaseOrig   original phase contrast image
+% image_in    original cell image
 % p           parameters structure from SetupTracking.m
 %
 % OUTPUT:
@@ -117,11 +117,11 @@ catch me
 end
 
 % Perform segmentation and correct
-output.seeds2 = propagatesegment(diagnos.seeds1, data.mask_cell>0, image_in,...
+diagnos.seeds2 = propagatesegment(diagnos.seeds1, data.mask_cell>0, image_in,...
     round(p.MinCellWidth/2), data.nuclei, lambda);
 
 % Fill all holes that are internal to a single object
-output.cells = output.seeds2;
+output.cells = diagnos.seeds2;
 cell_holes = imdilate(imfill(output.cells>0,'holes') &~ (output.cells),ones(3));
 hole_cc = bwconncomp(cell_holes);
 for i = 1:hole_cc.NumObjects

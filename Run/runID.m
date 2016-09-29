@@ -53,11 +53,7 @@ for idx = 1:numel(data.save_folder)
     parfor i = 1:length(parameters.XYRange)
         xyPos = parameters.XYRange(i);
         try
-            if strcmp(parameters.ImageType,'None')
-                trackPrimary(parameters,xyPos)
-            else
-                trackLoop(parameters,xyPos) % DIC or phase
-            end
+         trackLoop(parameters,xyPos)
         catch ME
             disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
             for err = 1:length(ME.stack)
