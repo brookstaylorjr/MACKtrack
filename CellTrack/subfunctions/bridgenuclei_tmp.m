@@ -1,4 +1,9 @@
-%
+label_in = diagnostics.nuclei.label1a;
+label_in = imclose(label_in,ones(2));
+cutoff.Area = [floor(pi*(p.MinNucleusRadius-1)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
+cutoff.Compactness = p.Compactness;
+verbose = 0;
+%%
 tic
 in_rprops = cell2mat(struct2cell(regionprops(label_in,'Area','Perimeter')))';
 in_rprops = mat2cell(in_rprops,ones(1,size(in_rprops,1)),2);
@@ -51,7 +56,8 @@ cc_in = label2cc(label_in,0);
 if verbose
     add_list = cell2mat(obj_match(remaining_obj(pass_2)));
     for i = 1:length(add_list)
-        disp(['II. ADDED [',num2str(i+length(pixels_out)),']: obj containing (all strict-passing) subobj [',num2str(add_list(i)'),']'])
+        disp(['II. ADDED [',num2str(i+length(pixels_out)),']: obj containing (all strict-passing) subobj [',...
+            num2str(add_list(i)'),']'])
     end
 end
 pixels_out = [pixels_out(:); cc_in.PixelIdxList(cell2mat(obj_match(remaining_obj(pass_2))))];
@@ -86,7 +92,6 @@ neighbors = cellfun(get_neighbors,cc_in.PixelIdxList,'UniformOutput',0);
 
 
 toc
-%%
 
 %%
 

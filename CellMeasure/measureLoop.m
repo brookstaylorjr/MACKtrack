@@ -91,6 +91,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                         AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);   
                     end
                 end
+                
                 % Call measurement function
                 currentfn = str2func(ModuleData.name);
                 [CellMeasurements, ModuleData] = currentfn(CellMeasurements,parameters,labels, AuxImages, ModuleData);            

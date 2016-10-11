@@ -10,6 +10,10 @@ function [CellMeasurements, ModuleData] = intensityModule(CellMeasurements,param
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+if isempty(AuxImages{1})
+    error('No measurement image loaded. Are you sure a correct name was specified for this module?')
+end
+
 iteration  = ModuleData.iter;
 
 % Mode-balance 1st auxililiary image - bimodal distribution assumed

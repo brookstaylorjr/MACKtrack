@@ -10,7 +10,11 @@ function [CellMeasurements, ModuleDataOut] = nfkbModule(CellMeasurements,paramet
 % ModuleData          extra information (current ModuleData.iter, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-% Grab NFkB image. If secondary AuxImage is defined, subtract it from NFkB image (AuxImage{1})
+% Grab measurement image. If secondary AuxImage is defined, subtract it from NFkB image (AuxImage{1})
+if isempty(AuxImages{1})
+    error('No measurement image loaded. Are you sure a correct name was specified for this module?')
+end
+
 
 % Mode-balance 1st auxililiary image - bimodal distribution assumed
     if ~isfield(ModuleData,'distr')

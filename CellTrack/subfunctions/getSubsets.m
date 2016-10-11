@@ -2,7 +2,6 @@ function [subset_list] = getSubsets(obj, all_neighbors, n)
 
 neighb1 = filterNeighbors(all_neighbors{obj},obj);
 
-
 % Get all sets centered on object - store in arrays (i.e. by size)
 subset_list = cell(n-1,1);
 for i = (n-1):-1:1

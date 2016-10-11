@@ -64,6 +64,9 @@ switch lower(p.ImageType)
         X = [];
 end
 
+% Turn off combine structures warning
+warning('off','MATLAB:combstrct')
+
 % - - - - 1st mask: make mask from cell image - - - - 
 tic
 maskfn = str2func([fnstem,'ID']);

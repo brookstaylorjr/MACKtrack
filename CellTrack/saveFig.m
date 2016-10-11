@@ -86,20 +86,19 @@ composite = cat(3, uint8(double(baseImg).*(1-transparency) + double(labelRGB(:,:
 
 % resize image, get scale factor so centroids aren't off
 composite = imresize(composite,outputRes);
+scale_factor = size(composite,1)/size(NuclearLabel,1);
 
 % - - - - Add text: Get nuclear centroids and label with cell ID number, then add annotations - - - -
 s = regionprops(NuclearLabel,'Centroid');
 obj = unique(NuclearLabel(NuclearLabel>0));
 try % (add fallback for older versions of MATLAB)
     locs = cell2mat(struct2cell(s(obj)));
-    locs = [(locs(1:2:end))',(locs(2:2:end))'];
+    locs = [(locs(1:2:end))',(locs(2:2:end))']*scale_factor;
     composite = insertText(composite,locs,obj,'FontSize',12,'TextColor',[255,255,255],...
         'Font','Arial','BoxOpacity',0,'AnchorPoint','center');
 catch me
-    scale_factor = size(composite,1)/size(NuclearLabel,1);
     nums =  cellstr(num2str(obj(:)))';
     txtInserter = vision.TextInserter(nums,'LocationSource','Input port','FontSize', 12,'Color',[255,255,255]);
-
     for i = 1:length(obj)
         loc = uint16(s(obj(i)).Centroid*scale_factor - [7 7]);
         composite = step(txtInserter,composite,uint16(i),loc);
