@@ -34,7 +34,7 @@ end
 info.parameters.FramesPerHour = 6; % 10 min between frames
 info.Module = 'nucintensityModule';
 t_max = (size(measure.MeanIntensityNuc,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
-info.graph_limits = [200 400];
+info.graph_limits = [400 1000];
 
 
 
@@ -47,7 +47,17 @@ info.keep = max(droprows,[],2) == 0;
 
 %% Outputs
 % Extract measurement and apply filtering
-graph.var = measure.MeanIntensityNuc(info.keep,:);
+
+all_pparg = measure.MeanIntensityNuc(info.keep,:);
+% Normalize by image background (per position)
+for i = 1:length(info.parameters.XYRange)
+    xy = info.parameters.XYRange(i);
+    all_pparg(info.CellData(:,1)==xy,:) = (all_pparg(info.CellData(:,1)==xy,:) - info.parameters.adj_distr(1,i)) ;
+    
+end
+
+
+graph.var = all_pparg;
 
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
 

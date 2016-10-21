@@ -20,6 +20,7 @@ function [output, diagnos] =  nucleusID(nuc_orig,p,data)
 % Set cutoffs for nuclear shape
 cutoff.Area = [floor(pi*(p.MinNucleusRadius-1)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
 cutoff.Compactness = p.Compactness;
+cutoff.Solidity = p.Solidity;
 
 % Pull out existing mask of cells
 cell_mask = data.mask_cell;
@@ -46,7 +47,7 @@ diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
 
 % Take subset of edge vals > p.NucleusEdgeThresh- step down incrementally
-edge_cutoffs = prctile(diagnos.edge_mag(diagnos.edge_mag>p.NucleusEdgeThreshold),0:20:80);
+edge_cutoffs = prctile(diagnos.edge_mag(diagnos.edge_mag>p.NucleusEdgeThreshold),linspace(0,90,7));
 unique_all = 0;
 diagnos.label1a = zeros(size(diagnos.watershed1));
 for i = 1:length(edge_cutoffs)

@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 28-Sep-2016 18:41:01
+% Last Modified by GUIDE v2.5 18-Oct-2016 17:49:45
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -112,7 +112,7 @@ if strcmp(os(1:4),'MACI')
         currentField = a{i};
         if strcmp(currentField(1:4),'edit')
             oldPos = get(handles.(currentField),'Position');
-            set(handles.(currentField),'Position', oldPos+[0 -3 0 4]);
+            set(handles.(currentField),'Position', oldPos+[0 -1 0 2]);
         end
     end
 end
@@ -873,6 +873,35 @@ end
 % ========================================================================================
 
 
+
+function edit5H_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% EDIT5H: set minimum solidity (morphological property, % of convex hull filled by shape)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+try
+    newVal = eval(get(hObject,'String'));
+    % Parameter checking
+    if ~isnumeric(newVal)
+        warning('Resetting - value must be numeric')
+        newVal = handles.parameters.Solidity;
+    end
+    set(hObject,'String',num2str(newVal))
+    handles.parameters.Solidity = newVal;
+    handles.Locked2 = 0;
+    set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+    set(handles.pushbutton4D,'ForegroundColor',handles.blue)
+    guidata(handles.figure1,handles)
+catch ME
+    set(hObject,'String','err')
+    handles.Locked2 = 1;
+    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
+    set(handles.pushbutton4D,'ForegroundColor',handles.gray)
+    rethrow(ME)
+end
+% ========================================================================================
+
+
+
 % %%%%%%%%%%%%%%%%%%%%%% UIPANEL 6 : Phase/DIC PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 
 function slider6A_Callback(hObject, ~, handles)
@@ -1512,6 +1541,3 @@ module = module_list{index_selected};
 
 handles.parameters.(module).Use = get(hObject,'Value');
 guidata(handles.figure1,handles)
-
-
-
