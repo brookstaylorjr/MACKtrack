@@ -96,31 +96,29 @@ try
     else
         background_sigma = sqrt(obj.Sigma(mu_ind));
     end
-
-    if strcmp(balance_mode,'measure')
-        varargout{1} = [background_mu(1); background_sigma(1)];
-        output_img = input_img; % Don't modify image
-    elseif strcmp(balance_mode,'correct')
-        if length(varargin)<1
-            error('Error in MODEBALANCE: corrected images need a distribution to match of form [mu; sigma]')
-        end
-        match_dist = varargin{1};
-        output_img = (input_img-background_mu(1))/background_sigma(1)*match_dist(2); % Match standard deviation
-        output_img = output_img + match_dist(1); % Match mean
-        output_img(output_img<0) = 0;
-        output_img(output_img > ((2^bit_depth)-1)) = (2^bit_depth)-1;
-        varargout{1} = match_dist(2)/background_sigma(1);
-    else % display
-        output_img = (input_img - background_mu(1))/(background_sigma(1));
-    end
 catch me
-    warning('Backround distribution fitting failed for this image - outputting original image, centered at zero')
-    std_dev = std(input_img(:));
-    if  std_dev > eps
-        output_img = (input_img - nanmean(input_img(:)))/std_dev;
-    else
-        output_img = (input_img - nanmean(input_img(:)));
-    end       
+    warning('Backround distribution fitting failed for this image - balancing around image mode')
+    background_mu =  mu1;
+    background_sigma = sigma1;
 end
+
+
+if strcmp(balance_mode,'measure')
+    varargout{1} = [background_mu(1); background_sigma(1)];
+    output_img = input_img; % Don't modify image
+elseif strcmp(balance_mode,'correct')
+    if length(varargin)<1
+        error('Error in MODEBALANCE: corrected images need a distribution to match of form [mu; sigma]')
+    end
+    match_dist = varargin{1};
+    output_img = (input_img-background_mu(1))/background_sigma(1)*match_dist(2); % Match standard deviation
+    output_img = output_img + match_dist(1); % Match mean
+    output_img(output_img<0) = 0;
+    output_img(output_img > ((2^bit_depth)-1)) = (2^bit_depth)-1;
+    varargout{1} = match_dist(2)/background_sigma(1);
+else % display
+    output_img = (input_img - background_mu(1))/(background_sigma(1));
+end
+
 
 

@@ -13,25 +13,21 @@ function [label_out] = bridgenuclei(label_in,cutoff,verbose)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+% Input checking - return if empty matrix is passed
 if nargin <3
     verbose=0;
 end
-
-% Dilate label matrix over watershed borders - if there are no objects to bridge, then break out of function.
-label_in = imclose(label_in,ones(2));
 if length(unique(label_in))<2
     label_out=double(label_in);
     return;
 end
 
-% Calculate regionprops for base objects
-in_rprops = cell2mat(struct2cell(regionprops(label_in,'Area','Perimeter')))';
-in_rprops = mat2cell(in_rprops,ones(1,size(in_rprops,1)),2);
-
-% Combine all connected objects and calculate regionprops
+% Dilate over of watershed borders, compute subobject and grouped-object CC structure
+label_in = imclose(label_in,ones(2));
+cc_in = label2cc(label_in,0);
 obj_cc = bwconncomp(label_in>0,4);
 obj_rprops = cell2mat(struct2cell(regionprops(obj_cc,'Area','Solidity','Perimeter')))';
-obj_rprops = [obj_rprops(:,1),obj_rprops(:,3),obj_rprops(:,2)]; % (Rearrange to put solidity @ end
+obj_rprops = [obj_rprops(:,1),obj_rprops(:,3),obj_rprops(:,2)]; % (Rearrange to put solidity @ end)
 obj_rprops = mat2cell(obj_rprops,ones(1,size(obj_rprops,1)),3);
 
 % Assign initial objects (in label in) to groups of objects (in obj_cc)
@@ -43,7 +39,6 @@ hard_pass = @(x) (x(1) < cutoff.Area(2)) && (x(1) > cutoff.Area(1)) && (((x(2).^
 soft_pass = @(x) (x(1) < cutoff.Area(2)) && (x(1) > cutoff.Area(1)) && (((x(2).^2)/(4*pi*x(1)))<cutoff.Compactness(2));
 hard_plus = @(x) (x(1) < cutoff.Area(2)) && (x(1) > cutoff.Area(1)) && (((x(2).^2)/(4*pi*x(1)))<cutoff.Compactness(1))...
     && (x(3)>cutoff.Solidity);
-
 soft_plus = @(x) (x(1) < cutoff.Area(2)) && (x(1) > cutoff.Area(1)) && (((x(2).^2)/(4*pi*x(1)))<cutoff.Compactness(2))...
     && (x(3)>cutoff.Solidity);
 
@@ -53,7 +48,7 @@ pixelidx_out = obj_cc.PixelIdxList(pass_1);
 if verbose
     for i = 1:length(pass_1)
         str_1 = ['obj containing [',num2str(obj_match{i}'),']. (a = ',num2str(obj_rprops{i}(1)),', c = ',...
-                num2str((obj_rprops{i}(2).^2)/(4*pi*obj_rprops{i}(1))),')'];
+                num2str((obj_rprops{i}(2).^2)/(4*pi*obj_rprops{i}(1))),',  s = ',num2str(obj_rprops{i}(3)),')'];
         if pass_1(i)
             disp(['I. ADDED [',num2str(sum(pass_1(1:i))),']: ', str_1]);
         else
@@ -61,71 +56,91 @@ if verbose
         end
     end
 end
-remaining_obj = find(~pass_1);
+remaining_obj = find(~pass_1); % Remaining grouped objects
 
 
-% PASS 2: Of remaining (combined) objects, see if any is composed of subobjects that all hard_pass
-pass_orig = cellfun(hard_pass, in_rprops);
-all_pass = @(subobj) min(pass_orig(subobj));
-pass_2 = cellfun(all_pass, obj_match(remaining_obj));
-cc_in = label2cc(label_in,0);
+% PASS 2: Soft pass (with solidity check) on (combined) objects with 1-2 subobjects
+pass_2 = (cellfun(@length,obj_match(remaining_obj))<=2) & cellfun(soft_plus,obj_rprops(remaining_obj));
 if verbose
-    add_list = cell2mat(obj_match(remaining_obj(pass_2)));
-    for i = 1:length(add_list)
-        disp(['II. ADDED [',num2str(i+length(pixelidx_out)),']: obj containing (all strict-passing) subobj [',...
-            num2str(add_list(i)'),']'])
-    end
-end
-pixelidx_out = [pixelidx_out(:); cc_in.PixelIdxList(cell2mat(obj_match(remaining_obj(pass_2))))];
-remaining_obj = remaining_obj(~pass_2);
-
-
-% PASS 3: soft (with solidity) pass on single/double objects
-pass_3 = (cellfun(@length,obj_match(remaining_obj))<=2) & cellfun(soft_plus,obj_rprops(remaining_obj));
-if verbose
-    add_list = remaining_obj(pass_3);
+    add_list = remaining_obj(pass_2);
     for i = 1:length(add_list)
         disp(['III. ADDED [',num2str(i+length(pixelidx_out)),']: obj containing [',num2str(obj_match{add_list(i)}'),']. (a = ',...
             num2str(obj_rprops{add_list(i)}(1)),', c = ',...
             num2str((obj_rprops{add_list(i)}(2).^2)/(4*pi*obj_rprops{add_list(i)}(1))),')'])
     end
 end
-pixelidx_out = [pixelidx_out; reshape(obj_cc.PixelIdxList(remaining_obj(pass_3)),sum(pass_3),1)];
-remaining_obj = remaining_obj(~pass_3);
+pixelidx_out = [pixelidx_out(:); reshape(obj_cc.PixelIdxList(remaining_obj(pass_2)),sum(pass_2),1)];
+remaining_obj = remaining_obj(~pass_2);
 
-% Drop out remaining single/double-subobject shapes
+% Drop out remaining single-subobject shapes to prevent further analysis
 remaining_obj(cellfun(@length,obj_match(remaining_obj))==1) = [];
 
+% PASS 3: Strong pass, trying to combine subsets of subobjects
+remaining_subobj = cell2mat(obj_match(remaining_obj));
+cc1 = cc_in;
+while length(remaining_subobj)>0 
+    [cc1, remaining_subobj] = mergeNeighbors(cc1, remaining_subobj, cutoff,'hard',3, verbose);
+end
+remaining_subobj = cell2mat(obj_match(remaining_obj)); % Get original list of subobjects (minus newly combined ones)  
+remaining_subobj(ismember(remaining_subobj,find(cellfun(@isempty,cc1.PixelIdxList)))) = [];
 
-% PASS 4A: Strong pass, sets of 2 or 3 subobjects
-subobj = cell2mat(obj_match(remaining_obj));
-while length(subobj)>0 
-    [cc_in, subobj] = mergeNeighbors(cc_in, subobj, cutoff,'hard',3, verbose);
+% PASS 4: Of remaining objects, see if any is composed of subobjects that all hard_pass
+label1 = labelmatrix(cc1);
+label1(~ismember(label1,remaining_subobj)) = 0;
+obj_cc1 = bwconncomp(label1>0,4);
+if obj_cc1.NumObjects>0
+    rprops1 = cell2mat(struct2cell(regionprops(label1,'Area','Perimeter')))';
+    rprops1 = mat2cell(rprops1,ones(1,size(rprops1,1)),2);
+    get_obj = @(pxlist) unique(label1(pxlist));
+    obj_match = cellfun(get_obj, obj_cc1.PixelIdxList,'UniformOutput',0)';
+    pass_orig = cellfun(hard_pass, rprops1);
+    all_pass = @(subobj) min(pass_orig(subobj));
+    pass_4 = cellfun(all_pass, obj_match);
+    if verbose
+        add_list = obj_match(pass_4);
+        for i = 1:length(add_list)
+            disp(['II. ADDED [',num2str(i+length(pixelidx_out)),']: obj containing (all strict-passing) subobj [',...
+                num2str(add_list{i}'),']'])
+        end
+    end
+    pixelidx_out = [pixelidx_out(:); cc1.PixelIdxList(cell2mat(obj_match(pass_4)))];
+    remaining_subobj(ismember(remaining_subobj,cell2mat(obj_match(pass_4)))) = [];
 end
 
-% PASS 4B: Two combination attempts with soft pass criteria (+solidity)
-subobj = cell2mat(obj_match(remaining_obj)); % Get original list of subobjects ( minus newly combined ones)  
-subobj(ismember(subobj,find(cellfun(@isempty,cc_in.PixelIdxList)))) = [];
-if length(subobj)>0
-    [cc_in, subobj] = mergeNeighbors(cc_in, subobj, cutoff,'soft',4, verbose);
+% PASS 5: Try to combine subobjects (up to 4) and pass with "soft" criteria
+if length(remaining_subobj)>0
+    [cc1, remaining_subobj] = mergeNeighbors(cc1, remaining_subobj, cutoff,'soft',4, verbose);
 end
 
-% Get remaining uncombined objects that also soft-pass, make label_out
-rprops_new = cell2mat(struct2cell(regionprops(labelmatrix(cc_in),'Area','Perimeter')))';
-rprops_new = mat2cell(rprops_new,ones(1,size(rprops_new,1)),2);
-keepers = find(cellfun(soft_pass, rprops_new));
-keepers(~ismember(keepers,cell2mat(obj_match(remaining_obj)))) = [];
-cc_out.PixelIdxList = [pixelidx_out;cc_in.PixelIdxList(keepers)];
+% PASS 6: Perform final soft-pass on remaining (uncombined) objects
+label1 = labelmatrix(cc1);
+label1(cell2mat(pixelidx_out)) = 0;
+cc2 = label2cc(label1);
+if cc2.NumObjects>0
+    rprops_new = cell2mat(struct2cell(regionprops(cc2,'Area','Perimeter')))';
+    rprops_new = mat2cell(rprops_new,ones(1,size(rprops_new,1)),2);
+    pass_5 = find(cellfun(soft_pass, rprops_new));
+else
+    pass_5 = [];
+end
+
+% Make output label matrix
+cc_out.PixelIdxList = [pixelidx_out;cc2.PixelIdxList(pass_5)];
 cc_out.NumObjects = length(cc_out.PixelIdxList);
 cc_out.ImageSize = size(label_in);
 cc_out.Connectivity = 4;
 label_out = double(labelmatrix(cc_out));
 
 
+% Make label_out
+label_out = double(labelmatrix(cc_out));
+
+
 
 function [cc_out, subobj_out] = mergeNeighbors(cc_in, subobj, cutoff,pass_type, dim, verbose)
-
-
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% MERGENEIGHBORS finds connected object subsets
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % SETUP: calculate base regionprops
 label_in = labelmatrix(cc_in);
 rprops_in = cell2mat(struct2cell(regionprops(label_in,'Area','Perimeter')))';
@@ -259,7 +274,7 @@ end
 
 function [subset_list] = getSubsets(obj, all_neighbors, n, dropObj)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% GETSUBSETS finds connected object subsets
+% GETSUBSETS finds connected subobject subsets (e.g. cobminations of touching objects)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if nargin<4
     dropObj = [];

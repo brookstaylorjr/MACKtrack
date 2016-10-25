@@ -45,7 +45,7 @@ SegmentData.image = {};
 SegmentData.image_id = [];
 SegmentData.cell_id = [];
 SegmentData.measurements = [];
-SegmentData.nuclei = [];
+SegmentData.label_nuc = [];
 
 
 for i = 1:length(well_subset)
@@ -78,7 +78,9 @@ for i = 1:length(well_subset)
         % Segment nuclear image
         tic
         nuc_orig = double(imread([image_dir,filesep,image_names{nuc_id(j)}]));
-        output =  primaryID(nuc_orig,parameters);
+        output =  primaryID(nuc_orig,parameters,[]);
+        output = nucleusID(nuc_orig,parameters,output);
+
         t = toc;
         % Save segmented nuclei (for diagnostic purposes)
         if exist(save_dir,'dir')
@@ -86,7 +88,7 @@ for i = 1:length(well_subset)
             tmp_img = (tmp_img - prctile(tmp_img(:),3))/diff(prctile(tmp_img(:),[3 99]));
             tmp_img(tmp_img<0) = 0; tmp_img(tmp_img>1) = 1;
             tmp_img = tmp_img*255;
-            tmp_mask = (imdilate(output.nuclei,ones(3)) - output.nuclei) > 0;
+            tmp_mask = (imdilate(output.label_nuc,ones(3)) - output.label_nuc) > 0;
             R = tmp_img; R(tmp_mask) = 248*0.75 + R(tmp_mask)*0.25;
             G = tmp_img; G(tmp_mask) = 152*0.75 + G(tmp_mask)*0.25;
             B = tmp_img; B(tmp_mask) = 29*0.75 + B(tmp_mask)*0.25;
@@ -97,7 +99,7 @@ for i = 1:length(well_subset)
         all_msg = ['Segmented ''', image_names{nuc_id(j)},'''. Elapsed time = ',num2str(t),' sec\n'];
         
         % (Make sure output mask is relabeled contiguously)
-        nuc_cc = label2cc(output.nuclei,'true');
+        nuc_cc = label2cc(output.label_nuc,'true');
         well_nuclei{j} = nuc_cc;
         % Measure objects in image and combine
         measurements = [];
@@ -106,7 +108,9 @@ for i = 1:length(well_subset)
             measured_name = image_names{nuc_id(j)};            
             measured_name = [measured_name(1:strfind(measured_name,['_',nuclear_channel])),...
                 measurement_channels{k}];
-            measure_id = find(~cellfun(@isempty,strfind(image_names,measured_name)));  
+            measure_id = ~cellfun(@isempty,strfind(image_names,measured_name));
+            measure_id = measure_id & cellfun(@isempty,strfind(image_names,'thumb')); % Drop anything with the name "thumb"
+            measure_id = find(measure_id);
             if ~isempty(measure_id)
                 all_msg = [all_msg, '(measurement col ',num2str(k),'): measuring ''', image_names{measure_id},' (',func2str(measurement_type{k}),')''\n'];
                 measure_orig = double(imread([image_dir,filesep,image_names{measure_id}]));
@@ -133,7 +137,7 @@ for i = 1:length(well_subset)
     SegmentData.cell_id = cat(1,SegmentData.cell_id,cell2mat(well_ids));
     SegmentData.image_id = cat(1,SegmentData.image_id,cell2mat(well_image_id));
     SegmentData.measurements = cat(1,SegmentData.measurements,cell2mat(well_measurements));
-    SegmentData.nuclei = cat(1,SegmentData.nuclei,well_nuclei);
+    SegmentData.label_nuc = cat(1,SegmentData.label_nuc,well_nuclei);
 end
 % Add other supporting information
 SegmentData.image_dir = image_dir;

@@ -15,7 +15,10 @@ function [output, diagnos] =  primaryID(image0,p, ~)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 %- - - - - - - - - - - - - - - - - - - MAKE "CELL" MASK - - - - - - - - - - - - - - - - - - - - - - -
+
 [~,bg_dist] = modebalance(image0, 2, 16, 'measure');
+
+
 %nuc_filt = imfilter(image0,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
 thresh1 = (quickthresh(image0,false(size(image0)),'none') + min(bg_dist))/2;
 

@@ -31,3 +31,19 @@ load('OP9_default.mat')
 % Find all plate layouts in parent directory; segment and measure cells
 [ScreenData, layout_dir, image_dir] = ...
     buildFromLayout(start_dir, nuclear_channel, measurement_channels, measurement_type, parameters);
+
+%% IF run - Octover 24, 2016
+% Specify staring directory - we'll find ALL layouts in any subdirectories under this one
+start_dir = '/Volumes/labdata/brooks/Images/Fixed Cell/2016-10-24-BT/YFP-mCh-Cy5-IF';
+% Specify channels and measurements
+nuclear_channel = 'w1';
+measurement_channels = {'w2','w3','w4'};
+measurement_type = {@mean,@mean,@mean};
+% Load parameters
+load('OP9_10x.mat')
+% Find all plate layouts in parent directory; segment and measure cells
+[ScreenData, layout_dir, image_dir] = ...
+    buildFromLayout(start_dir, nuclear_channel, measurement_channels, measurement_type, parameters);
+% Save output file(s)
+save([start_dir,filesep,'ScreenData_',date,'.mat'],'ScreenData')
+disp('... saved file')

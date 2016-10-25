@@ -114,7 +114,7 @@ set(handles.edit7G,'String',handles.parameters.MinCellWidth)
 set(handles.edit7H,'String',handles.parameters.FramesPerHour)
 jumpstring = '[';
 for i = 1:length(handles.parameters.ImageJumps)
-    jumpstring = [gaussstring,num2str(handles.parameters.jumpstring(i)),','];
+    jumpstring = [jumpstring,num2str(handles.parameters.ImageJumps(i)),','];
 end
 if strcmp(jumpstring(end),','); jumpstring = jumpstring(1:end-1); end
 jumpstring = [jumpstring,']'];
