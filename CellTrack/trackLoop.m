@@ -44,6 +44,9 @@ mkdir([outputDirectory,'NuclearLabels'])
 mkdir([outputDirectory,'CellLabels'])
 mkdir([outputDirectory,'SegmentedImages'])
 
+% Make default shift (for tracking cells across image jumps)
+parameters.ImageOffset = [0 0];
+
 % Check to make sure time vector is long enough
 if length(parameters.TimeRange) < parameters.StackSize
    error('Time vector is too short for stack size, aborting.')
@@ -121,12 +124,22 @@ for cycle = 1:length(parameters.TimeRange)
             ,bit_depth,1,parameters.debug);
         end
                 
-        
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic
         if cycle == parameters.StackSize
             [CellData, future] = initializeCellData(future,parameters);
         else
+            % Calculate image jump, if required.
+            parameters.ImageOffset_old = parameters.ImageOffset;
+            if ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
+                j =  parameters.TimeRange(cycle-1);
+                nucName1 = eval(parameters.NucleusExpr);
+                old_nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
+                parameters.ImageOffset = parameters.ImageOffset+calculatejump(old_nuc,images.nuc);
+                disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(parameters.ImageOffset),']'])
+            
+            end
+            
             trackstring = [trackstring,'\n- - - Cycle ',num2str(saveCycle),' - - -\n'];
             [tmpstring, CellData, future] =  evalc('trackNuclei(future, CellData, saveCycle, parameters)');
             trackstring = [trackstring,tmpstring];

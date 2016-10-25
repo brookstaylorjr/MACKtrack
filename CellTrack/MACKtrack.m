@@ -1348,7 +1348,7 @@ end
 
 function edit7H_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT7H: set frames per hour for display (FramesPerHour)
+% EDIT7H: set frames imaged per hour - default is 12 (FramesPerHour)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
@@ -1371,29 +1371,23 @@ end
 
 function edit7J_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT7J: set scaled stimulus for display- single value or location of .mat vector (ScaledStimulus)
+% EDIT7J: vector of timepoints where image "jumped" (activates cross-correlation normalization 
+% for these images) (ImageJumps)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
-    newVal = get(hObject,'String');
-    if exist(newVal,'file')
-        load(newVal,'-mat')
-        disp('yaaa!')
-        handles.parameters.ScaledStimulus = ScaledStimulus;
-        handles.parameters.ScaledStimulusName = newVal;
-        handles.ScaledStimulus
-    else
-        newVal = eval(get(hObject,'String'));
-        newVal = max([0,newVal]);
-        newVal = min([newVal,1]);
-        set(hObject,'String',num2str(newVal))
-        handles.parameters.ScaledStimulus = newVal;
-        handles.parameters.ScaledStimulusName = get(hObject,'String');
+    newVal = eval(get(hObject,'String'));
+    jumpstring = '[';
+    for i = 1:length(newVal)
+        jumpstring = [jumpstring,num2str(newVal(i)),','];
     end
+    if strcmp(jumpstring(end),','); jumpstring = jumpstring(1:end-1); end
+    jumpstring = [jumpstring,']'];    
+    set(hObject,'String',jumpstring)
+    handles.parameters.ImageJumps = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
     guidata(handles.figure1,handles)
-    
 catch ME
     set(hObject,'String','err')
     handles.Locked2 = 1;
@@ -1402,22 +1396,6 @@ catch ME
     rethrow(ME)
 end
 % ========================================================================================
-
-function pushbutton7J_Callback(hObject, eventdata, handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PUSHBUTTON7J: Load an existing vector for the scaled stimulus
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[FileName,PathName] = uigetfile('*','Select scaled stimulus vector file');
-if (FileName~=0)
-    load([PathName,FileName],'-mat')
-    handles.parameters.ScaledStimulus = ScaledStimulus;
-    handles.parameters.ScaledStimulusName =[PathName,FileName];
-    set(handles.edit7J,'String',[PathName,FileName])
-    guidata(handles.figure1,handles)
-
-end
-% ========================================================================================
-
 
 
 function listbox7_Callback(hObject, eventdata, handles)

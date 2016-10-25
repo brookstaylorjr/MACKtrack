@@ -4,7 +4,7 @@ function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, 
 %
 % queue_in       stack of label matricies to be analyzed
 % CellData       structure containing information/properties for all cells
-% currentImage   current image being analyzed (frame1 image number)
+% curr_frame     current image being analyzed (frame1 image number)
 % p              parameters structure from setupTracking.m script
 %
 % CellDataOut    modified from CellData
@@ -13,8 +13,13 @@ function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, 
 disp('Tracking decisions:')
 % Define edge image for use later in decision-making
 imgedge = false(size(queue_in(1).nuclei));
-imgedge([1:p.MinNucleusRadius,end-p.MinNucleusRadius:end],:) = 1;
-imgedge(:,[1:p.MinNucleusRadius,end-p.MinNucleusRadius:end]) = 1;
+offset = p.ImageOffset-p.ImageOffset_old;
+row_low = max([1, 1+p.MinNucleusRadius+offset(1)]);
+row_hi = min([size(imgedge,1),size(imgedge,1)-p.MinNucleusRadius+offset(1)]);  
+col_low = max([1, p.MinNucleusRadius+offset(1)]);
+col_hi = min([size(imgedge,2),size(imgedge,2)-p.MinNucleusRadius+offset(2)]);  
+imgedge([1:row_low,row_hi:end],:) = 1; % Edge rows
+imgedge(:,[1:col_low,col_hi:end]) = 1; % Edge cols
 
 % Get regionprops of new frame (top of queue)
 props = regionprops(queue_in(end).nuclei,'Area', 'Centroid', 'Perimeter');
@@ -27,8 +32,8 @@ vect_perimeter = cell2mat(tmpcell(3,:));
 
 % Make new (temporary) structure, concatenate into old labeldata
 tmp.obj = (1:length(props))';
-tmp.centroidx = vect_centroidx';
-tmp.centroidy = vect_centroidy';
+tmp.centroidx = vect_centroidx' - p.ImageOffset(2);
+tmp.centroidy = vect_centroidy' - p.ImageOffset(1);
 tmp.area = vect_area';
 tmp.perimeter = vect_perimeter';    
 tmp.obj(tmp.area==0) = 0;
@@ -115,6 +120,11 @@ for i = 1:size(blocks_pre,1)
             frmXobj = blocks_pre(i,frmX);
             xpt1 = floor(CellData.labeldata(1).centroidx(frm0obj) + (labeldata(frmX).centroidx(frmXobj) - CellData.labeldata(1).centroidx(frm0obj))/frmX);
             ypt1 = floor(CellData.labeldata(1).centroidy(frm0obj) + (labeldata(frmX).centroidy(frmXobj) - CellData.labeldata(1).centroidy(frm0obj))/frmX);
+            % Put image offset back in, cap to image size.
+            ypt1 = ypt1 + p.ImageOffset(1);
+            xpt1 = xpt1 + p.ImageOffset(2);
+            xpt1(xpt1<1) = 1; xpt1(xpt1>size(queue_in(end).nuclei,2)) = size(queue_in(end).nuclei,2);
+            ypt1(ypt1<1) = 1; ypt1(ypt1>size(queue_in(end).nuclei,1)) = size(queue_in(end).nuclei,1);
             rad1 = floor(sqrt(CellData.labeldata(1).area(frm0obj) + (labeldata(frmX).area(frmXobj) - CellData.labeldata(1).area(frm0obj))/frmX)/pi);
             tmp_mask(ypt1,xpt1) = 1;
             tmp_mask = imdilate(tmp_mask,diskstrel(rad1));

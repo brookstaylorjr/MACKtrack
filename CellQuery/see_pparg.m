@@ -48,13 +48,12 @@ info.keep = max(droprows,[],2) == 0;
 %% Outputs
 % Extract measurement and apply filtering
 
-all_pparg = measure.MeanIntensityNuc(info.keep,:);
+all_pparg = measure.MedianIntensityNuc(info.keep,:);
 % Normalize by image background (per position)
-for i = 1:length(info.parameters.XYRange)
-    xy = info.parameters.XYRange(i);
-    all_pparg(info.CellData(:,1)==xy,:) = (all_pparg(info.CellData(:,1)==xy,:) - info.parameters.adj_distr(1,i)) ;
-    
-end
+% for i = 1:length(info.parameters.XYRange)
+%     xy = info.parameters.XYRange(i);
+%     all_pparg(info.CellData(:,1)==xy,:) = (all_pparg(info.CellData(:,1)==xy,:) - info.parameters.adj_distr(1,i)) ;
+% end
 
 
 graph.var = all_pparg;

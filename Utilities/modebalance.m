@@ -26,8 +26,8 @@ function [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Validate number of subpopulations (needs to be 1 or 2)
-if ~ismember(num_modes,[1 2]);
-    error('Error in MODEBALANCE: only uni- or bi-modal populations can be modeled')
+if ~ismember(num_modes,[1 2 3]);
+    error('Error in MODEBALANCE: only 1,2, or 3 subpopulations can be modeled')
 end
 
 if nargin<4
@@ -45,6 +45,8 @@ n = hist(imgvect,x)/numel(imgvect);
 % Get mode of distribution, and calculate percentiles on left side
 mode_loc = find(n==max(n),1,'first');
 pct1 = cumsum(n(mode_loc:-1:1)) / sum(n(1:mode_loc));
+bg_prct = 2*sum(n(1:mode_loc));
+
 % Determine 1st guess at background mean and variance
 mu1 = x(mode_loc);
 if max(pct1>0.68)
@@ -54,7 +56,6 @@ else
 end
 
 % Turn convergence warning off
-warning('off','stats:gmdistribution:FailedToConverge')
 try
     switch num_modes
         case 1 % Unimodal case
@@ -68,17 +69,25 @@ try
             obj = gmdistribution.fit(imgvect,1,'Start',S,'SharedCov',true, 'Options',gmopt);  
         case 2 % Bimodal case
             % Assign starting GMM structure
-            S.mu = [mu1; mu1+2*sqrt(sigma1)];
-            S.Sigma = cat(3,sigma1, sigma1*4);
-            S.PComponents = [0.75 0.25]; % This may not be the best thing to do, here...
+            S.mu = [mu1; mu1+3*sqrt(sigma1)];
+            S.Sigma = cat(3,sigma1, sigma1*3);
+            S.PComponents = [bg_prct 1-bg_prct];
             % Set maxIter for GM modeling (should be small for speed, <50)
-            gmopt = statset('MaxIter',12);
+            gmopt = statset('MaxIter',15);
             % Model distribution
             obj = gmdistribution.fit(imgvect,2,'Start',S,'CovType','diagonal','Options',gmopt);
+        case 3 % Trimodal case
+            S.mu = [mu1; mu1+2.5*sqrt(sigma1); mu1+5*sqrt(sigma1)];
+            S.Sigma = cat(3,sigma1, sigma1*3, sigma1*3);
+            S.PComponents = [bg_prct (1-bg_prct)/2 (1-bg_prct)/2];
+            % Set maxIter for GM modeling (should be small for speed, <50)
+            gmopt = statset('MaxIter',100);
+            % Model distribution
+            obj = gmdistribution.fit(imgvect,3,'Start',S,'CovType','diagonal','Options',gmopt);
+            
     end
 
     % Turn convergence warning back on
-    warning('on','stats:gmdistribution:FailedToConverge')
     % Get the minimum mean and its standard deviation (background) and normalize that to [0,1]
     mu_ind = find(obj.mu == min(obj.mu));
     background_mu = obj.mu(mu_ind);

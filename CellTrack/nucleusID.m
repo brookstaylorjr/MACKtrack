@@ -65,6 +65,26 @@ for i = 1:length(edge_cutoffs)
 end
 
 diagnos.label1a = labelmatrix(label2cc(diagnos.label1a));
+
+% Simplify objects if necessary, then bridge subobjects
+% 1) make larger smoothed image/watershed
+nuc_smooth2 = imfilter(nucleus1,gauss2D(min([p.MinNucleusRadius, 2.5*p.NuclearSmooth])),'replicate'); % Gaussian filtered
+watershed2 = watershedalt(nuc_smooth2, cell_mask, 4);
+% 2) Count subobjects per object
+label_in = imclose(diagnos.label1a,ones(2));
+obj_cc = bwconncomp(label_in>0,4);
+get_obj = @(pxlist) unique(label_in(pxlist));
+obj_match = cellfun(get_obj, obj_cc.PixelIdxList,'UniformOutput',0)';
+% Reassign pixels within bridged objects, using watershed divisions from the larger smoothing kernel
+complex_obj = find(cellfun(@length,obj_match)>15);
+for i = 1:length(complex_obj)
+    subregion = obj_cc.PixelIdxList{complex_obj(i)};
+    subregion_vals = double(sort(unique(watershed2(subregion))));
+    lut = zeros(1,max(subregion_vals)+1);
+    lut(subregion_vals+1) = [0,double(max(diagnos.label1a(:)))+(1:(length(subregion_vals)-1))];
+    diagnos.label1a(subregion) = lut(watershed2(subregion)+1);
+end
+% D) Bridge nuclear subobjects together
 diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff,p.debug);
 
 % ID nuclei w/ strong edges tends to be over-generous. Erode things somewhat, then remove super-small objects again

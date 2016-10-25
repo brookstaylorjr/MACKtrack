@@ -112,8 +112,13 @@ set(handles.edit7D,'String',handles.parameters.MedianFilterSize)
 set(handles.edit7E,'String',handles.parameters.NoiseSize)
 set(handles.edit7G,'String',handles.parameters.MinCellWidth)
 set(handles.edit7H,'String',handles.parameters.FramesPerHour)
-set(handles.edit7J,'String',handles.parameters.ScaledStimulusName)
-
+jumpstring = '[';
+for i = 1:length(handles.parameters.ImageJumps)
+    jumpstring = [gaussstring,num2str(handles.parameters.jumpstring(i)),','];
+end
+if strcmp(jumpstring(end),','); jumpstring = jumpstring(1:end-1); end
+jumpstring = [jumpstring,']'];
+set(handles.edit7J,'String',jumpstring)
 % Get contents of 'CellMeasure' folder (the one stored with MACKtrack)
 contents = dir([handles.home_folder,filesep, 'CellMeasure']);
 
@@ -149,7 +154,7 @@ for i = 1:length(testnames)
      end
 end
 
-% Initialize GUI values
+% Initialize/check measurement values in GUI 
 if ~isfield(handles.parameters.(contents(1).name),'ImageExpr2') 
     handles.parameters.(contents(1).name).ImageExpr2 = '--';
 end
