@@ -20,7 +20,7 @@ end
 % Dilate label matrix over watershed borders - if there are no objects to bridge, then break out of function.
 label_in = imclose(label_in,ones(2));
 if length(unique(label_in))<2
-    label_out=label_in;
+    label_out=double(label_in);
     return;
 end
 
