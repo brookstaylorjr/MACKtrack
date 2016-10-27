@@ -41,7 +41,7 @@ for idx = 1:length(layout_dir)
     
     % Analyze all wells/images per conditon (in parallel)
     Data = cell(size(conditions));
-    for k = 1:length(conditions)
+    parfor k = 1:length(conditions)
         Data{k} = microxlprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
     end
     % Combine data into a more "useful" structure
@@ -51,7 +51,7 @@ for idx = 1:length(layout_dir)
     end
     
     % Save full measurments file
-    save(AllData, [save_subdir,filesep,'AllData.mat'])
+    save([save_subdir,filesep,'AllData.mat'],'AllData')
 end
 
         
