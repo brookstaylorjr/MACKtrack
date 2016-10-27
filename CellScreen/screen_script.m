@@ -49,17 +49,13 @@ save([start_dir,filesep,'ScreenData_',date,'.mat'],'ScreenData')
 disp('... saved file')
 
 %%
-% Get locations, get parameters
-home_folder = mfilename('fullpath');
-slash_idx = strfind(home_folder,filesep);
-load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 
 
 % Load/overwrite parameters as required
 load('OP9_10x.mat')
 parameters.ImagePath = 'Images/Fixed Cell/2016-10-24-BT/YFP-mCh-Cy5-IF';
 parameters.SaveDirectory = 'Tracked/2016-10-24_physio-screen/';
-
+screenLoop(parameters)
 
 
 
