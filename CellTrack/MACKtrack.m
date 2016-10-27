@@ -313,9 +313,10 @@ function check_expr(handles)
 % handles  structure with handles and user data
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-% Don't let user proceed unless file expression is valid
+% Don't let user proceed (or update parameter filename) unless file expression is valid
 handles.Locked = 0;
 
+% Ensure i/j vectors are valid
 try
     % Define/check i and j indicies
     handles.parameters.XYExpr = get(handles.edit2C,'String');
@@ -324,53 +325,92 @@ try
     handles.parameters.XYRange = eval(handles.parameters.XYExpr);
     handles.parameters.TimeRange = eval(handles.parameters.TimeExpr);
     i = min(handles.parameters.XYRange);
-    j = min(handles.parameters.TimeRange); 
-   
-    % Check nuclear expression/ existence of sample nuclear image in parent directory
-    try 
-        sampleNuc = eval(get(handles.edit2A,'String'));
-        sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
-        allowedLength = 75-length(sampleNuc);
-        if length(sampleDirec)>allowedLength
-            sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
-        end
-        if exist([handles.locations.scope,handles.parameters.ImagePath,sampleNuc],'file')
-            set(handles.text2G,'String',[sampleDirec,sampleNuc],'ForegroundColor',handles.blue);
-        else
-            set(handles.text2G,'String',['"',sampleNuc,'" not found in current directory' ],'ForegroundColor','r');
-            handles.Locked = 1;
-        end
-            handles.parameters.NucleusExpr = get(handles.edit2A,'String');        
-
-    catch ME
-         set(handles.text2G,'String','Error in string construction','ForegroundColor','r');
-         handles.Locked = 1;
-    end
-
-    % Check cell expression/ existence of sample cell file in parent directory
-    try 
-        sampleCell = eval(get(handles.edit2B,'String'));
-        sampleDirec = [handles.locations.scope,handles.parameters.ImagePath];
-        allowedLength = 75-length(sampleCell);
-        if length(sampleDirec)>allowedLength
-            sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
-        end
-        if exist([handles.locations.scope,handles.parameters.ImagePath,sampleCell],'file')
-            set(handles.text2I,'String',[sampleDirec,sampleCell],'ForegroundColor',handles.blue);
-        else
-            set(handles.text2I,'String',['"',sampleCell,'" not found in current directory' ],'ForegroundColor','r');
-            handles.Locked = 1;
-        end
-        handles.parameters.CellExpr = get(handles.edit2B,'String');        
-    catch ME
-         set(handles.text2I,'String','Error in string construction','ForegroundColor','r');
-         handles.Locked = 1;
-    end
-
+    j = min(handles.parameters.TimeRange);
+    
 catch ME
     set(handles.text2G,'String','Error in i/j vector construction','ForegroundColor','r');
     set(handles.text2I,'String','Error in i/j vector construction','ForegroundColor','r');
+    error('Invalid time or XY vector used')
     handles.Locked = 1;
+end
+    
+   
+% Check nuclear expression/ existence of sample nuclear image in parent directory
+try 
+    filestring = get(handles.edit2A,'String');
+    sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
+    sampleFile = eval(filestring);
+    % Try to get an exact match (for tracking) or a partial one (for screens)
+    pass = 1;
+    if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
+        id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)),1,'first');
+        if ~isempty(id)
+            id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
+            id = id(randperm(length(id),1));
+            sampleFile = [handles.file_names{id}];
+            handles.parameters.NucleusMatch = filestring;
+            filestring = ['''',sampleFile,''''];
+        else
+            pass = 0;
+        end
+    end
+    
+    allowedLength = 75-length(sampleFile);
+    if length(sampleDirec)>allowedLength
+        sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
+    end
+    if pass
+        set(handles.text2G,'String',[sampleDirec,sampleFile],'ForegroundColor',handles.blue);
+        handles.parameters.NucleusExpr = filestring;           
+    else
+        set(handles.text2G,'String',['"',sampleFile,'" not found in current directory' ],'ForegroundColor','r');
+        handles.Locked = 1;
+    end
+
+catch ME
+     set(handles.text2G,'String','Invalid MATLAB string used for nuclear image expression','ForegroundColor','r');
+     handles.Locked = 1;
+end
+
+% Check cell expression/ existence of sample cell file in parent directory (if applicable)
+if ~strcmpi(handles.parameters.ImageType,'None')
+    try 
+        filestring = get(handles.edit2B,'String');
+        sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
+        sampleFile = eval(filestring);
+        % Try to get an exact match (for tracking) or a partial one (for screens)
+        pass = 1;
+        if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
+            if ~isempty(id)
+                id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
+                id = id(randperm(length(id),1));
+                sampleFile = handles.file_names{id};
+                handles.parameters.CellMatch = filestring;
+                filestring = ['''',sampleFile,''''];
+            else
+                pass = 0;
+            end
+        end
+    
+        allowedLength = 75-length(sampleFile);
+        if length(sampleDirec)>allowedLength
+            sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
+        end
+        if pass
+            set(handles.text2I,'String',[sampleDirec,sampleFile],'ForegroundColor',handles.blue);
+            handles.parameters.CellExpr = filestring;        
+        else
+            set(handles.text2I,'String',['"',sampleFile,'" not found in current directory' ],'ForegroundColor','r');
+            handles.Locked = 1;
+        end
+    catch ME
+         set(handles.text2I,'String','Invalid MATLAB string used for cell image expression','ForegroundColor','r');
+         handles.Locked = 1;
+         ME
+    end
+else
+    set(handles.text2I,'ForegroundColor',handles.gray);
+    handles.Locked = 0;
 end
 
 % Change behavior based on lock
@@ -382,6 +422,13 @@ end
 handles.Locked;
 guidata(handles.figure1,handles)
 % ========================================================================================
+
+
+function partialmatch(string,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PARTIALMATCH if specified, then just matches first instance of string in a file list
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 
 function pushbutton2A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

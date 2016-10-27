@@ -93,66 +93,76 @@ diagnos.label1(imdilate(borders,ones(2))) = 0;
 diagnos.label1(~bwareaopen(diagnos.label1>0,cutoff.Area(1),4)) = 0;
 
 %- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
-% Drop mask1 "marked" watershed areas from watershed of Gaussian-smoothed image 
-label_dropped = imdilate(diagnos.watershed1,ones(3));
-markers = diagnos.label1>0;
-label_dropped = removemarked(label_dropped,markers,'remove')>0;
-nucleus_smooth2 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
-diagnos.watershed_remainder = imdilate(watershedalt(nucleus_smooth2, cell_mask, 4),ones(3));
-diagnos.watershed_remainder(label_dropped==0) = 0;
+% "Weak" objects missed by standard methods
+if p.WeakObjectCutoff>0
+    
+    % Drop mask1 "marked" watershed areas from watershed of Gaussian-smoothed image 
+    label_dropped = imdilate(diagnos.watershed1,ones(3));
+    markers = diagnos.label1>0;
+    label_dropped = removemarked(label_dropped,markers,'remove')>0;
+    nucleus_smooth2 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
+    diagnos.watershed_remainder = imdilate(watershedalt(nucleus_smooth2, cell_mask, 4),ones(3));
+    diagnos.watershed_remainder(label_dropped==0) = 0;
 
-% Rank remaining pixels, and use highest-valued pixels to bridge adjacent watershed regions
-diagnos.weak_ranked = rankpixels(diagnos.watershed_remainder, nucleus1);
-high_valued = bwconncomp(diagnos.weak_ranked==max(diagnos.weak_ranked(:)));
-% Merge watershed areas based on connected "high" areas
-for i = 1:high_valued.NumObjects
-    obj = unique(diagnos.watershed_remainder(high_valued.PixelIdxList{i}));
-    obj(obj==0) = [];
-    if length(obj)>1
-        for j = 2:length(obj)
-            diagnos.watershed_remainder(diagnos.watershed_remainder==obj(j)) = obj(1);
+    % Rank remaining pixels, and use highest-valued pixels to bridge adjacent watershed regions
+    diagnos.weak_ranked = rankpixels(diagnos.watershed_remainder, nucleus1);
+    high_valued = bwconncomp(diagnos.weak_ranked==max(diagnos.weak_ranked(:)));
+    % Merge watershed areas based on connected "high" areas
+    for i = 1:high_valued.NumObjects
+        obj = unique(diagnos.watershed_remainder(high_valued.PixelIdxList{i}));
+        obj(obj==0) = [];
+        if length(obj)>1
+            for j = 2:length(obj)
+                diagnos.watershed_remainder(diagnos.watershed_remainder==obj(j)) = obj(1);
+            end
         end
     end
+    diagnos.watershed_remainder((imdilate(diagnos.watershed_remainder,ones(3))-diagnos.watershed_remainder)>0) = 0;
+    diagnos.weak_ranked2 = rankpixels(diagnos.watershed_remainder, nucleus1); % Rerank in merged watershed
+
+
+    % Check that brightest part of "nucleus" is relatively concentric-shaped and contiguous
+    test_weak =  diagnos.weak_ranked2 - imerode(diagnos.weak_ranked2,ones(3));
+    bright_edge = bwareaopen(test_weak==4,8);
+    test_weak(bright_edge) = 100; % Penalize cells with strong intensity values near edge
+
+
+    % Label2a: based on watershed remainder
+    diagnos.label2a = diagnos.watershed_remainder;
+    diagnos.weak_objects = zeros(size(test_weak)); % (diagnostic image)
+    weak_obj = label2cc(diagnos.label2a);
+    for i = 1:weak_obj.NumObjects
+        testval = mean(test_weak(weak_obj.PixelIdxList{i}));
+        diagnos.weak_objects(weak_obj.PixelIdxList{i}) = min([testval,3]);
+        if (testval > p.WeakObjectCutoff) || (testval==0)
+            diagnos.label2a(weak_obj.PixelIdxList{i}) = 0;
+        end      
+    end
+    % Clean up label2
+    diagnos.label2a(diagnos.weak_ranked2<=2) = 0; % Only look at brightest 25% of area
+    diagnos.label2a = imclose(diagnos.label2a,diskstrel(2));
+    diagnos.label2a(~imopen(diagnos.label2a>0,diskstrel(floor(p.MinNucleusRadius*2/3)))) = 0;
+
+    % Fix bug where some edge pixels belong to another object
+    diagnos.label2a= imerode(imdilate(diagnos.label2a,ones(3)),ones(3));
+    diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
+    diagnos.label2a = labelmatrix(label2cc(diagnos.label2a));
+    cutoff.Area(1) = cutoff.Area(1)*0.5;
+    diagnos.label2 = bridgenuclei(diagnos.label2a,cutoff,p.debug);
+else
+    diagnos.label2 = zeros(size(diagnos.label1));
 end
-diagnos.watershed_remainder((imdilate(diagnos.watershed_remainder,ones(3))-diagnos.watershed_remainder)>0) = 0;
-diagnos.weak_ranked2 = rankpixels(diagnos.watershed_remainder, nucleus1); % Rerank in merged watershed
-
-
-% Check that brightest part of "nucleus" is relatively concentric-shaped and contiguous
-test_weak =  diagnos.weak_ranked2 - imerode(diagnos.weak_ranked2,ones(3));
-bright_edge = bwareaopen(test_weak==4,8);
-test_weak(bright_edge) = 100; % Penalize cells with strong intensity values near edge
-
-
-% Label2a: based on watershed remainder
-diagnos.label2a = diagnos.watershed_remainder;
-diagnos.weak_objects = zeros(size(test_weak)); % (diagnostic image)
-weak_obj = label2cc(diagnos.label2a);
-for i = 1:weak_obj.NumObjects
-    testval = mean(test_weak(weak_obj.PixelIdxList{i}));
-    diagnos.weak_objects(weak_obj.PixelIdxList{i}) = min([testval,3]);
-    if (testval > p.WeakObjectCutoff) || (testval==0)
-        diagnos.label2a(weak_obj.PixelIdxList{i}) = 0;
-    end      
-end
-% Clean up label2
-diagnos.label2a(diagnos.weak_ranked2<=2) = 0; % Only look at brightest 25% of area
-diagnos.label2a = imclose(diagnos.label2a,diskstrel(2));
-diagnos.label2a(~imopen(diagnos.label2a>0,diskstrel(floor(p.MinNucleusRadius*2/3)))) = 0;
-
-% Fix bug where some edge pixels belong to another object
-diagnos.label2a= imerode(imdilate(diagnos.label2a,ones(3)),ones(3));
-diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
-diagnos.label2a = labelmatrix(label2cc(diagnos.label2a));
-cutoff.Area(1) = cutoff.Area(1)*0.5;
-diagnos.label2 = bridgenuclei(diagnos.label2a,cutoff,p.debug);
-
 
 % - - - - - - - - - - - - - - - LABEL_END - - - - - - - - - - - - - - - - - - - - -
 % Combine label1 and label2.
 diagnos.label2(diagnos.label1>0) = 0; % Double check and make sure there's no overlap
 diagnos.label2(diagnos.label2>0) = diagnos.label2(diagnos.label2>0)+max(diagnos.label1(:));
 output.label_nuc = diagnos.label1+diagnos.label2;
+
+% Relabel contiguously, just in case - convert to double so there are no math errors down the line,
+tmp_cc = label2cc(output.label_nuc,1);
+output.label_nuc = double(labelmatrix(tmp_cc));
+
 
 % Save all information under diagnostic struct
 diagnos = combinestructures(diagnos,output);

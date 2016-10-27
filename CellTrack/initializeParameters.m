@@ -139,7 +139,6 @@ for i = 1:length(contents)
     if ~isfield(handles.parameters,contents(i).name)
         handles.parameters.(contents(i).name).ImageExpr = '--';
         handles.parameters.(contents(i).name).Use = get(handles.checkbox7A,'Min');
-        handles.parameters.(contents(i).name).Measure = 'Cells';
     end
 end
 % Cycle fields in parameters- if it refers to an old module, drop it.

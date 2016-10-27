@@ -11,6 +11,7 @@ if strcmp(handles.parameters.ImageType,'None')
     set(handles.pushbuttonSwitch2,'Visible','off') % Pushbutton "tab" for panel 6
     set(handles.text2B,'String','N/A','ForegroundColor',[0.9 0.9 0.9]) % Used for display output
     set(handles.edit2B,'ForegroundColor',[0.9 0.9 0.9]) % Used for display output
+    set(handles.text2I,'ForegroundColor',handles.gray);
 
 else
     
@@ -26,6 +27,8 @@ else
         set(handles.pushbuttonSwitch2,'String','DIC')
         set(handles.text2B,'String','DIC','ForegroundColor',[13 84 171]/255)
         set(handles.edit2B,'ForegroundColor',[0 0 0]) % Used for display output
+        set(handles.text2I,'ForegroundColor','r');
+
 
     else % (phase)
         % Panel 6- Cell parameters. Set to phase-specific fields
@@ -38,6 +41,8 @@ else
         set(handles.pushbuttonSwitch2,'Visible','on') % Pushbutton for panel 6
         set(handles.pushbuttonSwitch2,'String','Phase')
         set(handles.text2B,'String','Phase','ForegroundColor',[0 0 0])
+        set(handles.text2I,'ForegroundColor','r');
+
     end
 end
 

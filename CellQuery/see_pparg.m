@@ -37,23 +37,29 @@ t_max = (size(measure.MeanIntensityNuc,2)-1)/(info.parameters.FramesPerHour/60);
 info.graph_limits = [400 1000];
 
 
+all_pparg = measure.MeanPPARg;
+
+% Add parent trajectories to children
+find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));
+for i = 1:size(all_pparg,1)
+    if info.CellData(i,5)>0
+        all_pparg(i,1:info.CellData(i,3)) = all_pparg(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
+    end
+end
+
+
 
 %% Filtering
-droprows = zeros(size(measure.MeanIntensityNuc,1),1);
+droprows = zeros(size(measure.MeanPPARg,1),1);
 %droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:4)),2)>2]; % Cells existing @ expt start
-%droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:120)),2)>3]; % Long-lived cells
+droprows = [droprows, sum(isnan(all_pparg(:,1:400)),2)>15]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
 
 %% Outputs
 % Extract measurement and apply filtering
 
-all_pparg = measure.MedianIntensityNuc(info.keep,:);
-% Normalize by image background (per position)
-% for i = 1:length(info.parameters.XYRange)
-%     xy = info.parameters.XYRange(i);
-%     all_pparg(info.CellData(:,1)==xy,:) = (all_pparg(info.CellData(:,1)==xy,:) - info.parameters.adj_distr(1,i)) ;
-% end
+all_pparg = all_pparg(info.keep,:);
 
 
 graph.var = all_pparg;

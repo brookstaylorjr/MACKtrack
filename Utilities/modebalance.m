@@ -56,6 +56,8 @@ else
 end
 
 % Turn convergence warning off
+warning('off','stats:gmdistribution:FailedToConverge')
+
 try
     switch num_modes
         case 1 % Unimodal case
@@ -73,7 +75,7 @@ try
             S.Sigma = cat(3,sigma1, sigma1*3);
             S.PComponents = [bg_prct 1-bg_prct];
             % Set maxIter for GM modeling (should be small for speed, <50)
-            gmopt = statset('MaxIter',15);
+            gmopt = statset('MaxIter',20);
             % Model distribution
             obj = gmdistribution.fit(imgvect,2,'Start',S,'CovType','diagonal','Options',gmopt);
         case 3 % Trimodal case
@@ -88,6 +90,9 @@ try
     end
 
     % Turn convergence warning back on
+    warning('on','stats:gmdistribution:FailedToConverge')
+
+    
     % Get the minimum mean and its standard deviation (background) and normalize that to [0,1]
     mu_ind = find(obj.mu == min(obj.mu));
     background_mu = obj.mu(mu_ind);
@@ -97,7 +102,7 @@ try
         background_sigma = sqrt(obj.Sigma(mu_ind));
     end
 catch me
-    warning('Backround distribution fitting failed for this image - balancing around image mode')
+    warning('Background distribution fitting failed for this image - balancing around image mode')
     background_mu =  mu1;
     background_sigma = sigma1;
 end

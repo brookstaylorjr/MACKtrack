@@ -2,8 +2,8 @@ function string_out = microXLSname(num_in)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % string_out = microXLSname(num_in)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% MICROXLS name converts between a row/col/site value and a valid image name (from of 
-% Steve Cappel's re-naming script)
+% MICROXLS name converts between a row/col/site value and a valid image name (from 
+% Steve Cappell's re-naming script)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
