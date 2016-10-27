@@ -20,9 +20,11 @@ function [output, diagnos] =  primaryID(image0,p, ~)
 
 
 %nuc_filt = imfilter(image0,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
-thresh1 = (quickthresh(image0,false(size(image0)),'none') + min(bg_dist))/2;
+% Combine two threshold variants (Otsu threshold + MoG threshold)
+thresh1 = min([ quickthresh(image0,false(size(image0)),'none'), bg_dist(1)+4*bg_dist(2)]);
 
-% Combine two threshold variants (log compressed on smoothed image, non-log compressed on original image)
+
+
 diagnos.search = image0>thresh1;
 diagnos.search_dilate = imdilate(diagnos.search,ones(floor(p.MaxNucleusRadius*1.5)));
 output.mask1 = diagnos.search_dilate;
