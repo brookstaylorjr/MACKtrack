@@ -1,4 +1,4 @@
-%function [] = screenLoop(parameters)
+function [] = screenLoop(parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % [] = screenLoop(parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -24,7 +24,7 @@ mkdir(save_dir)
 
 for idx = 1:length(layout_dir)
     % a) PER PLATE LAYOUT: identify al conditions (and corresponding wells) to be measured
-    disp(['Analyzing images in subdirectory "',layout_dir{1}(length(start_dir)+1:end),'"...'])
+    disp(['Analyzing subdirectory "',layout_dir{1}(length(start_dir)+1:end),'"...'])
     save_subdir = [save_dir,filesep,layout_dir{idx}(length(start_dir)+1:end)];
     mkdir(save_subdir)
     mkdir([save_subdir,filesep,'SegmentedImages'])
