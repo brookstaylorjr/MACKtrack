@@ -83,7 +83,7 @@ try
             S.Sigma = cat(3,sigma1, sigma1*3, sigma1*3);
             S.PComponents = [bg_prct (1-bg_prct)/2 (1-bg_prct)/2];
             % Set maxIter for GM modeling (should be small for speed, <50)
-            gmopt = statset('MaxIter',100);
+            gmopt = statset('MaxIter',50);
             % Model distribution
             obj = gmdistribution.fit(imgvect,3,'Start',S,'CovType','diagonal','Options',gmopt);
             

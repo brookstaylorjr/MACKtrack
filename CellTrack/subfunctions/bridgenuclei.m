@@ -78,8 +78,10 @@ remaining_obj(cellfun(@length,obj_match(remaining_obj))==1) = [];
 % PASS 3: Strong pass, trying to combine subsets of subobjects
 remaining_subobj = cell2mat(obj_match(remaining_obj));
 cc1 = cc_in;
-while length(remaining_subobj)>0 
+counter = 0;
+while ~isempty(remaining_subobj) && (counter<100)
     [cc1, remaining_subobj] = mergeNeighbors(cc1, remaining_subobj, cutoff,'hard',3, verbose);
+    counter = counter+1;
 end
 remaining_subobj = cell2mat(obj_match(remaining_obj)); % Get original list of subobjects (minus newly combined ones)  
 remaining_subobj(ismember(remaining_subobj,find(cellfun(@isempty,cc1.PixelIdxList)))) = [];
