@@ -26,7 +26,7 @@ function [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Validate number of subpopulations (needs to be 1 or 2)
-if ~ismember(num_modes,[1 2 3]);
+if ~ismember(num_modes,[0 1 2 3]);
     error('Error in MODEBALANCE: only 1,2, or 3 subpopulations can be modeled')
 end
 
@@ -56,17 +56,17 @@ else
 end
 
 % Turn convergence warning off
-warning('off','stats:gmdistribution:FailedToConverge')
+%warning('off','stats:gmdistribution:FailedToConverge')
 
 try
     switch num_modes
         case 0 % No GMM fit - use background guess only.
-            obj.Sigma = sigma1;
+            obj.Sigma = sigma1^2;
             obj.mu = mu1;
         case 1 % Unimodal case
             % Assign starting GMM structure
             S.mu = mu1;
-            S.Sigma = sigma1;
+            S.Sigma = sigma1^2;
             S.PComponents = 1;
             % Set maxIter for GM modeling (should be small for speed, <50)
             gmopt = statset('MaxIter',5);
@@ -75,15 +75,15 @@ try
         case 2 % Bimodal case
             % Assign starting GMM structure
             S.mu = [mu1; mu1+3*sqrt(sigma1)];
-            S.Sigma = cat(3,sigma1, sigma1*3);
+            S.Sigma = cat(3,sigma1^2, (sigma1*3)^2);
             S.PComponents = [bg_prct 1-bg_prct];
             % Set maxIter for GM modeling (should be small for speed, <50)
             gmopt = statset('MaxIter',50);
             % Model distribution
             obj = gmdistribution.fit(imgvect,2,'Start',S,'CovType','diagonal','Options',gmopt);
         case 3 % Trimodal case
-            S.mu = [mu1; mu1+2.5*sqrt(sigma1); mu1+5*sqrt(sigma1)];
-            S.Sigma = cat(3,sigma1, sigma1*3, sigma1*3);
+            S.mu = [mu1; mu1+2.5*sigma1; mu1+5*sigma1];
+            S.Sigma = cat(3,sigma1, (sigma1*3)^2, (sigma1*3)^2);
             S.PComponents = [bg_prct (1-bg_prct)/2 (1-bg_prct)/2];
             % Set maxIter for GM modeling (should be small for speed, <50)
             gmopt = statset('MaxIter',50);
