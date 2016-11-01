@@ -152,6 +152,10 @@ end
 % Save updated handles
 handles.parameters = parameters;
 handlesOut = handles;
+
+% Temporary: throw loaded images into workspace
+% assignin('base','nucOrig',nucOrig)
+
 % ========================================================================================
 
 function [noiseCount, val] =noisecount(edges,dropPixels,searchRange,noiseSize)

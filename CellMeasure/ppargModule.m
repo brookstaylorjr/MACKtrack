@@ -16,7 +16,8 @@ function [CellMeasurements, ModuleData] = ppargModule(CellMeasurements, paramete
 iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
 
-% Mode-balance 1st auxililiary image - trimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
+% Mode-balance 1st auxililiary image - bimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
+
 [~, dist1] = modebalance(AuxImages{1},3,ModuleData.BitDepth,'measure'); 
 % Background subtract - don't divide to correct for standard deviation change
 % (Confluency makes this stdev measurement slightly unreliable).
