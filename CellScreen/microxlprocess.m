@@ -88,9 +88,12 @@ for i = 1:length(wells)
                     if exist(curr_name,'file')
                         if ~isfield(ModuleData,'BitDepth')
                             ModuleData.BitDepth = imfo.BitDepth;
-                            measure_names = [measure_names, ' + ' curr_name];
                         end
-                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);   
+                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);
+                        tmp_idx = regexp(curr_name,'[0-9]_w[0-9]');
+                        tmp_idx = tmp_idx(1);
+                        measure_names = [measure_names, ' + ' curr_name(tmp_idx-6:tmp_idx+3)];
+
                     end
                 end
                 % Call measurement function
