@@ -42,7 +42,7 @@ if ~isempty(AuxImages{2})
     % Mode-balance 1st auxililiary image - bimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
     corr_img = AuxImages{2};
     corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius))) = []; % Drop foreground objects for correction calculation
-    [~, dist1] = modebalance(corr_img,2,ModuleData.BitDepth,'measure');
+    [~, dist1] = modebalance(corr_img,1,ModuleData.BitDepth,'measure');
     AuxImages{2} = (AuxImages{2} - dist1(1))/dist1(2); % Background subtract/divide
 
     % Intensity-based measurement initialization
