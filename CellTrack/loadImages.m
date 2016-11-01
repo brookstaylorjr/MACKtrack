@@ -154,7 +154,7 @@ handles.parameters = parameters;
 handlesOut = handles;
 
 % Temporary: throw loaded images into workspace
-% assignin('base','nucOrig',nucOrig)
+assignin('base','nucOrig',nucOrig)
 
 % ========================================================================================
 

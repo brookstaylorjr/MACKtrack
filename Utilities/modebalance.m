@@ -60,6 +60,9 @@ warning('off','stats:gmdistribution:FailedToConverge')
 
 try
     switch num_modes
+        case 0 % No GMM fit - use background guess only.
+            obj.Sigma = sigma1;
+            obj.mu = mu1;
         case 1 % Unimodal case
             % Assign starting GMM structure
             S.mu = mu1;

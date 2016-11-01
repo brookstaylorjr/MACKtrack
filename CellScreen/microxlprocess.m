@@ -58,6 +58,7 @@ for i = 1:length(wells)
         parameters.TotalImages = 1;
         ModuleData.BitDepth = parameters.BitDepth;
         ModuleData.iter = 1;
+        measure_names = '';
         for m = 1:length(parameters.ModuleNames)
             ModuleData.name = parameters.ModuleNames{m};
             AuxImages = cell(1,2);
@@ -87,6 +88,7 @@ for i = 1:length(wells)
                     if exist(curr_name,'file')
                         if ~isfield(ModuleData,'BitDepth')
                             ModuleData.BitDepth = imfo.BitDepth;
+                            measure_names = [measure_names, ' + ' curr_name];
                         end
                         AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);   
                     end
@@ -120,6 +122,7 @@ for i = 1:length(wells)
         str = sprintf([str,'\n', 'Saving (', 'NuclearLabel-',wells{i},'_',numseq(j,2),'.mat', ') - ',  ...
             num2str(t2),' sec ']);
         str = sprintf([str,'\n', 'Measurement - ',  num2str(t3),' sec ']);
+        str = sprintf([str,'\n ( ',measure_names,')']);
         str = sprintf([str, '\n', '- - - - - - - - - -']);
         disp(str)  
     end         
