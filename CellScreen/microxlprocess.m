@@ -58,9 +58,12 @@ for i = 1:length(wells)
         parameters.TotalImages = 1;
         ModuleData.BitDepth = parameters.BitDepth;
         ModuleData.iter = 1;
+        ModuleData.X = backgroundcalculate(size(NuclearLabel));
         measure_names = '';
+        
         for m = 1:length(parameters.ModuleNames)
             ModuleData.name = parameters.ModuleNames{m};
+            
             AuxImages = cell(1,2);
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images

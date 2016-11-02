@@ -35,9 +35,10 @@ for idx = 1:length(layout_dir)
     image_names = image_names(1,:)';
     tmp_name = image_names{find(cellfun(@isempty,strfind(image_names,'thumb'))...
         &~cellfun(@isempty,strfind(image_names,['_',wells{1}{1},'_'])),1,'first')};
-    imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
-    parameters.BitDepth = imfo.BitDepth;
-    
+    if ~isfield(parameters,'BitDepth')
+        imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
+        parameters.BitDepth = imfo.BitDepth;
+    end
     % Analyze all wells/images per conditon (in parallel)
     Data = cell(size(conditions));
     parfor k = 1:length(conditions)

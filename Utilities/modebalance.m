@@ -56,7 +56,7 @@ else
 end
 
 % Turn convergence warning off
-%warning('off','stats:gmdistribution:FailedToConverge')
+warning('off','stats:gmdistribution:FailedToConverge')
 
 try
     switch num_modes
