@@ -29,10 +29,12 @@ for i = 0:20
 end
 % Mode-balance image - bimodal distribution assumed after dropping foreground objects (cytoplasmic expression, and b.g.)
 corr_img = AuxImages{1} - ModuleData.Flatfield{1}*mult;
-corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
-[~, dist1] = modebalance(corr_img,2,ModuleData.BitDepth,'measure'); 
-AuxImages{1} = AuxImages{1} - ModuleData.Flatfield{1}*mult;
-AuxImages{1} = (AuxImages{1} - dist1(1))/dist1(2); % Background subtract/divide
+corr_img = corr_img - min(corr_img(:));
+tmp = corr_img;
+tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
+[~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
+corr_img = (corr_img - dist1(1))/dist1(2); % Background subtract/divide
+AuxImages{1} = corr_img;
 
 % Intensity-based measurement initialization
 CellMeasurements.ImageBackground1 = dist1';
@@ -53,19 +55,21 @@ end
 if ~isempty(AuxImages{2})
     stdev1 = inf;
     for i = 0:20
-        bg_subtract = AuxImages{2}-ModuleData.Flatfield{1}*0.5*i;
+        bg_subtract = AuxImages{2}-ModuleData.Flatfield{1}*0.25*i;
         lo_vals = blockproc(bg_subtract,[200 200],fun);
         if std(lo_vals(:))<stdev1
             stdev1 = std(lo_vals(:));
-            mult = 0.5*i;
+            mult = 0.25*i;
         end
     end
+    mult
     corr_img = AuxImages{2} - ModuleData.Flatfield{1}*mult;
-    % Mode-balance image - bimodal distribution assumed after dropping foreground objects (cytoplasmic expression, and b.g.)
-    corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
-    [~, dist1] = modebalance(corr_img,2,ModuleData.BitDepth,'measure'); 
-    AuxImages{2} = AuxImages{2} - ModuleData.Flatfield{1}*mult;
-    AuxImages{2} = (AuxImages{2} - dist1(1))/dist1(2); % Background subtract/divide
+    corr_img = corr_img - min(corr_img(:));
+    tmp = corr_img;
+    tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
+    [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
+    corr_img = (corr_img - dist1(1))/dist1(2); % Background subtract/divide
+    AuxImages{2} = corr_img;
 
     % Intensity-based measurement initialization
     CellMeasurements.ImageBackground2 = dist1';
