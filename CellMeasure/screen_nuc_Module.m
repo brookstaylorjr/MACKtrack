@@ -20,10 +20,12 @@ measure_cc = label2cc(labels.Nucleus,0);
 corr_img = AuxImages{1};
 % Background correct
 if isfield(ModuleData,'X')
+    X = ModuleData.X;
     warning off MATLAB:nearlySingularMatrix
     pStar = (X'*X)\(X')*corr_img(:);
     % Apply correction
     corr_img = reshape((double(corr_img(:) - X*pStar)),size(corr_img));
+    corr_img = corr_img-min(corr_img(:));
 end
 
 corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius))) = []; % Drop foreground objects for correction calculation
@@ -55,6 +57,7 @@ if ~isempty(AuxImages{2})
         pStar = (X'*X)\(X')*corr_img(:);
         % Apply correction
         corr_img = reshape((double(corr_img(:) - X*pStar)),size(corr_img));
+        corr_img = corr_img-min(corr_img(:));
     end
     corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius))) = []; % Drop foreground objects for correction calculation
     [~, dist1] = modebalance(corr_img,2,ModuleData.BitDepth,'measure'); 
