@@ -58,12 +58,13 @@ for i = 1:length(wells)
         parameters.TotalImages = 1;
         ModuleData.BitDepth = parameters.BitDepth;
         ModuleData.iter = 1;
-        ModuleData.X = backgroundcalculate(size(NuclearLabel));
+        if isfield(parameters,'Flatfield')
+            ModuleData.Flatfield = parameters.Flatfield;
+        end
         measure_names = '';
         
         for m = 1:length(parameters.ModuleNames)
             ModuleData.name = parameters.ModuleNames{m};
-            
             AuxImages = cell(1,2);
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images
@@ -128,7 +129,7 @@ for i = 1:length(wells)
         str = sprintf([str,'\n', 'Saving (', 'NuclearLabel-',wells{i},'_',numseq(j,2),'.mat', ') - ',  ...
             num2str(t2),' sec ']);
         str = sprintf([str,'\n', 'Measurement - ',  num2str(t3),' sec ']);
-        str = sprintf([str,'\n ( ',measure_names,')']);
+        str = sprintf([str,'\n (Measured: ',measure_names(3:end),')']);
         str = sprintf([str, '\n', '- - - - - - - - - -']);
         disp(str)  
     end         

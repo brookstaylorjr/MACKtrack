@@ -15,21 +15,23 @@ function [CellMeasurements, ModuleData] = screen_nuc_Module(CellMeasurements, pa
 
 iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
+fun = @(block_struct) prctile(block_struct.data(:),2);
 
-% Mode-balance 1st auxililiary image - bimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
-corr_img = AuxImages{1};
-% Background correct
-if isfield(ModuleData,'X')
-    X = ModuleData.X;
-    warning off MATLAB:nearlySingularMatrix
-    pStar = (X'*X)\(X')*corr_img(:);
-    % Apply correction
-    corr_img = reshape((double(corr_img(:) - X*pStar)),size(corr_img));
-    corr_img = corr_img-min(corr_img(:));
+% Background correct - find best fit scale from 0x to 10x, 0.5x increment
+stdev1 = inf;
+for i = 0:20
+    bg_subtract = AuxImages{1}-ModuleData.Flatfield{1}*0.5*i;
+    lo_vals = blockproc(bg_subtract,[200 200],fun);
+    if std(lo_vals(:))<stdev1
+        stdev1 = std(lo_vals(:));
+        mult = 0.5*i;
+    end
 end
-
-corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius))) = []; % Drop foreground objects for correction calculation
+% Mode-balance image - bimodal distribution assumed after dropping foreground objects (cytoplasmic expression, and b.g.)
+corr_img = AuxImages{1} - ModuleData.Flatfield{1}*mult;
+corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
 [~, dist1] = modebalance(corr_img,2,ModuleData.BitDepth,'measure'); 
+AuxImages{1} = AuxImages{1} - ModuleData.Flatfield{1}*mult;
 AuxImages{1} = (AuxImages{1} - dist1(1))/dist1(2); % Background subtract/divide
 
 % Intensity-based measurement initialization
@@ -49,18 +51,20 @@ end
 
 % Measure nuclei in 2nd auxiliary, if it is specified
 if ~isempty(AuxImages{2})
-    % Mode-balance 1st auxililiary image - bimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
-    corr_img = AuxImages{2};
-    % Background correct
-    if isfield(ModuleData,'X')
-        warning off MATLAB:nearlySingularMatrix
-        pStar = (X'*X)\(X')*corr_img(:);
-        % Apply correction
-        corr_img = reshape((double(corr_img(:) - X*pStar)),size(corr_img));
-        corr_img = corr_img-min(corr_img(:));
+    stdev1 = inf;
+    for i = 0:20
+        bg_subtract = AuxImages{2}-ModuleData.Flatfield{1}*0.5*i;
+        lo_vals = blockproc(bg_subtract,[200 200],fun);
+        if std(lo_vals(:))<stdev1
+            stdev1 = std(lo_vals(:));
+            mult = 0.5*i;
+        end
     end
-    corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius))) = []; % Drop foreground objects for correction calculation
+    corr_img = AuxImages{2} - ModuleData.Flatfield{1}*mult;
+    % Mode-balance image - bimodal distribution assumed after dropping foreground objects (cytoplasmic expression, and b.g.)
+    corr_img(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
     [~, dist1] = modebalance(corr_img,2,ModuleData.BitDepth,'measure'); 
+    AuxImages{2} = AuxImages{2} - ModuleData.Flatfield{1}*mult;
     AuxImages{2} = (AuxImages{2} - dist1(1))/dist1(2); % Background subtract/divide
 
     % Intensity-based measurement initialization

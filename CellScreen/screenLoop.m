@@ -35,10 +35,23 @@ for idx = 1:length(layout_dir)
     image_names = image_names(1,:)';
     tmp_name = image_names{find(cellfun(@isempty,strfind(image_names,'thumb'))...
         &~cellfun(@isempty,strfind(image_names,['_',wells{1}{1},'_'])),1,'first')};
-    if ~isfield(parameters,'BitDepth')
-        imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
-        parameters.BitDepth = imfo.BitDepth;
+    
+    % Make parameter additions: 1) bit depth and 2) flatfield image fits.
+    imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
+    parameters.BitDepth = imfo.BitDepth;
+    % Calculate flatfield images - replace them in parameters
+    if isfield(parameters,'Flatfield')
+        X = backgroundcalculate([imfo.Height,imfo.Width]);
+        warning off MATLAB:nearlySingularMatrix
+        for i = 1:length(parameters.Flatfield)
+            corr_img = parameters.Flatfield{i};
+            pStar = (X'*X)\(X')*corr_img(:);
+            % Apply correction
+            corr_img = reshape(X*pStar,size(corr_img));
+            parameters.Flatfield{i} = corr_img-min(corr_img(:));
+        end
     end
+    
     % Analyze all wells/images per conditon (in parallel)
     Data = cell(size(conditions));
     parfor k = 1:length(conditions)

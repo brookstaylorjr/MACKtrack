@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 18-Oct-2016 17:49:45
+% Last Modified by GUIDE v2.5 02-Nov-2016 12:24:23
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1566,3 +1566,92 @@ module = module_list{index_selected};
 
 handles.parameters.(module).Use = get(hObject,'Value');
 guidata(handles.figure1,handles)
+
+
+function listbox7B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% LISTBOX7A: show all added selection images
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+get(handles.figure1,'SelectionType');
+% If user input is a double click, proceed
+if strcmp(get(handles.figure1,'SelectionType'),'open')
+    index_selected = get(handles.listbox7B,'Value');
+    figure,imagesc(handles.parameters.Flatfield{index_selected})
+    set(gca,'XTick',[],'YTick',[]), colorbar
+    axis equal
+    title1 = handles.parameters.FlatfieldNames{index_selected};
+    title2 = {};
+    splits = [1:96:length(title1),length(title1)+1];
+    for i = 1:(length(splits)-1)
+    title2 = cat(1,title2,{title1(splits(i):(splits(i+1)-1))});
+    end
+    title(title2,'Interpreter','none',...
+        'FontSize',8,'FontWeight','normal')
+end
+
+
+function pushbutton7A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON7A: add a new flatfield image (stored by name and image)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+[file1, dir1] = uigetfile({'*.tif';'*.png';'*.jpg';'*.*'},'Load a flatfield image',...
+    [handles.locations.scope,handles.parameters.ImagePath]);
+if file1
+    % Add file/filename to parameters
+    new_img = double(imread([dir1,filesep,file1]));
+    if ~isfield(handles.parameters,'Flatfield')
+        handles.parameters.Flatfield{1} = new_img;
+        handles.parameters.FlatfieldNames{1} = [dir1,filesep,file1];
+        set(handles.listbox7B,'Value',1)
+    else
+        handles.parameters.Flatfield = cat(2,handles.parameters.Flatfield, {new_img});
+        handles.parameters.FlatfieldNames = cat(2,handles.parameters.FlatfieldNames,{[dir1,filesep,file1]});
+    end
+    updateflatfields(handles);
+    guidata(handles.figure1,handles);
+end
+
+function pushbutton7B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON7B: remove selected flatfield image
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+index_selected = get(handles.listbox7B,'Value');
+handles.parameters.Flatfield(index_selected) = [];
+handles.parameters.FlatfieldNames(index_selected) = [];
+disp('Deleted uploaded flatfield image')
+updateflatfields(handles);
+guidata(handles.figure1,handles);
+
+
+
+function pushbutton7C_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON7C: swap selected flatfield image for a new image
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+index_selected = get(handles.listbox7B,'Value');
+[file1, dir1] = uigetfile({'*.tif';'*.png';'*.jpg';'*.*'},'Load a flatfield image',...
+    [handles.locations.scope,handles.parameters.ImagePath]);
+if file1
+    % Add file/filename to parameters
+    new_img = double(imread([dir1,filesep,file1]));
+    handles.parameters.Flatfield{index_selected} = new_img;
+    handles.parameters.FlatfieldNames{index_selected} = [dir1,filesep,file1];
+    % Update listbox and save parameters
+    updateflatfields(handles);
+    guidata(handles.figure1,handles)
+end
+
+
+function updateflatfields(handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Update list of flatfields based on parameters (similar to lines in initializeParameters.m)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+flatfields = {};
+if isfield(handles.parameters,'Flatfield')
+    for i = 1:length(handles.parameters.Flatfield)
+        flatfields = cat(1,flatfields,{['Flatfield{',num2str(i),...
+            '}(',num2str(size(handles.parameters.Flatfield{i},1)),' x ',...
+            num2str(size(handles.parameters.Flatfield{i},1)),')']});
+    end
+end
+set(handles.listbox7B,'String',flatfields)

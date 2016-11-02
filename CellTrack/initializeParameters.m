@@ -188,7 +188,23 @@ catch ME
     set(handles.text7L_2,'ForegroundColor',handles.gray)
 end
 
-% Resave parameters in place to reflect new updated values
+% Get flatfield objects and populate listbox accordingly
+flatfields = {};
+if isfield(handles.parameters,'Flatfield')
+    for i = 1:length(handles.parameters.Flatfield)
+        flatfields = cat(1,flatfields,{['Flatfield{',num2str(i),...
+            '}(',num2str(size(handles.parameters.Flatfield{i},1)),' x ',...
+            num2str(size(handles.parameters.Flatfield{i},1)),')']});
+    end
+end
+set(handles.listbox7B,'String',flatfields)
+
+
+
+
+
+
+%% Resave parameters in place to reflect new updated values
 load(paramfile,'-mat') % Reload original parameters for comparison
 if ~isequal(handles.parameters,parameters)
     disp('Saving automatically-updated parameters')
