@@ -33,10 +33,11 @@ corr_img = corr_img - min(corr_img(:));
 tmp = corr_img;
 tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
 [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
-corr_img = (corr_img - dist1(1))/dist1(2); % Background subtract/divide
+corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
 AuxImages{1} = corr_img;
 
 % Intensity-based measurement initialization
+CellMeasurements.Mult1 = mult;
 CellMeasurements.ImageBackground1 = dist1';
 CellMeasurements.MeanNuc1 =  nan(parameters.TotalCells,parameters.TotalImages);
 CellMeasurements.IntegratedNuc1 =  nan(parameters.TotalCells,parameters.TotalImages);
@@ -62,16 +63,16 @@ if ~isempty(AuxImages{2})
             mult = 0.25*i;
         end
     end
-    mult
     corr_img = AuxImages{2} - ModuleData.Flatfield{1}*mult;
     corr_img = corr_img - min(corr_img(:));
     tmp = corr_img;
     tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
     [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
-    corr_img = (corr_img - dist1(1))/dist1(2); % Background subtract/divide
+    corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
     AuxImages{2} = corr_img;
 
     % Intensity-based measurement initialization
+    CellMeasurements.Mult2 = mult;
     CellMeasurements.ImageBackground2 = dist1';
     CellMeasurements.MeanNuc2 =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.IntegratedNuc2 =  nan(parameters.TotalCells,parameters.TotalImages);
