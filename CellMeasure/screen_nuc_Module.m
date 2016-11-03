@@ -15,20 +15,19 @@ function [CellMeasurements, ModuleData] = screen_nuc_Module(CellMeasurements, pa
 
 iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
-fun = @(block_struct) prctile(block_struct.data(:),2);
 
-% Background correct - find best fit scale from 0x to 10x, 0.5x increment
-stdev1 = inf;
-for i = 0:20
-    bg_subtract = AuxImages{1}-ModuleData.Flatfield{1}*0.5*i;
-    lo_vals = blockproc(bg_subtract,[200 200],fun);
-    if std(lo_vals(:))<stdev1
-        stdev1 = std(lo_vals(:));
-        mult = 0.5*i;
-    end
-end
-% Mode-balance image - bimodal distribution assumed after dropping foreground objects (cytoplasmic expression, and b.g.)
-corr_img = AuxImages{1} - ModuleData.Flatfield{1}*mult;
+% Normalization 1: flatfield correction -> estimate range for scaling
+orig_img = double(AuxImages{1}); bg_img = double(ModuleData.Flatfield{1});
+blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
+lo_find = @(block_struct) prctile(block_struct.data(:),2);
+guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
+% Calculating optimal scaling and subtract
+fun1 = @(x) std(reshape(blockproc(orig_img-bg_img*x,blk_sz,lo_find),[1 36]));
+opt1 = optimset('TolX',1e-2);
+mult = fminbnd(fun1,0, guess*5,opt1);
+corr_img = orig_img - bg_img*mult;
+
+% Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
 corr_img = corr_img - min(corr_img(:));
 tmp = corr_img;
 tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
@@ -54,22 +53,25 @@ end
 
 % Measure nuclei in 2nd auxiliary, if it is specified
 if ~isempty(AuxImages{2})
-    stdev1 = inf;
-    for i = 0:20
-        bg_subtract = AuxImages{2}-ModuleData.Flatfield{1}*0.25*i;
-        lo_vals = blockproc(bg_subtract,[200 200],fun);
-        if std(lo_vals(:))<stdev1
-            stdev1 = std(lo_vals(:));
-            mult = 0.25*i;
-        end
-    end
-    corr_img = AuxImages{2} - ModuleData.Flatfield{1}*mult;
+    % Normalization 1: flatfield correction -> estimate range for scaling
+    orig_img = double(AuxImages{2}); bg_img = double(ModuleData.Flatfield{1});
+    blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
+    lo_find = @(block_struct) prctile(block_struct.data(:),2);
+    guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
+    % Calculating optimal scaling and subtract
+    fun1 = @(x) std(reshape(blockproc(orig_img-bg_img*x,blk_sz,lo_find),[1 36]));
+    opt1 = optimset('TolX',1e-2);
+    mult = fminbnd(fun1,0, guess*5,opt1);
+    corr_img = orig_img - bg_img*mult;
+
+    % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
     corr_img = corr_img - min(corr_img(:));
     tmp = corr_img;
     tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
     [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
     corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
     AuxImages{2} = corr_img;
+
 
     % Intensity-based measurement initialization
     CellMeasurements.Mult2 = mult;

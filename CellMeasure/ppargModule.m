@@ -16,12 +16,25 @@ function [CellMeasurements, ModuleData] = ppargModule(CellMeasurements, paramete
 iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
 
-% Mode-balance 1st auxililiary image - bimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
+% Normalization 1: flatfield correction -> estimate range for scaling
+orig_img = double(AuxImages{1}); bg_img = double(ModuleData.Flatfield{1});
+blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
+lo_find = @(block_struct) prctile(block_struct.data(:),2);
+guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
+% Calculating optimal scaling and subtract
+fun1 = @(x) std(reshape(blockproc(orig_img-bg_img*x,blk_sz,lo_find),[1 36]));
+opt1 = optimset('TolX',1e-2);
+mult = fminbnd(fun1,0, guess*5,opt1);
+corr_img = orig_img - bg_img*mult;
 
-[~, dist1] = modebalance(AuxImages{1},3,ModuleData.BitDepth,'measure'); 
-% Background subtract - don't divide to correct for standard deviation change
-% (Confluency makes this stdev measurement slightly unreliable).
-AuxImages{1} = AuxImages{1} - dist1(1);
+% Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
+corr_img = corr_img - min(corr_img(:));
+tmp = corr_img;
+tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
+[~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
+corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
+AuxImages{1} = corr_img;
+
 
 % On first call, initialize all new CellMeasurements fields 
 if ~isfield(CellMeasurements,'MeanIntensityNuc')
@@ -41,11 +54,24 @@ end
 
 % Measure nuclei in 2nd auxiliary, if it is specified
 if ~isempty(AuxImages{2})
-    % Mode-balance 1st auxililiary image - trimodal distribution assumed (nuclear expression, cytoplasmic expression, and b.g.)
-    [~, dist2] = modebalance(AuxImages{2},3,ModuleData.BitDepth,'measure'); 
-    % Background subtract - don't divide to correct for standard deviation change
-    % (Confluency makes this stdev measurement slightly unreliable).
-    AuxImages{2} = AuxImages{2} - dist2(1);
+    orig_img = double(AuxImages{2}); bg_img = double(ModuleData.Flatfield{1});
+    blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
+    lo_find = @(block_struct) prctile(block_struct.data(:),2);
+    guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
+    % Calculating optimal scaling and subtract
+    fun1 = @(x) std(reshape(blockproc(orig_img-bg_img*x,blk_sz,lo_find),[1 36]));
+    opt1 = optimset('TolX',1e-2);
+    mult = fminbnd(fun1,0, guess*5,opt1);
+    corr_img = orig_img - bg_img*mult;
+
+    % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
+    corr_img = corr_img - min(corr_img(:));
+    tmp = corr_img;
+    tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
+    [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
+    corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
+    AuxImages{2} = corr_img;
+
 
     % On first call, initialize all new CellMeasurements fields 
     if ~isfield(CellMeasurements,'MeanCEBP')
