@@ -12,6 +12,22 @@ parameters.XYDir = [parameters.locations.data,filesep,parameters.SaveDirectory,f
 CellMeasurements = struct;      
 ModuleData = struct;
 
+% Convert any parameter flatfield images to functions
+if isfield(parameters,'Flatfield')
+    X = [];
+    warning off MATLAB:nearlySingularMatrix
+    for i = 1:length(parameters.Flatfield)
+        if size(X,1) ~= numel(parameters.Flatfield{i})
+            X = backgroundcalculate(size(parameters.Flatfield{i}));
+        end        
+        corr_img = parameters.Flatfield{i};
+        pStar = (X'*X)\(X')*corr_img(:);
+        % Apply correction
+        corr_img = reshape(X*pStar,size(corr_img));
+        parameters.Flatfield{i} = corr_img-min(corr_img(:));
+    end
+end
+
 % Load and add CellData field to CellMeasurements
 if exist([parameters.XYDir,'CellData.mat'],'file')
     load([parameters.XYDir,'CellData.mat']);
