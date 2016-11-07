@@ -17,7 +17,7 @@ iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
 
 % Normalization 1: flatfield correction -> estimate range for scaling
-orig_img = double(AuxImages{1}); bg_img = double(ModuleData.Flatfield{1});
+orig_img = double(AuxImages{1}); bg_img = double(parameters.Flatfield{1});
 blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
 lo_find = @(block_struct) prctile(block_struct.data(:),2);
 guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
