@@ -373,7 +373,7 @@ catch ME
 end
 
 % Check cell expression/ existence of sample cell file in parent directory (if applicable)
-if ~strcmpi(handles.parameters.ImageType,'None')
+if ~strcmpi(handles.parameters.ImageType,'none')
     try 
         filestring = get(handles.edit2B,'String');
         sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];

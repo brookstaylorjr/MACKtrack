@@ -49,10 +49,14 @@ bg_prct = min([0.99,2*sum(n(1:mode_loc))]);
 
 % Determine 1st guess at background mean and variance using 68% rule
 mu1 = x(mode_loc);
-if max(pct1)>0.68
-    sigma1 = (x(mode_loc) - x(mode_loc - find(pct1>0.68,1,'first')));
-else
-    sigma1 = (x(mode_loc)-min(imgvect(:)))/3;
+try
+    if max(pct1)>0.68
+        sigma1 = (x(mode_loc) - x(mode_loc - find(pct1>0.68,1,'first')));
+    else
+        sigma1 = (x(mode_loc)-min(imgvect(:)))/3;
+    end
+catch me
+    sigma1 = stdev(imgvect);
 end
 
 % Turn convergence warning off

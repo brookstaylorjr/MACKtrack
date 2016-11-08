@@ -52,16 +52,17 @@ switch lower(p.ImageType)
     case 'dic'
         % Set function names
         fnstem = 'dic';
-        % Set images and overlays
         X = []; 
     case 'phase'
-        % Set function names
         fnstem = 'phase';
-        % Set auxilary information
         X = backgroundcalculate(p.ImageSize);
     case 'none'
         fnstem = 'primary';
         X = [];
+    case 'fluorescence'
+        fnstem = 'fluorescence';
+        X = backgroundcalculate(p.ImageSize); 
+        
 end
 
 % Turn off combine structures warning

@@ -19,13 +19,14 @@ images = struct;
 tocs = struct;
 switch lower(parameters.ImageType)
     case 'dic'
-        % Set function names
         fnstem = 'dic';
         X = []; 
     case 'phase'
-        % Set function names
         fnstem = 'phase';
         X = backgroundcalculate(parameters.ImageSize);
+    case 'fluorescence'
+        fnstem = 'fluorescence';
+        X = [];
     case 'none';
         fnstem = 'primary';
         X = [];
@@ -84,6 +85,11 @@ for cycle = 1:length(parameters.TimeRange)
     % CELL MASKING on phase contrast/DIC image
     tic
     maskfn = str2func([fnstem,'ID']);
+    
+    if strcmp(lower(parameters.ImageType),'fluorescence')
+        X = image.nuc;
+    end
+    
     data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
     tocs.CellMasking = toc;
     

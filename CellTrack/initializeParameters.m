@@ -58,8 +58,8 @@ set(handles.edit5F,'String',num2str(handles.parameters.Compactness(2)))
 set(handles.edit5G,'String',num2str(handles.parameters.NuclearSmooth))
 set(handles.edit5H,'String',num2str(handles.parameters.Solidity))
 
-%% - - - - - - - - - Phase/DIC parameters - - - - - - - - - - - - 
-set(handles.popupmenu0,'Value',find(strcmp(handles.parameters.ImageType,{'phase','DIC','None'})));
+%% - - - - - - - - - Cell parameters - - - - - - - - - - - - 
+set(handles.popupmenu0,'Value',find(strcmp(lower(handles.parameters.ImageType),{'phase','dic','fluorescence','none'})));
 setVisibility(handles)
 
 cell_edge1 = min(handles.parameters.CellSearchRange);
