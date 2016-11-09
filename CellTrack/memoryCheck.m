@@ -68,6 +68,7 @@ for n = reshape(checklist,1,length(checklist))
     end
 end
 % SWAP/JUMP resolution: classify error as either swap or jump, and fix appropriately
+
 for i = 1:length(swap_cells)
     if swap_displacement(i) > (p.MinNucleusRadius*2)
         % Check to see if cell has matched partner in list, and if it also was a "big mover"

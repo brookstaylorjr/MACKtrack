@@ -40,13 +40,35 @@ for ind1 = 1:length(modules)
         end
     end
 end
-% Rotate images if necessary
+% Rotate images (to make wider than tall)
 imgnames = fieldnames(images);
+rotate_flag = 0;
 for k = 1:length(imgnames)
     if size(images.(imgnames{k}),1)>size(images.(imgnames{k}),2)
         images.(imgnames{k}) = imrotate(images.(imgnames{k}),90);
+        rotate_flag = 1;
     end
 end
+
+% Convert any parameter flatfield images to functions
+if isfield(p,'Flatfield')
+    X = [];
+    warning off MATLAB:nearlySingularMatrix
+    for i = 1:length(p.Flatfield)
+        if size(X,1) ~= numel(p.Flatfield{i})
+            X = backgroundcalculate(size(p.Flatfield{i}));
+        end        
+        corr_img = p.Flatfield{i};
+        pStar = (X'*X)\(X')*corr_img(:);
+        % Apply correction
+        corr_img = reshape(X*pStar,size(corr_img));
+        if rotate_flag
+            corr_img = imrotate(corr_img,90);
+        end
+        p.Flatfield{i} = corr_img-min(corr_img(:));
+    end
+end
+
 
 switch lower(p.ImageType)
     case 'dic'
@@ -61,7 +83,7 @@ switch lower(p.ImageType)
         X = [];
     case 'fluorescence'
         fnstem = 'fluorescence';
-        X = backgroundcalculate(p.ImageSize); 
+        X = images.nucleus; 
         
 end
 
@@ -133,6 +155,15 @@ for k = 1:length(overlayList)
     R = disp_img; R(border1) = R(border1)*0.25 + 0.75*248;
     G = disp_img; G(border1) = G(border1)*0.25 + 0.75*152;
     B = disp_img; B(border1) = B(border1)*0.25 + 0.75*29;
+    
+    if ~strcmpi(p.ImageType,'none')
+        %  Overlay cell borders as light blue
+        border1 = (imdilate(data.cells,ones(3))-data.cells)>0;
+        R(border1) = R(border1)*0.25 + 0.75*118;
+        G(border1) = G(border1)*0.25 + 0.75*180;
+        B(border1) = B(border1)*0.25 + 0.75*203;
+    end
+    
     disp_img = cat(3,R,G,B);
     disp_img = uint8(round(disp_img));
     handles.overlays.(overlayList{k}) = disp_img;

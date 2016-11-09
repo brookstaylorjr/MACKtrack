@@ -32,6 +32,24 @@ switch lower(parameters.ImageType)
         X = [];
 end
 
+% Convert any parameter flatfield images to functions
+if isfield(parameters,'Flatfield')
+    X = [];
+    warning off MATLAB:nearlySingularMatrix
+    for i = 1:length(parameters.Flatfield)
+        if size(X,1) ~= numel(parameters.Flatfield{i})
+            X = backgroundcalculate(size(parameters.Flatfield{i}));
+        end        
+        corr_img = parameters.Flatfield{i};
+        pStar = (X'*X)\(X')*corr_img(:);
+        % Apply correction
+        corr_img = reshape(X*pStar,size(corr_img));
+        parameters.Flatfield{i} = corr_img-min(corr_img(:));
+    end
+end
+
+
+
 % Get image bit depth
 i = xyPos;
 j =  parameters.TimeRange(1);
@@ -87,7 +105,7 @@ for cycle = 1:length(parameters.TimeRange)
     maskfn = str2func([fnstem,'ID']);
     
     if strcmp(lower(parameters.ImageType),'fluorescence')
-        X = image.nuc;
+        X = images.nuc;
     end
     
     data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
@@ -191,7 +209,7 @@ for cycle = 1:length(parameters.TimeRange)
         save([outputDirectory,'CellLabels',filesep,'CellLabel-',numseq(saveCycle,4),'.mat'], 'CellLabel')   
         % Save composite 'Segmentation' image
         alpha = 0.30;
-        saveFig(images.bottom,CellLabel,NuclearLabel, X,bit_depth,[outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  alpha)
+        saveFig(images.bottom,CellLabel,NuclearLabel, [],bit_depth,[outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  alpha)
         tocs.Saving = toc;
         % Save decisions.txt
         fid = fopen([outputDirectory,'decisions.txt'],'a','n','UTF-8');

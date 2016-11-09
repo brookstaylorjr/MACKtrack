@@ -21,7 +21,7 @@ function [output, diagnos] =  primaryID(image0,p, ~)
 
 %nuc_filt = imfilter(image0,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
 % Combine two threshold variants (Otsu threshold + MoG threshold)
-thresh1 = min([ quickthresh(image0,false(size(image0)),'none'), bg_dist(1)+4*bg_dist(2)]);
+thresh1 = min([quickthresh(image0,false(size(image0)),'none'), bg_dist(1)+4*bg_dist(2)]);
 
 
 

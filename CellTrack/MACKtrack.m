@@ -1594,7 +1594,7 @@ function pushbutton7A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON7A: add a new flatfield image (stored by name and image)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[file1, dir1] = uigetfile({'*.tif';'*.png';'*.jpg';'*.*'},'Load a flatfield image',...
+[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
     [handles.locations.scope,handles.parameters.ImagePath]);
 if file1
     % Add file/filename to parameters
@@ -1629,7 +1629,7 @@ function pushbutton7C_Callback(hObject, eventdata, handles)
 % PUSHBUTTON7C: swap selected flatfield image for a new image
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 index_selected = get(handles.listbox7B,'Value');
-[file1, dir1] = uigetfile({'*.tif';'*.png';'*.jpg';'*.*'},'Load a flatfield image',...
+[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
     [handles.locations.scope,handles.parameters.ImagePath]);
 if file1
     % Add file/filename to parameters
