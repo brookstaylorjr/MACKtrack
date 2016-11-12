@@ -1,8 +1,8 @@
-function [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
+function [CellMeasurements, ModuleData] = fret_nucModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
+% [CellMeasurements, ModuleData] = fret)nucModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% FRETMODULE 
+% FRET_NUCMODULE 
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %
@@ -13,8 +13,7 @@ function [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameter
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 iteration  = ModuleData.iter;
-tmp_label = labels.Cell;
-tmp_label(labels.Nucleus>0) = 0; % cytoplasm only
+tmp_label = labels.Nucleus;
 measure_cc = label2cc(tmp_label,0);
 
 

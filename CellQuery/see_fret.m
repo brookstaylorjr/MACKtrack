@@ -1,8 +1,8 @@
-function [graph, info, measure] = see_pparg(id,show_graphs, diagnos)
+function [graph, info, measure] = see_fret(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [graph, info, measure] = see_pparg(id,show_graphs, diagnos)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SEE_PPARG is a visualization function to see measured nuclear PPARg levels in tagged cells
+% SEE_FRET is a visualization function to see measured cytoplasmic FRET levels in tagged cells
 %
 %
 % id             experiment ID (from Google Spreadsheet specigied in "loadID.m")
@@ -32,36 +32,42 @@ end
 % Load data; set parameters
 [measure, info] = loadID(id);
 info.parameters.FramesPerHour = 6; % 10 min between frames
-info.Module = 'ppargModule';
-t_max = (size(measure.MeanPPARg,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+info.Module = 'MedianFRET';
+t_max = (size(measure.MedianFRET,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 info.graph_limits = [400 1000];
 
 
-all_pparg = measure.MeanPPARg;
+all_fret = measure.MedianFRET;
 
 % Add parent trajectories to children
 find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));
-for i = 1:size(all_pparg,1)
+for i = 1:size(all_fret,1)
     if info.CellData(i,5)>0
-        all_pparg(i,1:info.CellData(i,3)) = all_pparg(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
+        all_fret(i,1:info.CellData(i,3)) = all_fret(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
     end
 end
 
 
 
 %% Filtering
-droprows = zeros(size(measure.MeanPPARg,1),1);
+droprows = zeros(size(measure.MedianFRET,1),1);
 %droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:4)),2)>2]; % Cells existing @ expt start
-droprows = [droprows, sum(isnan(all_pparg(:,1:400)),2)>15]; % Long-lived cells
+droprows = [droprows, sum(isnan(all_fret(:,1:200)),2)>15]; % Long-lived cells
+droprows = [droprows, sum(isnan(all_fret(:,1:2)),2)>1]; % Cells existing @ start
 info.keep = max(droprows,[],2) == 0;
+
+%% Subtract basal level of FRET (?)
+
+all_fret = all_fret(info.keep,:);
+
+all_fret_baseline  = all_fret - repmat(nanmean(all_fret(:,1:2),2),[1 size(all_fret,2)]);
+
 
 
 %% Outputs
 % Extract measurement and apply filtering
-all_pparg = all_pparg(info.keep,:);
-
-
-graph.var = all_pparg;
+graph.var = all_fret;
+graph.var2 = all_fret_baseline;
 
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
 

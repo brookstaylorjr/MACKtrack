@@ -58,6 +58,6 @@ diagnos.mask_clean = bwareaopen(diagnos.mask_clean,p.NoiseSize);
 diagnos.mask_fill = ~bwareaopen(~diagnos.mask_clean,p.MinHoleSize);
 
 output.mask0 = diagnos.mask_clean;
-output.mask_cell = diagnos.mask_fillfi;
+output.mask_cell = diagnos.mask_fill;
 
 

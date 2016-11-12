@@ -55,8 +55,9 @@ try
     else
         sigma1 = (x(mode_loc)-min(imgvect(:)))/3;
     end
-catch me
-    sigma1 = stdev(imgvect);
+catch me % Entire image may be "saturated" - 
+    sigma1 = std(input_img(:));
+    mu1 = mode(input_img(:));
 end
 
 % Turn convergence warning off
