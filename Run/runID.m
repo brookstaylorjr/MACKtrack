@@ -8,6 +8,7 @@ function [] = runID(varargin)
 %
 % INPUT:
 % varargin     ID# of sets to track (1st column of spreadsheet) - single values or vector
+%              (optionally, you can specify a single parameters structure or file location)
 %
 % Example Usage: runID(1,4:16,27) will sequentially track sets 1, 4 to 16, and 27.
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

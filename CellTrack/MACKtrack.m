@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 02-Nov-2016 12:24:23
+% Last Modified by GUIDE v2.5 14-Nov-2016 10:40:37
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1493,7 +1493,18 @@ catch ME
 end
 % ========================================================================================
 
-
+function checkbox7A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX7A: check/set measurement use for selected module
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+% Get selected module
+index_selected = get(handles.listbox7,'Value');
+module_list = get(handles.listbox7,'String');
+module = module_list{index_selected};
+ 
+handles.parameters.(module).Use = get(hObject,'Value');
+guidata(handles.figure1,handles)
 
 
 function edit7K_Callback(hObject, eventdata, handles)
@@ -1553,24 +1564,36 @@ catch ME
 end
 % ========================================================================================
 
-
-function checkbox7A_Callback(hObject, eventdata, handles)
+function edit7M_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% CHECKBOX7A: check/set measurement use for selected module
+% EDIT7M: check/set tertiary measurement image expression for selected module
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 % Get selected module
 index_selected = get(handles.listbox7,'Value');
 module_list = get(handles.listbox7,'String');
 module = module_list{index_selected};
-
-handles.parameters.(module).Use = get(hObject,'Value');
+handles.parameters.(module).ImageExpr3 = get(hObject,'String');   
 guidata(handles.figure1,handles)
+try
+    i = min(handles.parameters.XYRange);
+    j = min(handles.parameters.TimeRange);
+    filePath = [handles.locations.scope,handles.parameters.ImagePath,eval(get(hObject,'String'))];
+    if exist(filePath,'file')
+        set(handles.text7M_2,'ForegroundColor',handles.blue)    
+    else
+        set(handles.text7M_2,'ForegroundColor',handles.gray)
+    end
+    
+catch ME
+    set(handles.text7M_2,'ForegroundColor',handles.gray)
+    disp(ME.message)
+end
 
 
 function listbox7B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% LISTBOX7A: show all added selection images
+% LISTBOX7A: show all added flatfield images - show image/image location if item is double-clicked
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 get(handles.figure1,'SelectionType');
 % If user input is a double click, proceed

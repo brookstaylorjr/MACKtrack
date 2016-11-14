@@ -51,7 +51,7 @@ if ~isempty(X)
 end
 
 % Balance background mode of image to 0, then map to 0-255
-baseImg = modebalance(inputImg,1,bit_depth);
+baseImg = modebalance(inputImg,0,bit_depth);
 x = saturationVal;
 baseImg(baseImg<x(1)) = x(1);
 baseImg(baseImg>x(2)) = x(2);

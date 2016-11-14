@@ -68,7 +68,7 @@ parameters.ImageOffset = [0 0];
 
 % Check to make sure time vector is long enough
 if length(parameters.TimeRange) < parameters.StackSize
-   error('Time vector is too short for stack size, aborting.')
+   error('Time vector is too short for specified stack size, aborting tracking.')
 end
 
 % Save tracking/memory checking text output
@@ -81,58 +81,74 @@ warning('off','MATLAB:combstrct')
 
 
 % Loop all time points
-for cycle = 1:length(parameters.TimeRange)
+for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
     tic
     trackstring = '';
-    i = xyPos;
-    j =  parameters.TimeRange(cycle);
-    parameters.i = i; parameters.j = j;
     
-    % Load in images
-    tic
-    nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
-    if ~strcmpi(parameters.ImageType,'none')
-        cellName1 = eval(parameters.CellExpr);
-        images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
-    else
-        images.cell = images.nuc;
-    end
-    tocs.ImageLoading = toc;
-    
-    % CELL MASKING on phase contrast/DIC image
-    tic
-    maskfn = str2func([fnstem,'ID']);
-    
-    if strcmp(lower(parameters.ImageType),'fluorescence')
-        X = images.nuc;
-    end
-    
-    data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
-    tocs.CellMasking = toc;
-    
-    % NUCLEAR IDENTIFICATION
-    tic
-    present = nucleusID(images.nuc,parameters,data);
-    data = combinestructures(present,data);
-    tocs.NucMasking = toc;
-    
-    % NUCLEUS/CELL CHECKS (preliminary)
-    tic
-    present = doubleCheck(data,images.cell,parameters);
-    data = combinestructures(present,data);
-    tocs.CheckCells = toc;
-    
-    % Update stacks/structs with each iteration      
-    % After fill loops, empty bottom on update
-    if cycle>parameters.StackSize
+    % "FUTURE" handling.
+    if cycle<=length(parameters.TimeRange)
+        i = xyPos;
+        j =  parameters.TimeRange(cycle);
+        parameters.i = i; parameters.j = j;
+
+        % Load in images
+        tic
+        nucName1 = eval(parameters.NucleusExpr);
+        images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
+        if ~strcmpi(parameters.ImageType,'none')
+            cellName1 = eval(parameters.CellExpr);
+            images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
+        else
+            images.cell = images.nuc;
+        end
+        tocs.ImageLoading = toc;
+
+        % CELL MASKING on phase contrast/DIC image
+        tic
+        maskfn = str2func([fnstem,'ID']);
+        if strcmpi(parameters.ImageType,'fluorescence')
+            X = images.nuc;
+        end
+        data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
+        tocs.CellMasking = toc;
+
+        % NUCLEAR IDENTIFICATION
+        tic
+        present = nucleusID(images.nuc,parameters,data);
+        data = combinestructures(present,data);
+        tocs.NucMasking = toc;
+
+        % NUCLEUS/CELL CHECKS (preliminary)
+        tic
+        present = doubleCheck(data,images.cell,parameters);
+        data = combinestructures(present,data);
+        tocs.CheckCells = toc;
+
+        % Update stacks/structs with each iteration      
+        % After fill loops, empty bottom on update
+        if cycle>parameters.StackSize
+            future(1) = [];
+        end
+        % Concatenate new information into 'future' queue
+        if cycle==1
+            future = data;
+        else
+            future = cat(1,future,data);
+        end
+    else % For final frames (i.e. those with incomplete stack), fill in "future" with dummy data
         future(1) = [];
-    end
-    % Concatenate new information into 'future' queue
-    if cycle==1
-        future = data;
-    else
-        future = cat(1,future,data);
+        tmpnames = fieldnames(future(end));
+        data = struct;
+        for z = 1:length(tmpnames)
+            if islogical(future(end).(tmpnames{i}))
+                data.(tmpnames{z}) = false(size(future(end).(tmpnames{z})));
+            else
+                data.(tmpnames{z}) = zeros(size(future(end).(tmpnames{z})));
+            end
+        end
+        future = cat(1,future,data);   
+        tocs.ImageLoading = 0; tocs.CellMasking = 0; tocs.NucMasking = 0; tocs.CheckCells = 0; % zero out these guys
+        
     end
    
    if cycle >= parameters.StackSize
@@ -155,13 +171,12 @@ for cycle = 1:length(parameters.TimeRange)
         else
             % Calculate image jump, if required.
             parameters.ImageOffset_old = parameters.ImageOffset;
-            if ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
+            if (cycle<=length(parameters.TimeRange)) && ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
                 j =  parameters.TimeRange(cycle-1);
                 nucName1 = eval(parameters.NucleusExpr);
                 old_nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
                 parameters.ImageOffset = parameters.ImageOffset+calculatejump(old_nuc,images.nuc);
-                disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(parameters.ImageOffset),']'])
-            
+                disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(parameters.ImageOffset),']'])         
             end
             
             trackstring = [trackstring,'\n- - - Cycle ',num2str(saveCycle),' - - -\n'];
@@ -221,7 +236,7 @@ for cycle = 1:length(parameters.TimeRange)
     
     % - - - - Display progress/times taken for mask/track/segment - - - -
     name1 = parameters.SaveDirectory;
-    if strcmp(name1(end),filesep)
+    if ~isempty(name1) && strcmp(name1(end),filesep)
         name1 = name1(1:end-1);
     end
     seps = strfind(name1,filesep);
@@ -243,6 +258,9 @@ for cycle = 1:length(parameters.TimeRange)
     fprintf([str, '\n'])
 
 end
+
+
+
 
 
 % Save CellData

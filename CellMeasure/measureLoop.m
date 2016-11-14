@@ -86,7 +86,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
             AuxImages = cell(1,2);
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images
-                for aux = 1:2
+                for aux = 1:3
                     % Check name
                     if aux==1
                         curr_expr = parameters.(ModuleData.name).ImageExpr;

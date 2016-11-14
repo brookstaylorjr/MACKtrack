@@ -22,7 +22,7 @@ slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 parameters.locations = locations;
 AllMeasurements= struct;
-parameters.TotalImages = length(parameters.TimeRange) - parameters.StackSize+1;
+parameters.TotalImages = length(parameters.TimeRange);
 
 % Outer loop: Cycle xy folders (in each condition)
 if parallel_flag

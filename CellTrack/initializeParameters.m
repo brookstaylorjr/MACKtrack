@@ -134,13 +134,26 @@ end
 contents(dropind) = [];
 handles.parameters.ModuleNames = {contents.name};
 
-% Cycle modules- create associated parameters if necessary
+% Create associated substructures/parameters (if required) for any discovered measurement modules
 for i = 1:length(contents)
     if ~isfield(handles.parameters,contents(i).name)
-        handles.parameters.(contents(i).name).ImageExpr = '--';
-        handles.parameters.(contents(i).name).Use = get(handles.checkbox7A,'Min');
+       handles.parameters.(contents(i).name) = struct;
     end
 end
+
+check_fields = {'ImageExpr','ImageExpr2','ImageExpr3','Use'};
+default_vals = {'--','--','--',get(handles.checkbox7A,'Min')};
+for i = 1:length(contents)
+    for j = 1:length(check_fields)
+        if ~isfield(handles.parameters.(contents(i).name),check_fields{j})
+            handles.parameters.(contents(i).name).(check_fields{j}) = default_vals{j};
+        end
+    end
+end
+
+
+
+
 % Cycle fields in parameters- if it refers to an old module, drop it.
 testnames = fieldnames(handles.parameters);
 for i = 1:length(testnames)
@@ -154,12 +167,11 @@ for i = 1:length(testnames)
 end
 
 % Initialize/check measurement values in GUI 
-if ~isfield(handles.parameters.(contents(1).name),'ImageExpr2') 
-    handles.parameters.(contents(1).name).ImageExpr2 = '--';
-end
 set(handles.listbox7,'String',handles.parameters.ModuleNames)
 set(handles.edit7K,'String',handles.parameters.(contents(1).name).ImageExpr)
 set(handles.edit7L,'String',handles.parameters.(contents(1).name).ImageExpr2)
+set(handles.edit7M,'String',handles.parameters.(contents(1).name).ImageExpr3)
+
 set(handles.checkbox7A, 'Value', handles.parameters.(contents(1).name).Use);
 
 
@@ -187,6 +199,17 @@ try
 catch ME
     set(handles.text7L_2,'ForegroundColor',handles.gray)
 end
+try
+    filePath = [handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr3)];
+    if exist(filePath,'file')
+        set(handles.text7M_2,'ForegroundColor',handles.blue)    
+    else
+        set(handles.text7M_2,'ForegroundColor',handles.gray)
+    end
+catch ME
+    set(handles.text7M_2,'ForegroundColor',handles.gray)
+end
+
 
 % Get flatfield objects and populate listbox accordingly
 flatfields = {};
