@@ -140,7 +140,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         tmpnames = fieldnames(future(end));
         data = struct;
         for z = 1:length(tmpnames)
-            if islogical(future(end).(tmpnames{i}))
+            if islogical(future(end).(tmpnames{z}))
                 data.(tmpnames{z}) = false(size(future(end).(tmpnames{z})));
             else
                 data.(tmpnames{z}) = zeros(size(future(end).(tmpnames{z})));
@@ -222,9 +222,22 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         % Save cell labels
         CellLabel = uint16(past(1).cells);
         save([outputDirectory,'CellLabels',filesep,'CellLabel-',numseq(saveCycle,4),'.mat'], 'CellLabel')   
+        
         % Save composite 'Segmentation' image
-        alpha = 0.30;
-        saveFig(images.bottom,CellLabel,NuclearLabel, [],bit_depth,[outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  alpha)
+        output_res = [1024 1024];
+        if strcmpi(parameters.ImageType,'phase')|| strcmpi(parameters.ImageType,'dic') % BRIGHTFIELD MODALITIES
+            saturation_val = [-2 4];
+            alpha = 0.30;
+        else % FLUORESCENCE MODALITIES - SNR varies dramatically, so guess a display range from img #1.
+            if ~exist('saturation_val','var')
+                [~,dist1] = modebalance(past(1).img_straight,0, bit_depth,'measure');
+                saturation_val = [-3 (prctile(past(1).img_straight(:),95)-dist1(1))/dist1(2)];
+            end
+            alpha = 0.4;
+        end
+        saveFig(images.bottom,CellLabel,NuclearLabel, [],bit_depth,...
+            [outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  ...
+            alpha, output_res, saturation_val)
         tocs.Saving = toc;
         % Save decisions.txt
         fid = fopen([outputDirectory,'decisions.txt'],'a','n','UTF-8');

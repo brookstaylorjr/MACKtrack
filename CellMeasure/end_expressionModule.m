@@ -15,6 +15,7 @@ function [CellMeasurements, ModuleData] = end_expressionModule(CellMeasurements,
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if ModuleData.iter == parameters.TotalImages
+    
     %% Load the corresponding (final) nuclear image - calculate the "jump" to the endpoint images
     home_folder = mfilename('fullpath');
     slash_idx = strfind(home_folder,filesep);
@@ -31,6 +32,7 @@ if ModuleData.iter == parameters.TotalImages
     cell_img = flatfieldcorrect(double(AuxImages{2}),double(parameters.Flatfield{1}));
     cell_img = cell_img-min(cell_img(:))+2;
     mask0 = cell_img>tsaithresh(cell_img,false(size(cell_img)));
+    
     % Morphological cleanup on mask
     mask1 = bwareaopen(mask0,2);
     mask1 = imclose(mask1,diskstrel(3));
@@ -50,15 +52,18 @@ if ModuleData.iter == parameters.TotalImages
     nuc_label(~ismember(nuc_label,nuc_ids)) = 0; 
     cell_label = propagatesegment(nuc_label,mask1,AuxImages{1},2);
     
+    % Background subtraction normalization
+    [~, dist1] = modebalance(cell_img,2,ModuleData.BitDepth,'measure'); 
+    cell_img = (cell_img - dist1(1)); % Background subtract (DON'T divide) 
+    
     % Make a diagnostic output
     save_dir = [locations.data,filesep,parameters.SaveDirectory,filesep,'EndpointSegmentation',filesep];
     if ~exist(save_dir,'dir');  mkdir(save_dir); end
-   saveFig(cell_img,cell_label,nuc_label,[],ModuleData.BitDepth,...
-        [save_dir,'Endpoint_pos',numseq(ModuleData.i,2),'.jpg'],0.2,[1024 1024], [-3 60]);
-    
-    % Background subtraction on cell image
-    [~, dist1] = modebalance(cell_img,2,ModuleData.BitDepth,'measure'); 
-    cell_img = (cell_img - dist1(1)); % Background subtract (DON'T divide) 
+    if ~isfield(ModuleData,'DisplayRange')
+        ModuleData.DisplayRange = [-3 prctile(cell_img(:),92)/dist1(2)];
+    end
+    saveFig(cell_img,cell_label,nuc_label,[],ModuleData.BitDepth,...
+        [save_dir,'Endpoint_pos',numseq(ModuleData.i,2),'.jpg'],0.3,[1024 1024], ModuleData.DisplayRange);
     
     % Initialize measurements for cell_img (AuxImages{2})
     CellMeasurements.EndMean1 =  nan(parameters.TotalCells,1);
