@@ -57,7 +57,7 @@ if ModuleData.iter == parameters.TotalImages
     save_dir = [locations.data,filesep,parameters.SaveDirectory,filesep,'EndpointSegmentation',filesep];
     if ~exist(save_dir,'dir');  mkdir(save_dir); end
     if ~isfield(ModuleData,'DisplayRange')
-        [~,dist1] = modebalance(cell_img,2,ModuleData.BitDepth,'measure');
+        [~,dist1] = modebalance(cell_img-min(cell_img(:)),2,ModuleData.BitDepth,'measure');
         ModuleData.DisplayRange = [-3 prctile(cell_img(:),97)/dist1(2)];
     end
     saveFig(cell_img,cell_label,nuc_label,[],ModuleData.BitDepth,...
