@@ -51,10 +51,7 @@ if ModuleData.iter == parameters.TotalImages
     nuc_ids = find(overlap>0.66);
     nuc_label(~ismember(nuc_label,nuc_ids)) = 0; 
     cell_label = propagatesegment(nuc_label,mask1,AuxImages{1},2);
-    
-    % Background subtraction normalization
-    [~, dist1] = modebalance(cell_img,2,ModuleData.BitDepth,'measure'); 
-    cell_img = (cell_img - dist1(1)); % Background subtract (DON'T divide) 
+    cell_img = cell_img - prctile(cell_img(:),2);
     
     % Make a diagnostic output
     save_dir = [locations.data,filesep,parameters.SaveDirectory,filesep,'EndpointSegmentation',filesep];
@@ -69,7 +66,7 @@ if ModuleData.iter == parameters.TotalImages
     CellMeasurements.EndMean1 =  nan(parameters.TotalCells,1);
     CellMeasurements.EndIntegrated1 =  nan(parameters.TotalCells,1);
     CellMeasurements.EndMedian1 = nan(parameters.TotalCells,1);
-
+        
     % Cycle objects and measure
     measure_cc = label2cc(cell_label,0);
     for n = 1:measure_cc.NumObjects
@@ -81,14 +78,13 @@ if ModuleData.iter == parameters.TotalImages
     if ~isempty(AuxImages{3})
         % Flatfield/background subtraction correction
         cell_img2 = flatfieldcorrect(double(AuxImages{3}),double(parameters.Flatfield{1}));
-        cell_img2 = cell_img2-min(cell_img2(:))+2;
-        [~, dist1] = modebalance(cell_img2,2,ModuleData.BitDepth,'measure'); 
-        cell_img2 = (cell_img2 - dist1(1)); % Background subtract (DON'T divide) 
+        cell_img2 = cell_img2 - prctile(cell_img2(:),2);
         
          % Initialize measurements for AuxImages{2}
         CellMeasurements.EndMean2 =  nan(parameters.TotalCells,1);
         CellMeasurements.EndIntegrated2 =  nan(parameters.TotalCells,1);
         CellMeasurements.EndMedian2 = nan(parameters.TotalCells,1);
+
 
         % Cycle objects and measure
         measure_cc = label2cc(cell_label,0);
