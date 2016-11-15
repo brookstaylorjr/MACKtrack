@@ -29,7 +29,7 @@ AuxImages{1} = corr_img-subtr;
 
 % Intensity-based measurement initialization
 CellMeasurements.Mult1 = mult;
-CellMeasurements.ImageBackground1 = subtr;
+CellMeasurements.Subtr1 = subtr;
 CellMeasurements.MeanNuc1 =  nan(parameters.TotalCells,parameters.TotalImages);
 CellMeasurements.IntegratedNuc1 =  nan(parameters.TotalCells,parameters.TotalImages);
 CellMeasurements.MedianNuc1 = nan(parameters.TotalCells,parameters.TotalImages);
@@ -59,7 +59,7 @@ if ~isempty(AuxImages{2})
 
     % Intensity-based measurement initialization
     CellMeasurements.Mult2 = mult;
-    CellMeasurements.ImageBackground2 = subtr;
+    CellMeasurements.Subtr2 = subtr;
     CellMeasurements.MeanNuc2 =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.IntegratedNuc2 =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.MedianNuc2 = nan(parameters.TotalCells,parameters.TotalImages);
