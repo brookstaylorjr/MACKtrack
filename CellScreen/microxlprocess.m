@@ -50,10 +50,11 @@ for i = 1:length(wells)
         tmp_img = uint8(cat(3,R,G,B));
         imwrite(tmp_img,save_name)
         t2 = toc;
-        % 3) MEASURE images accorgding to selected modules
+        % 3) MEASURE images according to selected modules
         tic
         CellMeasurements = struct;
         labels.Nucleus = NuclearLabel;
+        labels.Cell = NuclearLabel;
         parameters.TotalCells = length(unique(NuclearLabel(NuclearLabel>0)));
         parameters.TotalImages = 1;
         ModuleData.BitDepth = parameters.BitDepth;

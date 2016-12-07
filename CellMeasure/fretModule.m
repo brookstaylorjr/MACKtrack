@@ -21,11 +21,11 @@ measure_cc = label2cc(tmp_label,0);
 % Get ratiometric measurement for FRET
 fret = AuxImages{1}; 
 fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
-fret = fret- prctile(fret(:),2);
+fret = fret-prctile(fret(:),2);
 fret(fret<20) = 20;
 cfp = AuxImages{2};
 cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
-cfp = cfp - prctile(cfp(:),2);
+cfp = cfp -prctile(cfp(:),2);
 cfp(cfp<20) = 20;
 fret_image = (fret)./(cfp);
 
