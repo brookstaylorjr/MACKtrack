@@ -167,17 +167,16 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
-    if handles.is_dir(handles.sorted_index(index_selected))
-        newfolder = [get(handles.edit1A,'String'),filename];
-        % Remove leading slash, add trailing slash
-        if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-            newfolder = [newfolder,filesep];
-        end
-        if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
-            newfolder = newfolder(2:end);
-        end
+    newfolder = [get(handles.edit1A,'String'),filename];
+    % Remove leading slash, add trailing slash
+    if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+        newfolder = [newfolder,filesep];
+    end
+    if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+        newfolder = newfolder(2:end);
+    end
+    if exist([handles.locations.scope,newfolder],'dir')
         load_listbox(newfolder,handles)
-    
     end
 end
 % ========================================================================================
@@ -200,7 +199,7 @@ if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
 end
 if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
     newfolder = newfolder(2:end);
-    end
+end
 load_listbox(newfolder,handles)
 
 % ========================================================================================
@@ -265,21 +264,10 @@ function load_listbox(dir_path, handles)
 if ~exist([handles.locations.scope,dir_path],'dir')
     dir_path = '';
 end
-dir_struct = dir([handles.locations.scope,dir_path]);
-% Clean directory of any invisible files
-drop_ind = 1;
-for i=1:length(dir_struct)
-    if strcmp(dir_struct(drop_ind).name(1),'.')
-        dir_struct(drop_ind) = [];
-    else
-        drop_ind = drop_ind+1;
-    end
-end
+
 % Place remaining files in listbox and update edit1A (add filesep)
-[sorted_names,sorted_index] = sortrows({dir_struct.name}');
-handles.file_names = sorted_names;
-handles.is_dir = [dir_struct.isdir];
-handles.sorted_index = sorted_index;
+handles.file_names = quickdir([handles.locations.scope,dir_path]);
+
 set(handles.listbox1A,'String',handles.file_names,...
  'Value',1)
 
