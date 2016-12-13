@@ -37,7 +37,7 @@ AuxImages{1} = corr_img;
 
 
 % On first call, initialize all new CellMeasurements fields 
-if ~isfield(CellMeasurements,'MeanIntensityPPARg')
+if ~isfield(CellMeasurements,'MeanPPARg')
     % Intensity-based measurement initialization
     CellMeasurements.MeanPPARg =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.IntegratedPPARg =  nan(parameters.TotalCells,parameters.TotalImages);
