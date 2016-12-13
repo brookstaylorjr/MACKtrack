@@ -90,7 +90,7 @@ else
     elseif isstruct(varargin{1})
         parameters = varargin{1};
     else
-        error(['runID accepts a paraeters structure, file location, or row entries',...
+        error(['runID accepts a parameters structure, file location, or row entries',...
             'of experiments (from scope spreadsheet). Type ''help runID'' for further detail'])
     end
     
