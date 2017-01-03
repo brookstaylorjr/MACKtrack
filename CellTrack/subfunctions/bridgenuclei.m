@@ -32,6 +32,8 @@ obj_rprops = mat2cell(obj_rprops,ones(1,size(obj_rprops,1)),3);
 % Assign groups of subobjects to corresponding parent object (in obj_cc)
 get_obj = @(pxlist) unique(subobj_in(pxlist));
 obj_match = cellfun(get_obj, obj_cc.PixelIdxList,'UniformOutput',0);
+rm_zeros = @(pxlist) pxlist(pxlist~=0); % Filter zeros out of there.
+obj_match = cellfun(rm_zeros, obj_match,'UniformOutput',0);
 obj_groups = cell(size(cc_in.PixelIdxList));
 for i = 1:length(obj_match)
     obj_groups(obj_match{i}) = obj_match(i);

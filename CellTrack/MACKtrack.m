@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 20-Dec-2016 09:42:07
+% Last Modified by GUIDE v2.5 03-Jan-2017 10:13:33
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1695,3 +1695,13 @@ if handles.parameters.NucleusFF > length(flatfields)
 end
 set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
 guidata(handles.figure1,handles)
+
+
+% --- Executes on selection change in popupmenu5A.
+function popupmenu5A_Callback(hObject, eventdata, handles)
+% hObject    handle to popupmenu5A (see GCBO)
+% eventdata  reserved - to be defined in a future version of MATLAB
+% handles    structure with handles and user data (see GUIDATA)
+
+% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu5A contents as cell array
+%        contents{get(hObject,'Value')} returns selected item from popupmenu5A
