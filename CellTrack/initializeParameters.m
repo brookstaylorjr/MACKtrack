@@ -222,6 +222,18 @@ if isfield(handles.parameters,'Flatfield')
 end
 set(handles.listbox7B,'String',flatfields)
 
+% (Also update popupup menus)
+if handles.parameters.CellFF > length(flatfields)
+    handles.parameters.CellFF = 0;
+    set(handles.popupmenu6A,'Value',0);
+end
+set(handles.popupmenu6B,'String',cat(1,{'None'},flatfields));
+if handles.parameters.NucleusFF > length(flatfields)
+    handles.parameters.NucleusFF = 0;
+    set(handles.popupmenu6B,'Value',0);
+end
+set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
+guidata(handles.figure1,handles)
 
 
 

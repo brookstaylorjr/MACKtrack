@@ -31,9 +31,10 @@ bit_depth = imfo.BitDepth;
 
 nucOrig = checkread(nucleusFile,bit_depth);
 parameters.ImageSize = [size(nucOrig,1),size(nucOrig,2)];
-if ~strcmp(parameters.ImageType,'None')
+if ~strcmpi(parameters.ImageType,'none')
 	cellFile = [locations.scope,parameters.ImagePath,eval(parameters.CellExpr)];
 	cellOrig = checkread(cellFile,bit_depth);
+    else
 end
 
 
@@ -90,7 +91,7 @@ set(handles.edit5A,'String',num2str(nuc_edge))
 
 
 % CELL OVERLAY (axes6B)
-if ~strcmp(parameters.ImageType,'None')
+if ~strcmpi(parameters.ImageType,'none')
 	% Phase contrast/DIC image: balance mode at 90.
 	cellMin = cellOrig - min(cellOrig(:));
 	[n, x] = hist(cellMin(:),2^bit_depth);
@@ -114,39 +115,42 @@ if ~strcmp(parameters.ImageType,'None')
 	set(handles.CellOverlay,'AlphaData',double(diskCell>0)*0.3)
 	hold(handles.axes6B,'off')
     
-% CELL EDGE PLOT (axes6A)
-    horizontalEdge = imfilter(cellOrig,fspecial('sobel') /8,'replicate');
-    verticalEdge = imfilter(cellOrig,fspecial('sobel')'/8,'replicate');
-	edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
-	levelStart = quickthresh(edge_mag,false(size(edge_mag)),'none');
-	imgSubsetCell = imdilate(edge_mag>(levelStart), ones(80));
-	initialSearch = prctile(edge_mag(:),[5, 95]); % Use 5th and 95th percentile as starting point for cells
-	[noiseCount2, val2]  = noisecount(edge_mag,~imgSubsetCell,initialSearch,64);
-	plot(handles.axes6A,val2,noiseCount2,'LineWidth',2,'Color',[207 79 51]/255)
-	set(handles.axes6A,'YTick',[],'FontSize',11)
-	% Keep starting value, unless it's way out of 5/95th prctile range.
-    cell_edge1 = min(parameters.CellSearchRange);
-    if (cell_edge1<(initialSearch(1)/2))
-        cell_edge1 = initialSearch(1);
-        parameters.CellSearchRange = [initialSearch(1),max(parameters.CellSearchRange)];
-        disp('Note: lower cell edge threshold was out of range; reset to bottom of search range')
+    % CELL EDGE PLOT (axes6A)
+    if ~strcmpi(parameters.ImageType,'fluorescence')
+
+        horizontalEdge = imfilter(cellOrig,fspecial('sobel') /8,'replicate');
+        verticalEdge = imfilter(cellOrig,fspecial('sobel')'/8,'replicate');
+        edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
+        levelStart = quickthresh(edge_mag,false(size(edge_mag)),'none');
+        imgSubsetCell = imdilate(edge_mag>(levelStart), ones(80));
+        initialSearch = prctile(edge_mag(:),[5, 95]); % Use 5th and 95th percentile as starting point for cells
+        [noiseCount2, val2]  = noisecount(edge_mag,~imgSubsetCell,initialSearch,64);
+        plot(handles.axes6A,val2,noiseCount2,'LineWidth',2,'Color',[207 79 51]/255)
+        set(handles.axes6A,'YTick',[],'FontSize',11)
+        % Keep starting value, unless it's way out of 5/95th prctile range.
+        cell_edge1 = min(parameters.CellSearchRange);
+        if (cell_edge1<(initialSearch(1)/2))
+            cell_edge1 = initialSearch(1);
+            parameters.CellSearchRange = [initialSearch(1),max(parameters.CellSearchRange)];
+            disp('Note: lower cell edge threshold was out of range; reset to bottom of search range')
+        end
+        cell_edge2 = max(parameters.CellSearchRange);
+        if (cell_edge2>(initialSearch(2)*1.5))
+            cell_edge2 = initialSearch(2);
+            parameters.CellSearchRange = [min(parameters.CellSearchRange),initialSearch(2)];
+            disp('Note: upper cell edge threshold was out of range; reset to top of search range')
+        end
+        % Plot lines indicating search range
+        x_lims = [floor(min(initialSearch(1),cell_edge1)), ceil(max(initialSearch(2),cell_edge2))];
+        hold(handles.axes6A,'on')
+        handles.LineNoise1 = plot(handles.axes6A,ones(1,2)*cell_edge1,get(handles.axes6A,'YLim'),'Color',handles.blue);
+        handles.LineNoise2 = plot(handles.axes6A,ones(1,2)*cell_edge2,get(handles.axes6A,'YLim'),'Color',handles.blue);
+        hold(handles.axes6A,'off')
+        set(handles.slider6A,'Min',x_lims(1),'Max',x_lims(2),'Value',cell_edge1)
+        set(handles.slider6B,'Min',x_lims(1),'Max',x_lims(2),'Value',cell_edge2)
+        set(handles.edit6A,'String',num2str(cell_edge1))
+        set(handles.edit6B,'String',num2str(cell_edge2))
     end
-    cell_edge2 = max(parameters.CellSearchRange);
-    if (cell_edge2>(initialSearch(2)*1.5))
-        cell_edge2 = initialSearch(2);
-        parameters.CellSearchRange = [min(parameters.CellSearchRange),initialSearch(2)];
-        disp('Note: upper cell edge threshold was out of range; reset to top of search range')
-    end
-    % Plot lines indicating search range
-    x_lims = [floor(min(initialSearch(1),cell_edge1)), ceil(max(initialSearch(2),cell_edge2))];
-    hold(handles.axes6A,'on')
-	handles.LineNoise1 = plot(handles.axes6A,ones(1,2)*cell_edge1,get(handles.axes6A,'YLim'),'Color',handles.blue);
-	handles.LineNoise2 = plot(handles.axes6A,ones(1,2)*cell_edge2,get(handles.axes6A,'YLim'),'Color',handles.blue);
-	hold(handles.axes6A,'off')
-	set(handles.slider6A,'Min',x_lims(1),'Max',x_lims(2),'Value',cell_edge1)
-	set(handles.slider6B,'Min',x_lims(1),'Max',x_lims(2),'Value',cell_edge2)
-	set(handles.edit6A,'String',num2str(cell_edge1))
-	set(handles.edit6B,'String',num2str(cell_edge2))
 end
 
 % Save updated handles

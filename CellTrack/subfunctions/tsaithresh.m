@@ -1,16 +1,19 @@
 function [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,numBins)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,numBins)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 %  TSAITHRESH Threshold image using method by Tsai (1995)
 %
-% Inputs
-% - image1: image to be thresholded
-% - dropPixels: binary mask showing pixels to be pulled out of the image
+% INPUTS
+% image1         image to be thresholded
+% dropPixels     binary mask showing pixels to be pulled out of the image
+% numBins        number of bins in the histogram function (defaults to 4096)
 %
-% Outputs
-% - thresh: calculated image threshold, above mode of image
-% - K : curvature of smoothed histogram
-% - H: smoothed histogram function
-% - bins: histogram bins from imagefrom
+% OUTPUTS
+% thresh calculated image threshold, above mode of image
+% K      curvature of smoothed histogram
+% H      smoothed histogram function
+% bins   histogram bins from imagefrom
 %
 % NOTE: we are dealing with phase images, which are generally unimodal- the
 % multimodal part of this algorithm is currently omitted
@@ -24,7 +27,7 @@ if nargin<3
 end
 
 % Get image histogram
-image1(dropPixels) = [ ];
+image1(dropPixels) = [];
 image1 = image1(:);
 image1(image1==max(image1)) = [];
 
@@ -34,6 +37,7 @@ R =2; % Radius of curvature, Tsai says <= 3
 lowCutoff = 0.02; % sets cutoff for very low peaks
 
 [histFunc, bins] = hist(image1,numBins);
+histFunc = [zeros(size(bins)),histFunc,zeros(size(bins))];
 
 
 % Make smoothing filter
@@ -47,7 +51,7 @@ end
 
 % Smooth function, find peaks- Drop all peaks that are less than 2% of max.
  H = ifft(fft(histFunc).*fft(gaussian,length(histFunc)).*conj(fft(gaussian,length(histFunc))));
- [peaks locs] = findpeaks(H, 'minpeakheight',max(H)*lowCutoff);
+ [peaks, locs] = findpeaks(H, 'minpeakheight',max(H)*lowCutoff);
  index = 0;
 
 
@@ -58,6 +62,7 @@ end
  index = index+1;
  end
 
+ H = H((length(bins)+1):(length(bins)*2));
 
 % ____Unimodal Distribution___________________________________________________
 %(maximize rate of change of curvature)

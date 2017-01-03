@@ -16,11 +16,16 @@ switch lower(handles.parameters.ImageType)
         set(handles.text2I,'ForegroundColor',handles.gray);
     
     case 'dic' % Set to DIC-specific fields
+        set(handles.axes6A,'Visible','on');
+        set(handles.uipanel6_A,'Visible','on');
+        set(handles.uipanel6_E,'Visible','off');
+
         set(handles.uipanel6_C,'Visible','off');
         set(handles.uipanel6_D,'Visible','on');
         set(handles.text6D,'Visible','off');
         set(handles.edit6D,'Visible','off');
         set(handles.text6D_2,'Visible','off');
+        
         set(handles.uipanel6,'Title','DIC Parameters')
         set(handles.pushbuttonSwitch2,'Visible','on') % Pushbutton for panel 6
         set(handles.pushbuttonSwitch2,'String','DIC')
@@ -30,6 +35,10 @@ switch lower(handles.parameters.ImageType)
 
 
     case 'phase' % Set to phase-contrast  fields
+        set(handles.axes6A,'Visible','on');
+        set(handles.uipanel6_A,'Visible','on');
+        set(handles.uipanel6_E,'Visible','off');
+        
         set(handles.uipanel6_C,'Visible','on');
         set(handles.uipanel6_D,'Visible','off');
         set(handles.text6D,'Visible','on');
@@ -42,6 +51,10 @@ switch lower(handles.parameters.ImageType)
         set(handles.text2I,'ForegroundColor','r');
         
     case 'fluorescence' % Set to fluorescence-specific fields
+        set(handles.axes6A,'Visible','off');
+        set(handles.uipanel6_A,'Visible','off');
+        set(handles.uipanel6_E,'Visible','on');
+        
         set(handles.uipanel6_C,'Visible','off');
         set(handles.uipanel6_D,'Visible','on');
         set(handles.text6D,'Visible','off');

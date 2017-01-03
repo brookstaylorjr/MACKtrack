@@ -35,10 +35,8 @@ nucleus1 = medfilt2(nuc_orig,[p.MedianFilterSize, p.MedianFilterSize]); % Median
 if isnan(p.NuclearSmooth)
     p.NuclearSmooth = p.MinNucleusRadius/4;
 end
-
 diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.NuclearSmooth),'replicate'); % Gaussian filtered
 diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
-
 %- - - - - - - - - - - - - - - - - - - Label1 - - - - - - - - - - - - - - - - - - - - - - -
 % Label1: strong-edge nuclei. Use watershed1 and p.NucleusEdgeThreshold
 horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'symmetric');
@@ -46,64 +44,57 @@ verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
 
-% Take subset of edge vals > p.NucleusEdgeThresh- step down incrementally
-edge_cutoffs = prctile(diagnos.edge_mag(diagnos.edge_mag>p.NucleusEdgeThreshold),linspace(0,90,7));
-unique_all = 0;
-diagnos.label1a = zeros(size(diagnos.watershed1));
+edge_cutoffs = prctile(diagnos.edge_mag(diagnos.edge_mag>p.NucleusEdgeThreshold),linspace(0,90,21));
+cc_list = {};
 for i = 1:length(edge_cutoffs)
-    % Threshold, fill holes, check for minsize
-    mask_tmp = ~bwareaopen(diagnos.edge_mag<edge_cutoffs((end-i)+1),cutoff.Area(2),4);
-    mask_tmp = imopen(mask_tmp&cell_mask,diskstrel(p.MinNucleusRadius));
-    unique_tmp = unique(diagnos.watershed1(mask_tmp));
-    % If we found object before, drop it.
-    unique_tmp(ismember(unique_tmp,unique_all)) = [];
-    % Record new object positions, then add new unique objects to list.
-    for j = 1:length(unique_tmp)
-       diagnos.label1a((diagnos.watershed1==unique_tmp(j)) & mask_tmp) = unique_tmp(j);
+    % a) Threshold, drop already-found objects
+    mask0  = cell_mask & diagnos.edge_mag>=edge_cutoffs((end-i)+1);
+    tmp_drop = cell2mat(cc_list');
+    if ~isempty(tmp_drop)
+        mask0(tmp_drop) = 0;
     end
-    unique_all = cat(1,unique_all, unique_tmp(:));
+    % b) Skeletonize/ fill holes
+    mask0 = bwmorph(mask0,'skel',2);
+    mask0 = bwareaopen(mask0,p.NoiseSize,8);
+    mask0 = ~bwareaopen(~mask0,cutoff.Area(2)*4,4);    
+    if ~isempty(tmp_drop)
+        mask0(tmp_drop) = 0;
+    end
+    % c) Filter objects that aren't round/sufficently large (alternate btw strict/lenient criteria)
+    mask0 = imopen(mask0,diskstrel(round(p.MinNucleusRadius/2)));
+    if mod(i-1,4) < 3
+        mask0 = bwareaopen(mask0,round(1.3*cutoff.Area(1)),4);
+    else
+        mask0 = bwareaopen(mask0,cutoff.Area(1),4);
+    end
+    % d) Add newly-found objects to list
+    cc_new = bwconncomp(mask0,8);
+    cc_list = cat(2,cc_list,cc_new.PixelIdxList);
 end
 
-diagnos.label1a = labelmatrix(label2cc(diagnos.label1a));
+cc_all.PixelIdxList = cc_list';
+cc_all.ImageSize = size(diagnos.edge_mag);
+cc_all.NumObjects = length(cc_list);
+cc_all.Connectivity = 4;
+diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
-% Simplify objects if necessary, then bridge subobjects
-% [Count subobjects per larger object - cap @ 15] 
-max_complexity = 15; % 10-20 seems to be a reasonable number - really large clusters of nuclei would break this.
-label_in = imclose(diagnos.label1a,ones(2));
-obj_cc = bwconncomp(label_in>0,4);
-get_obj = @(pxlist) unique(label_in(pxlist));
-obj_match = cellfun(get_obj, obj_cc.PixelIdxList,'UniformOutput',0)';
-complex_obj = find(cellfun(@length,obj_match)>max_complexity);
-% If complex objects are found, replace them with smoothed/re-watershedded image.
-n = 2;
-while ~isempty(complex_obj)
-   % Use larger smoothing kernel, recalculate watershed, and replace "complex" subregions as required
-    nuc_smooth2 = imfilter(nucleus1,gauss2D(min([p.MinNucleusRadius/2*n, (1.25*n)*p.NuclearSmooth])),'replicate'); % Gaussian filtered
-    watershed2 = watershedalt(nuc_smooth2, cell_mask, 4);
-    for i = 1:length(complex_obj)
-        subregion = obj_cc.PixelIdxList{complex_obj(i)};
-        subregion_vals = double(sort(unique(watershed2(subregion))));
-        lut = zeros(1,max(subregion_vals)+1);
-        lut(subregion_vals+1) = [0,double(max(diagnos.label1a(:)))+(1:(length(subregion_vals)-1))];
-        diagnos.label1a(subregion) = lut(watershed2(subregion)+1);
-    end
-    % Re-count subobjects
-    label_in = imclose(diagnos.label1a,ones(2));
-    obj_cc = bwconncomp(label_in>0,4);
-    get_obj = @(pxlist) unique(label_in(pxlist));
-    obj_match = cellfun(get_obj, obj_cc.PixelIdxList,'UniformOutput',0)';
-    % Reassign pixels within bridged objects, using watershed divisions from the larger smoothing kernel
-    complex_obj = find(cellfun(@length,obj_match)>max_complexity);
-    n = n+1;
-end
+% Subdivide objects using concave points on perimeter (>220 degrees)
+mask1 = diagnos.label1a>0;
+mask1((imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
+mask1 = mask1 &~perimetersplit(mask1,p);
+label_tmp = imdilate(bwlabel(mask1,4),ones(3));
+label_tmp(diagnos.label1a==0) = 0;
+
+% Subdivide objects with additional borders from watershed
+w1 = imdilate(diagnos.watershed1,ones(3));
+w1(label_tmp==0) = 0;
+pairs  = [w1(:),label_tmp(:)];
+[~,~,ic] = unique(pairs,'rows');
+diagnos.label1b = reshape(ic,size(w1))-1;
+
 
 % Bridge nuclear subobjects together
-diagnos.label1 = bridgenuclei(diagnos.label1a,cutoff,p.debug);
-
-% IDed nuclei w/ strong edges tends to be over-generous. Erode things somewhat, then remove super-small objects again
-borders = (imdilate(diagnos.label1,ones(3))-diagnos.label1)>0;
-diagnos.label1(imdilate(borders,ones(2))) = 0;
-diagnos.label1(~bwareaopen(diagnos.label1>0,cutoff.Area(1),4)) = 0;
+diagnos.label1 = bridgenuclei(diagnos.label1b, cc_all, cutoff,p.debug);
 
 %- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
 % "Weak" objects missed by standard methods
@@ -161,7 +152,7 @@ if p.WeakObjectCutoff>0
     diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
     diagnos.label2a = labelmatrix(label2cc(diagnos.label2a));
     cutoff.Area(1) = cutoff.Area(1)*0.5;
-    diagnos.label2 = bridgenuclei(diagnos.label2a,cutoff,p.debug);
+    diagnos.label2 = bridgenuclei(diagnos.label2a,bwconncomp(diagnos.label2a>0,4),cutoff,p.debug);
 else
     diagnos.label2 = zeros(size(diagnos.label1));
 end

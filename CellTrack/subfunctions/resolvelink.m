@@ -1,14 +1,19 @@
 function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbose)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% RESOLVELINKS takes top link, double-checks the two blocks we're combining, then modifies 
-% blocks, links, and properties arrays 
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbose)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% RESOLVELINKS takes top link, and decides whether to combine two objects (which may exist in a set
+% of frames). If a link is made, the function modifies remaining blocks, links, and property arrays
+% to reflect new object identity.
+%
+% e.g. object blocks [0 1 0 2 0] and [4 0 0 0 0] could be combined into a single block [4 1 0 2 0]
 %
 % blocks      array showing linked objects across frames
-% links       potential linked objects- [obj1 obj1frame obj2 obj2frame dist delta_area/perim].
+% links       potentially-linked objects -> [obj1 obj1frame obj2 obj2frame dist delta_area/perim].
 % labeldata  structure with centroid,perimeter, and area information
 % p           parameters structure
 %
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Find the blocks we're potentially linking.
 link = links(1,:);
 rows = [find(blocks(:,link(2))==link(1)), find(blocks(:,link(4))==link(3))];

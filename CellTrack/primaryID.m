@@ -15,23 +15,12 @@ function [output, diagnos] =  primaryID(image0,p, ~)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 %- - - - - - - - - - - - - - - - - - - MAKE "CELL" MASK - - - - - - - - - - - - - - - - - - - - - - -
-
-%[~,bg_dist] = modebalance(image0, 2, 16, 'measure');
-
-
-%nuc_filt = imfilter(image0,gauss2D(p.MinNucleusRadius/2),'replicate'); % Gaussian filtered
-% Combine two threshold variants (Otsu threshold + MoG threshold)
-%thresh1 = min([quickthresh(image0,false(size(image0)),'none'), bg_dist(1)+4*bg_dist(2)]);
-
-
-
-%diagnos.search = image0>thresh1;
-%diagnos.search_dilate = imdilate(diagnos.search,ones(floor(p.MaxNucleusRadius*1.5)));
-%output.mask1 = diagnos.search_dilate;
-%output.mask_cell = diagnos.search_dilate;
-
-output.mask1 = true(size(image0));
-output.mask_cell =  true(size(image0));
+horizontalEdge = imfilter(image0,fspecial('sobel') /8,'symmetric');
+verticalEdge = imfilter(image0,fspecial('sobel')'/8,'symmetric');
+nuc_edge = sqrt(horizontalEdge.^2 + verticalEdge.^2);
+output.mask1 = nuc_edge>tsaithresh(nuc_edge,false(size(nuc_edge)),2^10);
+output.mask1 = bwareaopen(output.mask1,p.NoiseSize);
+output.mask_cell =  imdilate(output.mask1,ones(32));
 
 diagnos = output;
 

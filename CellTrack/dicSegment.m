@@ -30,7 +30,6 @@ end
 
 
 %% Straight-edge finding
-
 % Form base edge mask from the default Canny edge filter - break/filter small branches
 small = round(sqrt(p.NoiseSize));
 edges = edge(image_in,'canny');

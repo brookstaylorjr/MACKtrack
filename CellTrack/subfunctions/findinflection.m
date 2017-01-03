@@ -1,8 +1,8 @@
 function [inflection] = findinflection(cell_mask, nuc_mask,p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [inflection] = findinflection(mask_cell, label_nuc, skeleton, markers, max_inflection)
+% [inflection] = findinflection(cell_mask, nuc_mask,p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% FINDINFLECTION   Given a marked skeleton
+% FINDINFLECTION   Given a mask of cell/nuclear area, identify "cut" points between cells
 %
 % INPUT:
 % mask_cell        mask of cells (try to find inflection points here)

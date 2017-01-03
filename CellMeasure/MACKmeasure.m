@@ -65,5 +65,5 @@ AllMeasurements.parameters.locations = locations;
 
 % Save AllMeasurements in condition directory
 
-save([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat'],'AllMeasurements')
+save([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat'],'AllMeasurements','-v7.3')
 end

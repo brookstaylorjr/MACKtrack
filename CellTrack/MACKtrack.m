@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 14-Nov-2016 10:40:37
+% Last Modified by GUIDE v2.5 20-Dec-2016 09:42:07
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1271,6 +1271,24 @@ end
 
 % ========================================================================================
 
+function popupmenu6A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU6A: specify flatfield correction image for nuclear channel (NucleusFF)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.NucleusFF = get(hObject,'Value') - 1;
+guidata(handles.figure1,handles)
+% ========================================================================================
+
+
+function popupmenu6B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU6B: specify flatfield correction image for cell channel (CellFF)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.CellFF = get(hObject,'Value') - 1;
+guidata(handles.figure1,handles)
+% ========================================================================================
+
+
 
 %  - - - - - - - - - - - - - - -  - - - - - - UIPANEL 7 : OTHER PARAMETERS - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -1649,7 +1667,6 @@ if file1
     handles.parameters.FlatfieldNames{index_selected} = [dir1,filesep,file1];
     % Update listbox and save parameters
     updateflatfields(handles);
-    guidata(handles.figure1,handles)
 end
 
 
@@ -1666,3 +1683,15 @@ if isfield(handles.parameters,'Flatfield')
     end
 end
 set(handles.listbox7B,'String',flatfields)
+% Also update popupup menus accordingly
+if handles.parameters.CellFF > length(flatfields)
+    handles.parameters.CellFF = 0;
+    set(handles.popupmenu6A,'Value',0);
+end
+set(handles.popupmenu6B,'String',cat(1,{'None'},flatfields));
+if handles.parameters.NucleusFF > length(flatfields)
+    handles.parameters.NucleusFF = 0;
+    set(handles.popupmenu6B,'Value',0);
+end
+set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
+guidata(handles.figure1,handles)

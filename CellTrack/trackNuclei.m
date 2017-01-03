@@ -1,5 +1,7 @@
 function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % TRACKNUCLEI tracks nuclei across 2 frames (frame 1 to frame 2), using later frames for error checking.
 %
 % queue_in       stack of label matricies to be analyzed
@@ -61,6 +63,7 @@ for i = 1:(size(blocks,1)-1)
     newlinks = linkblock(blocks(i,:), blocks, i+1, labeldata, p);
     links = cat(1,links,newlinks);
 end
+all_links = links;
 
 % Rank/resolve links on distance travelled and similarity (average of perimeter/area changes)
 while ~isempty(links)
@@ -76,7 +79,6 @@ while ~isempty(links)
     else
         links(1,:) = [];
     end
-
 end
 
 % Pull pre-existing blocks (in numerically consistent order) 
@@ -106,7 +108,7 @@ mask_added = false(size(queue_in(1).nuclei));
 for i = 1:size(blocks_pre,1)
     if blocks_pre(i,1) == 0
         if sum(blocks_pre(i,:))==0 % If object doesn't ever reappear in stack again, let it die off
-            % Make sure we didn't kill the cell off already.
+            % [Make sure we didn't kill the cell off already]
             if CellData.FrameOut(i) > curr_frame
                 CellData.FrameOut(i) = curr_frame-1;
                 disp(['Set cell #',num2str(i),'''s frame out: ',num2str(curr_frame-1)])
@@ -118,14 +120,17 @@ for i = 1:size(blocks_pre,1)
             frm1obj = length(labeldata(1).obj)+1;
             frmX = find(blocks_pre(i,:)>0,1,'first');
             frmXobj = blocks_pre(i,frmX);
-            xpt1 = floor(CellData.labeldata(1).centroidx(frm0obj) + (labeldata(frmX).centroidx(frmXobj) - CellData.labeldata(1).centroidx(frm0obj))/frmX);
-            ypt1 = floor(CellData.labeldata(1).centroidy(frm0obj) + (labeldata(frmX).centroidy(frmXobj) - CellData.labeldata(1).centroidy(frm0obj))/frmX);
+            xpt1 = floor(CellData.labeldata(1).centroidx(frm0obj) + (labeldata(frmX).centroidx(frmXobj)...
+                         - CellData.labeldata(1).centroidx(frm0obj))/frmX);
+            ypt1 = floor(CellData.labeldata(1).centroidy(frm0obj) + (labeldata(frmX).centroidy(frmXobj)...
+                        - CellData.labeldata(1).centroidy(frm0obj))/frmX);
             % Put image offset back in, cap to image size.
             ypt1 = ypt1 + p.ImageOffset(1);
             xpt1 = xpt1 + p.ImageOffset(2);
             xpt1(xpt1<1) = 1; xpt1(xpt1>size(queue_in(end).nuclei,2)) = size(queue_in(end).nuclei,2);
             ypt1(ypt1<1) = 1; ypt1(ypt1>size(queue_in(end).nuclei,1)) = size(queue_in(end).nuclei,1);
-            rad1 = floor(sqrt(CellData.labeldata(1).area(frm0obj) + (labeldata(frmX).area(frmXobj) - CellData.labeldata(1).area(frm0obj))/frmX)/pi);
+            rad1 = floor(sqrt(CellData.labeldata(1).area(frm0obj) + (labeldata(frmX).area(frmXobj)...
+                - CellData.labeldata(1).area(frm0obj))/frmX)/pi);
             tmp_mask(ypt1,xpt1) = 1;
             tmp_mask = imdilate(tmp_mask,diskstrel(rad1));
             mask_added = mask_added|tmp_mask; % Keep track of all added objects
@@ -181,11 +186,7 @@ for i = 1:size(blocks,1)
         blocknums = blocknums(blocknums>0);
         p_distances(blocks_pre(blocknums,1)==0) = [];
         blocknums(blocks_pre(blocknums,1)==0) = [];
-        %s_distances = sqrt( (labeldata(1).centroidx(blocks_pre(blocknums,1)) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
-         %   (labeldata(1).centroidy(blocks_pre(blocknums,1)) - labeldata(1).centroidy(blocks(i,1))).^2 );
-        % For all candidates, parent should be CLOSER than sister
-        %blocknums = blocknums(p_distances<s_distances);
-        %p_distances = p_distances(p_distances<s_distances);
+        
         % Of remaining candidates, minimize distance to parent
         p_block = blocknums(find(p_distances==min(p_distances),1,'first'));
         % a) Both daughters must exist in at least (n-1)/n frames 
@@ -215,7 +216,7 @@ for i = 1:size(blocks,1)
                 '#',num2str(cellnum),' & #',num2str(cellnum+1),...
                 ': [',num2str(newblocks(end-1,:)),'] and [',num2str(newblocks(end,:)),']'])
             
-        % CHECK 4: if no suitable parent is found, we better be REAL sure this cell exists.
+        % CHECK 4: if no suitable parent is found, we better be very sure this cell exists.
         elseif (sum(blocks(i,:)==0)) < 2
             % Create new lineage
             newblocks = cat(1,newblocks,blocks(i,:));
