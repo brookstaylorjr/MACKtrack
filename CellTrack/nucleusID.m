@@ -82,8 +82,10 @@ diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 diagnos.mask_split = diagnos.label1a>0;
 diagnos.mask_split((diagnos.label1a>0)&(imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
 diagnos.mask_split = diagnos.mask_split &~perimetersplit(diagnos.mask_split,p);
+diagnos.mask_split = bwareaopen(diagnos.mask_split,cutoff.Area(1),4);
 cc_inflect = bwconncomp(diagnos.mask_split,4);
 diagnos.label1b = labelmatrix(cc_inflect);
+
 
 % Subdivide objects with additional borders from watershed
 w1 = imdilate(diagnos.watershed1,ones(3));

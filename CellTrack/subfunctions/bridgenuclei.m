@@ -356,10 +356,10 @@ function fcn = definefilters(cutoff,shapedef)
 % DEFINEFILTERS defines anonymous functions used to get regionproperties and filter nuclear shapes
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if strcmpi(shapedef,'Compactness')
-   fcn.get_props = @(cc) cell2mat(struct2cell(regionprops(cc,'Area','Perimeter')))';
-   fcn.shape = @(x) (x(:,2).^2)/(4*pi*x(:,1));
-   fcn.hard_pass = @(x) (x(:,1) < cutoff.Area(2)) & (x(:,1) > cutoff.Area(1)) & (fcn.compactness(x)<cutoff.Compactness(1));
-   fcn.soft_pass = @(x) (x(:,1) < cutoff.Area(2)) & (x(:,1) > cutoff.Area(1)) & (fcn.compactness(x)<cutoff.Compactness(2));
+   fcn.get_rprops = @(cc) cell2mat(struct2cell(regionprops(cc,'Area','Perimeter')))';
+   fcn.shape = @(x) (x(:,2).^2)./(4*pi*x(:,1));
+   fcn.hard_pass = @(x) (x(:,1) < cutoff.Area(2)) & (x(:,1) > cutoff.Area(1)) & (fcn.shape(x)<cutoff.Compactness(1));
+   fcn.soft_pass = @(x) (x(:,1) < cutoff.Area(2)) & (x(:,1) > cutoff.Area(1)) & (fcn.shape(x)<cutoff.Compactness(2));
 else % (Solidity)
    fcn.shape = @(x) x(:,2);
    fcn.get_rprops = @(cc) cell2mat(struct2cell(regionprops(cc,'Area','Solidity')))';

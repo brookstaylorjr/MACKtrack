@@ -99,6 +99,7 @@ handles.diagnostics.cell = diag_tmp;
 tocs.CellMasking = toc;
 
 % - - - - 1st label: make label matrix from nuclear image - - - -
+tic
 [data_tmp, diag_tmp] = nucleusID(images.nucleus,p,data);
 % Save information
 handles.diagnostics.nuclei = diag_tmp;
