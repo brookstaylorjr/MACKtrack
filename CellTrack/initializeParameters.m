@@ -53,10 +53,17 @@ end
 set(handles.edit5B,'String',num2str(handles.parameters.WeakObjectCutoff))
 set(handles.edit5C,'String',num2str(handles.parameters.MinNucleusRadius))
 set(handles.edit5D,'String',num2str(handles.parameters.MaxNucleusRadius))
-set(handles.edit5E,'String',num2str(handles.parameters.Compactness(1)))
-set(handles.edit5F,'String',num2str(handles.parameters.Compactness(2)))
+set(handles.popupmenu5A,'Value', find(strcmpi(get(handles.popupmenu5A,'String'),handles.parameters.ShapeDef),1,'first'));
+
+set(handles.text5E,'String', [handles.parameters.ShapeDef,':']);
+set(handles.edit5E,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(1)));
+if length(handles.parameters.(handles.parameters.ShapeDef))<2
+    val = handles.parameters.(handles.parameters.ShapeDef);
+    handles.parameters.(handles.parameters.ShapeDef) = [val val];
+end
+set(handles.edit5F,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(2)));
+
 set(handles.edit5G,'String',num2str(handles.parameters.NuclearSmooth))
-set(handles.edit5H,'String',num2str(handles.parameters.Solidity))
 
 %% - - - - - - - - - Cell parameters - - - - - - - - - - - - 
 set(handles.popupmenu0,'Value',find(strcmp(lower(handles.parameters.ImageType),{'phase','dic','fluorescence','none'})));

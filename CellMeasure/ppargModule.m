@@ -17,15 +17,7 @@ iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
 
 % Normalization 1: flatfield correction -> estimate range for scaling
-orig_img = double(AuxImages{1}); bg_img = double(parameters.Flatfield{1});
-blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
-lo_find = @(block_struct) prctile(block_struct.data(:),2);
-guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
-% Calculating optimal scaling and subtract
-fun1 = @(x) std(reshape(blockproc(orig_img-bg_img*x,blk_sz,lo_find),[1 36]));
-opt1 = optimset('TolX',1e-2);
-mult = fminbnd(fun1,0, guess*5,opt1);
-corr_img = orig_img - bg_img*mult;
+corr_img = flatfieldcorrect(double(AuxImages{1}),double(parameters.Flatfield{1}));
 
 % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
 corr_img = corr_img - min(corr_img(:));
@@ -54,15 +46,7 @@ end
 
 % Measure nuclei in 2nd auxiliary, if it is specified
 if ~isempty(AuxImages{2})
-    orig_img = double(AuxImages{2}); bg_img = double(ModuleData.Flatfield{1});
-    blk_sz = [ceil(size(orig_img,1)/6) , ceil(size(orig_img,2)/6)];
-    lo_find = @(block_struct) prctile(block_struct.data(:),2);
-    guess = range(reshape(blockproc(orig_img,blk_sz,lo_find),[1 36]))/range(reshape(blockproc(bg_img,blk_sz,lo_find),[1 36]));
-    % Calculating optimal scaling and subtract
-    fun1 = @(x) std(reshape(blockproc(orig_img-bg_img*x,blk_sz,lo_find),[1 36]));
-    opt1 = optimset('TolX',1e-2);
-    mult = fminbnd(fun1,0, guess*5,opt1);
-    corr_img = orig_img - bg_img*mult;
+    corr_img = flatfieldcorrect(double(AuxImages{2}),double(parameters.Flatfield{1}));
 
     % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
     corr_img = corr_img - min(corr_img(:));

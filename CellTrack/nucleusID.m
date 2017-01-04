@@ -79,22 +79,22 @@ cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
 % Subdivide objects using concave points on perimeter (>220 degrees)
-mask1 = diagnos.label1a>0;
-mask1((imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
-mask1 = mask1 &~perimetersplit(mask1,p);
-label_tmp = imdilate(bwlabel(mask1,4),ones(3));
-label_tmp(diagnos.label1a==0) = 0;
+diagnos.mask_split = diagnos.label1a>0;
+diagnos.mask_split((diagnos.label1a>0)&(imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
+diagnos.mask_split = diagnos.mask_split &~perimetersplit(diagnos.mask_split,p);
+cc_inflect = bwconncomp(diagnos.mask_split,4);
+diagnos.label1b = labelmatrix(cc_inflect);
 
 % Subdivide objects with additional borders from watershed
 w1 = imdilate(diagnos.watershed1,ones(3));
-w1(label_tmp==0) = 0;
-pairs  = [w1(:),label_tmp(:)];
+w1(diagnos.label1b==0) = 0;
+pairs  = [w1(:),diagnos.label1b(:)];
 [~,~,ic] = unique(pairs,'rows');
-diagnos.label1b = reshape(ic,size(w1))-1;
+diagnos.label1c = reshape(ic,size(w1))-1;
 
 
 % Bridge nuclear subobjects together
-diagnos.label1 = bridgenuclei(diagnos.label1b, cc_all, cutoff,p.debug);
+diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
 
 %- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
 % "Weak" objects missed by standard methods
@@ -152,7 +152,7 @@ if p.WeakObjectCutoff>0
     diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
     diagnos.label2a = labelmatrix(label2cc(diagnos.label2a));
     cutoff.Area(1) = cutoff.Area(1)*0.5;
-    diagnos.label2 = bridgenuclei(diagnos.label2a,bwconncomp(diagnos.label2a>0,4),cutoff,p.debug);
+    diagnos.label2 = bridgenuclei(diagnos.label2a,bwconncomp(diagnos.label2a>0,4),cutoff,p.ShapeDef, p.debug);
 else
     diagnos.label2 = zeros(size(diagnos.label1));
 end

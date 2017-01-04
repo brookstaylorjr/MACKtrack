@@ -1,12 +1,11 @@
 function cut_lines = perimetersplit(mask1,p)
 
 % Set concave angle threshold (should be roughly 180+45 degrees)
-angle_thresh = 220;
+angle_thresh = 222;
 
-
-s = (p.MinNucleusRadius-4):(p.MinNucleusRadius-1);
+s = (0:2) + min([2,round(p.MinNucleusRadius/4)]);
 s(s<1) = [];
-b = bwboundaries(mask1,4);
+b = bwboundaries(mask1,8);
 sum_line = @(a,b) sum([a,b],2);
 shifts = mat2cell(repmat(s(1),[length(b),1]),ones(size(b)));
 [all_angles, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
@@ -17,14 +16,14 @@ for i = 2:length(s)
     [all_angles, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
     sum_angles = cellfun(sum_line,all_angles,sum_angles,'UniformOutput',0);
     sum_refs = cellfun(sum_line,sum_refs,ref_angles,'UniformOutput',0);
-
 end
 rescale_line = @(a) a/length(s);
 sum_angles = cellfun(rescale_line,sum_angles,'UniformOutput',0);
 sum_refs = cellfun(rescale_line,sum_refs,'UniformOutput',0);
 
-cut_lines = zeros(size(mask1));
 % Threshold perimeter angles (per object)
+cut_lines = false(size(mask1));
+
 for n = 1:length(sum_angles)
     idx = find(sum_angles{n}>angle_thresh);
     new_idx = [];
@@ -51,20 +50,26 @@ for n = 1:length(sum_angles)
         end
         all_angles(sub2ind(size(all_angles),1:size(pts,1),1:size(pts,1))) = nan;
         all_angles = (abs(all_angles)+abs(all_angles)')/2;
-        all_angles(all_angles>120) = nan;
         while sum(~isnan(all_angles(:)))>1
             [n1,n2] = find(all_angles==nanmin(all_angles(:)),1,'first');
             d1 = 1+max([abs(b{n}(idx(n1),1)-b{n}(idx(n2),1)),abs(b{n}(idx(n1),2)-b{n}(idx(n2),2))]);
             r = round(linspace(b{n}(idx(n1),1),b{n}(idx(n2),1),d1));
             c = round(linspace(b{n}(idx(n1),2),b{n}(idx(n2),2),d1));
-            cut_lines(sub2ind(size(cut_lines),r,c)) = 2;     
-            all_angles([n1 n2],:) = nan;
-            all_angles(:, [n1 n2]) = nan;
+            rm_idx = sub2ind(size(cut_lines),r,c);
+            if (max(cut_lines(rm_idx))==0) && (min(mask1(rm_idx))==1) 
+                cut_lines(rm_idx) = 1;     
+                all_angles([n1 n2],:) = nan;
+                all_angles(:, [n1 n2]) = nan;
+            else
+                all_angles(n1,n2) = nan;
+                all_angles(n2,n1) = nan;
+            end
+                
         end
     end
 end
 
-
+%%
 function [perim_angles, ref_angles] = perimeterangles(pts,shift)
 
 xy_pts = [pts(:,2), -pts(:,1)]; % Convert [r c] to [x y]

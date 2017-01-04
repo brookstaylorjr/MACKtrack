@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 03-Jan-2017 10:13:33
+% Last Modified by GUIDE v2.5 03-Jan-2017 10:33:19
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -828,18 +828,43 @@ catch ME
 end
 % ========================================================================================
 
+
+function popupmenu5A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUP5A: choose parameter to define nuclear shape: compactness or solidity
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+idx = get(hObject,'Value');
+fullstr = get(hObject,'String');
+handles.parameters.ShapeDef = fullstr{idx};
+set(handles.text5E,'String', [handles.parameters.ShapeDef,':']);
+set(handles.edit5E,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(1)));
+try
+    set(handles.edit5F,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(2)));
+catch me
+    set(handles.edit5F,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(1)));
+    handles.parameters.(handles.parameters.ShapeDef)(2) = handles.parameters.(handles.parameters.ShapeDef)(1);
+end
+guidata(handles.figure1,handles)
+
+
+
 function edit5E_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5E: set lower compactness bound (for round nuclei)
+% EDIT5E: set lower compactness/solidity bound (for round nuclei)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
-    if newVal > handles.parameters.Compactness(2)
-        warning('Resetting - round compactness value shound be less than oblong compactness value')
-        newVal = handles.parameters.Compactness(2);
+    if strcmp(handles.parameters.ShapeDef,'Compactness')
+        test1 = @(v1,v2) v1>v2;
+    else
+        test1 = @(v1,v2) v1<v2;
+    end
+    if test1(newVal,handles.parameters.(handles.parameters.ShapeDef)(2))
+        warning('Resetting value - lenient compactness should be higher than strict, lenient soliditiy should be lower')
+        newVal = handles.parameters.(handles.parameters.ShapeDef)(2);
     end
     set(hObject,'String',num2str(newVal))
-    handles.parameters.Compactness(1) = newVal;
+    handles.parameters.(handles.parameters.ShapeDef)(1) = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
@@ -856,17 +881,22 @@ end
 
 function edit5F_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5F: set upper compactness bound (for oblong nuclei)
+% EDIT5F: set upper compactness/solidity bound (for oblong nuclei)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
     % Parameter checking
-    if newVal < handles.parameters.Compactness(1)
-        warning('Resetting - oblong compactness value shound be greater than round compactness value')
-        newVal = handles.parameters.Compactness(1);
+    if strcmp(handles.parameters.ShapeDef,'Compactness')
+        test1 = @(v1,v2) v1<v2;
+    else
+        test1 = @(v1,v2) v1>v2;
+    end
+    if test1(newVal,handles.parameters.(handles.parameters.ShapeDef)(1))
+        warning('Resetting value - lenient compactness should be higher than strict, lenient soliditiy should be lower')
+        newVal = handles.parameters.(handles.parameters.ShapeDef)(1);
     end
     set(hObject,'String',num2str(newVal))
-    handles.parameters.Compactness(2) = newVal;
+    handles.parameters.(handles.parameters.ShapeDef)(2) = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
@@ -1695,13 +1725,3 @@ if handles.parameters.NucleusFF > length(flatfields)
 end
 set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
 guidata(handles.figure1,handles)
-
-
-% --- Executes on selection change in popupmenu5A.
-function popupmenu5A_Callback(hObject, eventdata, handles)
-% hObject    handle to popupmenu5A (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    structure with handles and user data (see GUIDATA)
-
-% Hints: contents = cellstr(get(hObject,'String')) returns popupmenu5A contents as cell array
-%        contents{get(hObject,'Value')} returns selected item from popupmenu5A
