@@ -1,4 +1,4 @@
-function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, p)
+function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, past, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 

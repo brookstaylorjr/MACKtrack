@@ -33,7 +33,7 @@ obj_rprops = fcn.get_rprops(obj_cc);
 % Assign groups of subobjects to corresponding parent object (in obj_cc)
 get_obj = @(pxlist) unique(subobj_in(pxlist));
 obj_match = cellfun(get_obj, obj_cc.PixelIdxList,'UniformOutput',0);
-rm_zeros = @(pxlist) pxlist(pxlist>=0); % Filter "improper objects" out of there.
+rm_zeros = @(pxlist) pxlist(pxlist>0); % Filter "improper objects" out of there.
 obj_match = cellfun(rm_zeros, obj_match,'UniformOutput',0);
 obj_match = obj_match(:);
 obj_groups = cell(size(cc_in.PixelIdxList));
@@ -63,7 +63,7 @@ remaining_obj = find(~pass_1); % Remaining grouped objects
 
 
 % PASS 2: Soft pass on any (grouped) object with 1-2 subobjects
-criteriaA = cellfun(@length,obj_match(remaining_obj))<=2;
+criteriaA = cellfun(@length,obj_match(remaining_obj))<=1;
 criteriaB = fcn.soft_pass(obj_rprops(remaining_obj,:));
 pass_2 = criteriaA(:) & criteriaB(:);
 if verbose
@@ -103,7 +103,7 @@ label1 = labelmatrix(cc1);
 label1(~ismember(label1,remaining_subobj)) = 0;
 obj_cc1 = bwconncomp(label1>0,4);
 if obj_cc1.NumObjects>0
-    rprops1 = fcn.get_rprops(cc1);
+    rprops1 = fcn.get_rprops(labelmatrix(cc1));
     get_obj = @(pxlist) unique(label1(pxlist));
     obj_match = cellfun(get_obj, obj_cc1.PixelIdxList,'UniformOutput',0)';
     pass_orig = fcn.hard_pass(rprops1);
@@ -128,9 +128,9 @@ end
 % PASS 6: Perform final soft-pass on remaining (uncombined) objects
 label1 = labelmatrix(cc1);
 label1(cell2mat(pixelidx_out)) = 0;
-cc2 = label2cc(label1);
+cc2 = label2cc(label1,0);
 if cc2.NumObjects>0
-    rprops_new = fcn.get_rprops(cc2);
+    rprops_new = fcn.get_rprops(label1);
     pass_5 = find(fcn.end_pass(rprops_new)>0);
     if verbose
         for i = 1:length(pass_5)
@@ -202,7 +202,7 @@ if tmp_cc.NumObjects==0
 end
 
 % Do morphological tests on base objects
-rprops_in = fcn.get_rprops(cc_in);
+rprops_in = fcn.get_rprops(labelmatrix(cc_in));
 only_hard =  fcn.hard_pass(rprops_in);
 only_fail = ~fcn.soft_pass(rprops_in);
 only_soft = ~only_fail & ~only_hard;

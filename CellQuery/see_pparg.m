@@ -28,16 +28,15 @@ if nargin<3
     end
 end
 
-
 % Load data; set parameters
 [measure, info] = loadID(id);
 info.parameters.FramesPerHour = 6; % 10 min between frames
 info.Module = 'ppargModule';
-t_max = (size(measure.MeanPPARg,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
-info.graph_limits = [400 1000];
+t_max = (size(measure.MedianPPARg,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 
 
 all_pparg = measure.MeanPPARg;
+info.graph_limits = prctile(all_pparg(~isnan(all_pparg)),[3 97]);
 
 % Add parent trajectories to children
 find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));

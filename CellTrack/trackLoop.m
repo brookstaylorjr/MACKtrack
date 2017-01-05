@@ -179,7 +179,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
             end
             
             trackstring = [trackstring,'\n- - - Cycle ',num2str(saveCycle),' - - -\n'];
-            [tmpstring, CellData, future] =  evalc('trackNuclei(future, CellData, saveCycle, parameters)');
+            [tmpstring, CellData, future] =  evalc('trackNuclei(future, CellData, saveCycle,past, parameters)');
             trackstring = [trackstring,tmpstring];
         end
         tocs.Tracking = toc;    

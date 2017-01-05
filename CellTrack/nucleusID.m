@@ -37,13 +37,13 @@ if isnan(p.NuclearSmooth)
 end
 diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.NuclearSmooth),'replicate'); % Gaussian filtered
 diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
-%- - - - - - - - - - - - - - - - - - - Label1 - - - - - - - - - - - - - - - - - - - - - - -
-% Label1: strong-edge nuclei. Use watershed1 and p.NucleusEdgeThreshold
+
+%- - - - - - - - - - - - - - - - - - - LABEL1: strong edges  - - - - - - - - - - - - - - - - - - - - - - -
+% 1) Iterate down to p.NucleusEdgeThreshold to find strong-edge nuclei
 horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'symmetric');
 verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
-
 edge_cutoffs = prctile(diagnos.edge_mag(diagnos.edge_mag>p.NucleusEdgeThreshold),linspace(0,90,21));
 cc_list = {};
 for i = 1:length(edge_cutoffs)
@@ -71,14 +71,13 @@ for i = 1:length(edge_cutoffs)
     cc_new = bwconncomp(mask0,8);
     cc_list = cat(2,cc_list,cc_new.PixelIdxList);
 end
-
 cc_all.PixelIdxList = cc_list';
 cc_all.ImageSize = size(diagnos.edge_mag);
 cc_all.NumObjects = length(cc_list);
 cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
-% Subdivide objects using concave points on perimeter (>220 degrees)
+% 2) Label1b: subdivide objects using concave points on perimeter (>220 degrees)
 diagnos.mask_split = diagnos.label1a>0;
 diagnos.mask_split((diagnos.label1a>0)&(imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
 diagnos.mask_split = diagnos.mask_split &~perimetersplit(diagnos.mask_split,p);
@@ -86,19 +85,44 @@ diagnos.mask_split = bwareaopen(diagnos.mask_split,cutoff.Area(1),4);
 cc_inflect = bwconncomp(diagnos.mask_split,4);
 diagnos.label1b = labelmatrix(cc_inflect);
 
-
-% Subdivide objects with additional borders from watershed
+% 3) Label1c: subdivide objects with additional borders from watershed
 w1 = imdilate(diagnos.watershed1,ones(3));
 w1(diagnos.label1b==0) = 0;
 pairs  = [w1(:),diagnos.label1b(:)];
 [~,~,ic] = unique(pairs,'rows');
 diagnos.label1c = reshape(ic,size(w1))-1;
+% Simplify objects in label1c to prevent bridgenuclei from hanging
+% [Count subobjects per larger object - cap @ 5] 
+max_complexity = 6; % Nuclei should be largely broken up by this point.
+get_obj = @(pxlist) unique(diagnos.label1c(pxlist));
+obj_match = cellfun(get_obj, cc_inflect.PixelIdxList,'UniformOutput',0)';
+complex_obj = find(cellfun(@length,obj_match)>max_complexity);
+% If complex objects are found, replace them with smoothed/re-watershedded image.
+n = 2;
+while ~isempty(complex_obj)
+    % Use larger smoothing kernel, recalculate watershed, and replace "complex" subregions as required
+    nuc_smooth2 = imfilter(nucleus1,gauss2D(min([p.MinNucleusRadius/2*n, (1.25*n)*p.NuclearSmooth])),'replicate'); % Gaussian filtered
+    watershed2 = watershedalt(nuc_smooth2, cell_mask, 4);
+    for i = 1:length(complex_obj)
+        subregion = cc_inflect.PixelIdxList{complex_obj(i)};
+        subregion_vals = double(sort(unique(watershed2(subregion))));
+        lut = zeros(1,max(subregion_vals)+1);
+        lut(subregion_vals+1) = [0,double(max(diagnos.label1c(:)))+(1:(length(subregion_vals)-1))];
+        diagnos.label1c(subregion) = lut(watershed2(subregion)+1);
+    end
+    % Re-count subobjects
+    diagnos.label1c = imclose(diagnos.label1c,ones(2));
+    get_obj = @(pxlist) unique(diagnos.label1c(pxlist));
+    obj_match = cellfun(get_obj, cc_inflect.PixelIdxList,'UniformOutput',0)';
+    complex_obj = find(cellfun(@length,obj_match)>max_complexity);
+    n = n+1;
+end
 
 
-% Bridge nuclear subobjects together
+% 4) Bridge oversegmented nuclear subobjects (from watershed divisions) together by shape
 diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
 
-%- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
+%%- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
 % "Weak" objects missed by standard methods
 if p.WeakObjectCutoff>0
     

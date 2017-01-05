@@ -1,4 +1,4 @@
-function [measure, info] = loadID(id, options)
+function [measure, info] = loadID(id)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [measure, info] = loadID(id, options)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -7,7 +7,6 @@ function [measure, info] = loadID(id, options)
 %
 % INPUTS
 % id          ID# of sets get data from
-% options     (optional) structure specifying smoothing on data and pixel-to-micron conv.
 %
 % OUTPUTS:
 % measure     full measurement information struct
@@ -15,12 +14,6 @@ function [measure, info] = loadID(id, options)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Set default smoothing/unit conversion options: 
-if nargin<2
-    options.Smoothing = ' None';
-    options.SmoothingWindow = 3;
-    options.PixelConversion = 4.03;
-    options.FramesPerHour = 12;
-end
 
 % Load locations (for images and output data)
 home_folder = mfilename('fullpath');
@@ -51,13 +44,7 @@ info.ImageDirectory = [locations.scope, AllMeasurements.parameters.ImagePath];
 measure = struct;
 for i = 1:length(info.fields)
     if ~strcmpi(info.fields{i},'parameters') && ~strcmpi(info.fields{i},'CellData')
-        
-        if ~iscell(AllMeasurements.(info.fields{i}))
-            measure.(info.fields{i}) = smoothMeasurement(AllMeasurements.(info.fields{i}), ...
-                options,info.CellData, info.fields{i});
-        else
-            measure.(info.fields{i}) = AllMeasurements.(info.fields{i});
-        end
+        measure.(info.fields{i}) = AllMeasurements.(info.fields{i}); 
     end
 end
 info.fields = fieldnames(measure);
