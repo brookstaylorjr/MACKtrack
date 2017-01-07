@@ -41,6 +41,10 @@ gui_State = struct('gui_Name',       mfilename, ...
                    'gui_OutputFcn',  @checkDynamics_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
+               
+if nargin<1
+    error('Input must include an experiment ID/file location')
+end
 if (nargin>1) && ischar(varargin{1})
     gui_State.gui_Callback = str2func(varargin{1});
 end
@@ -263,9 +267,13 @@ end
 
 
 % Saturate image according to first image
-if 1%~isfield(handles,'imgmax')
-handles.imgmax = prctile(measure_img(:),99.9);
-handles.imgmin = prctile(measure_img(:),5);
+if ~isfield(handles,'imgmax')
+    j = handles.parameters.TimeRange(round(end*0.75));
+    img_path = [handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
+                eval(handles.parameters.(handles.module).ImageExpr)];
+    scale_img = checkread(img_path,handles.parameters.BitDepth);
+    handles.imgmax = prctile(scale_img(:),99);
+    handles.imgmin = prctile(scale_img(:),3);
 end
 measure_img(measure_img>handles.imgmax) = handles.imgmax;
 measure_img(measure_img<handles.imgmin) = handles.imgmin;

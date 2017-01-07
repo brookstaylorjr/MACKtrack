@@ -42,9 +42,8 @@ for i = 1:length(obj_match)
 end
 
 
-
 % PASS 1: Check intially-combined objects -> add in to pixels_out, drop from obj_cc
-pass_1 = fcn.hard_pass(obj_rprops);
+pass_1 = fcn.soft_pass(obj_rprops);
 pixelidx_out = obj_cc.PixelIdxList(pass_1);
 if verbose
     for i = 1:length(pass_1)
@@ -62,31 +61,7 @@ remaining_obj = find(~pass_1); % Remaining grouped objects
 
 
 
-% PASS 2: Soft pass on any (grouped) object with 1-2 subobjects
-criteriaA = cellfun(@length,obj_match(remaining_obj))<=1;
-criteriaB = fcn.soft_pass(obj_rprops(remaining_obj,:));
-pass_2 = criteriaA(:) & criteriaB(:);
-if verbose
-    add_list = remaining_obj(pass_2);
-    for i = 1:length(add_list)
-        str_1 = [' containing subobj. [ ',num2str(obj_match{add_list(i)}'),' ]. (Area: ',num2str(obj_rprops(add_list(i),1)),...
-            ', ',shapedef, ': ',num2str(fcn.shape(obj_rprops(add_list(i),:))),')'];
-        if pass_1(i)
-            disp(['II. ADDED obj ',num2str(length(pixelidx_out)+i),': ', str_1]);
-        else
-            disp(['II. FAILED obj ', str_1]);
-        end
-    end
-    disp('- - - - - - - - - - - - - - - - - - ')
-
-end
-pixelidx_out = [pixelidx_out(:); reshape(obj_cc.PixelIdxList(remaining_obj(pass_2)),sum(pass_2),1)];
-remaining_obj = remaining_obj(~pass_2);
-
-% Drop out remaining single-subobject shapes to prevent further analysis
-remaining_obj(cellfun(@length,obj_match(remaining_obj))==1) = [];
-
-%% PASS 3: Strong pass, trying to combine subsets of subobjects
+%% PASS 2: Strong pass, trying to combine subsets of subobjects
 remaining_subobj = cell2mat(obj_match(remaining_obj));
 cc1 = cc_in;
 counter = 0;
@@ -98,34 +73,7 @@ remaining_subobj = cell2mat(obj_match(remaining_obj)); % Get original list of su
 remaining_subobj(ismember(remaining_subobj,find(cellfun(@isempty,cc1.PixelIdxList)))) = [];
 
 
-%% PASS 4: Of remaining objects, see if any is composed of subobjects that are all hard_pass
-label1 = labelmatrix(cc1);
-label1(~ismember(label1,remaining_subobj)) = 0;
-obj_cc1 = bwconncomp(label1>0,4);
-if obj_cc1.NumObjects>0
-    rprops1 = fcn.get_rprops(labelmatrix(cc1));
-    get_obj = @(pxlist) unique(label1(pxlist));
-    obj_match = cellfun(get_obj, obj_cc1.PixelIdxList,'UniformOutput',0)';
-    pass_orig = fcn.hard_pass(rprops1);
-    all_pass = @(subobj) min(pass_orig(subobj));
-    pass_4 = cellfun(all_pass, obj_match);
-    if verbose
-        add_list = obj_match(pass_4);
-        for i = 1:length(add_list)
-            disp(['IV. ADDED #',num2str(i+length(pixelidx_out)),': obj containing (all strict-passing) subobj [ ',...
-                num2str(add_list{i}'),' ]'])
-        end
-    end
-    pixelidx_out = [pixelidx_out(:); cc1.PixelIdxList(cell2mat(obj_match(pass_4)))];
-    remaining_subobj(ismember(remaining_subobj,cell2mat(obj_match(pass_4)))) = [];
-end
-
-% PASS 5: Try to combine subobjects (up to 4) and pass with "soft" criteria
-if ~isempty(remaining_subobj)
-    [cc1, remaining_subobj] = mergeNeighbors(cc1, remaining_subobj, obj_groups, cutoff,shapedef, 'soft',4, verbose);
-end
-
-% PASS 6: Perform final soft-pass on remaining (uncombined) objects
+%% PASS III: Perform final area-only pass on remaining (uncombined) objects
 label1 = labelmatrix(cc1);
 label1(cell2mat(pixelidx_out)) = 0;
 cc2 = label2cc(label1,0);
@@ -136,7 +84,7 @@ if cc2.NumObjects>0
         for i = 1:length(pass_5)
             str_1 = ['(Area: ',num2str(rprops_new(pass_5(i),1)),...
                 ', ',shapedef, ': ',num2str(fcn.shape(rprops_new(pass_5(i),:))),')'];
-                disp(['VI. ADDED # ',num2str(length(pixelidx_out)+i),': ', str_1]);
+                disp(['III. ADDED # ',num2str(length(pixelidx_out)+i),': ', str_1]);
         end
     end
 
@@ -273,7 +221,7 @@ for i = 1:length(group_rows)
         if verbose
             tmp_num = props(i,:);
             tmp_str = ['Area: ', num2str(tmp_num(1)),', ',shapedef, ': ',num2str(fcn.shape(tmp_num))];
-            disp(['MERGED subobj [ ',num2str(combo),' ]. (',tmp_str,')'])
+            disp(['II. MERGED subobj [ ',num2str(combo),' ]. (',tmp_str,')'])
         end      
     end
 end

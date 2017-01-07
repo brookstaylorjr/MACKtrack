@@ -105,17 +105,17 @@ check_savedir(handles.parameters.SaveDirectory,handles);
 handles = guidata(handles.figure1);
 
 % OSX-specific formatting
-os = computer;
-if strcmp(os(1:4),'MACI')
-    a = fieldnames(handles);
-    for i = 1:length(a)
-        currentField = a{i};
-        if strcmp(currentField(1:4),'edit')
-            oldPos = get(handles.(currentField),'Position');
-            set(handles.(currentField),'Position', oldPos+[0 -1 0 2]);
-        end
-    end
-end
+% os = computer;
+% if strcmp(os(1:4),'MACI')
+%     a = fieldnames(handles);
+%     for i = 1:length(a)
+%         currentField = a{i};
+%         if strcmp(currentField(1:4),'edit')
+%             oldPos = get(handles.(currentField),'Position');
+%             set(handles.(currentField),'Position', oldPos+[0 -1 0 2]);
+%         end
+%     end
+% end
 % ========================================================================================
 
 function varargout = MACKtrack_OutputFcn(hObject, eventdata, handles) 

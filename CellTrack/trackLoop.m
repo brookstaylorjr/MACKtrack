@@ -64,7 +64,7 @@ mkdir([outputDirectory,'CellLabels'])
 mkdir([outputDirectory,'SegmentedImages'])
 
 % Make default shift (for tracking cells across image jumps)
-parameters.ImageOffset = [0 0];
+parameters.ImageOffset = repmat({[0 0]},1,parameters.StackSize);
 
 % Check to make sure time vector is long enough
 if length(parameters.TimeRange) < parameters.StackSize
@@ -103,6 +103,20 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         end
         tocs.ImageLoading = toc;
 
+        
+        % Calculate image jump, if parameters require it.
+        if ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
+            j =  parameters.TimeRange(cycle-1);
+            nucName1 = eval(parameters.NucleusExpr);
+            old_nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
+            new_offset = parameters.ImageOffset{end}+calculatejump(old_nuc,images.nuc);
+            disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(new_offset),']'])       
+        else
+            new_offset = parameters.ImageOffset{end};
+        end
+        parameters.ImageOffset = [parameters.ImageOffset(2:end),{new_offset}];
+            
+        
         % CELL MASKING on phase contrast/DIC image
         tic
         maskfn = str2func([fnstem,'ID']);
@@ -150,6 +164,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         tocs.ImageLoading = 0; tocs.CellMasking = 0; tocs.NucMasking = 0; tocs.CheckCells = 0; % zero out unused tics   
     end
    
+    
    if cycle >= parameters.StackSize
        % Bookkeeping (indicies), initialization for tracking 
         saveCycle = cycle-parameters.StackSize+1; % Value assigned to CellData and tracked label matricies
@@ -168,18 +183,8 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         if cycle == parameters.StackSize
             [CellData, future] = initializeCellData(future,parameters);
         else
-            % Calculate image jump, if required.
-            parameters.ImageOffset_old = parameters.ImageOffset;
-            if (cycle<=length(parameters.TimeRange)) && ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
-                j =  parameters.TimeRange(cycle-1);
-                nucName1 = eval(parameters.NucleusExpr);
-                old_nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
-                parameters.ImageOffset = parameters.ImageOffset+calculatejump(old_nuc,images.nuc);
-                disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(parameters.ImageOffset),']'])         
-            end
-            
             trackstring = [trackstring,'\n- - - Cycle ',num2str(saveCycle),' - - -\n'];
-            [tmpstring, CellData, future] =  evalc('trackNuclei(future, CellData, saveCycle,past, parameters)');
+            [tmpstring, CellData, future] =  evalc('trackNuclei(future, CellData, saveCycle, parameters)');
             trackstring = [trackstring,tmpstring];
         end
         tocs.Tracking = toc;    
@@ -189,7 +194,8 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         segmentfn = str2func([fnstem,'Segment']);
         present = segmentfn(future(1), images.bottom, parameters);
         tocs.Segmentation = toc;
-
+        present.ImageOffset = parameters.ImageOffset{1};
+       
         % MEMORY CHECKING ("past" queue)
         tic
         if ~exist('past','var')

@@ -32,12 +32,9 @@ if sum(tmp(:)) < sum(cell_mask(:))
 end
 % Construct smoothed images + watershed image
 nucleus1 = medfilt2(nuc_orig,[p.MedianFilterSize, p.MedianFilterSize]); % Median-filtered
-if isnan(p.NuclearSmooth)
-    p.NuclearSmooth = p.MinNucleusRadius/4;
-end
-diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.NuclearSmooth),'replicate'); % Gaussian filtered
-diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
 
+diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/4),'replicate'); % Gaussian filtered
+diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
 %- - - - - - - - - - - - - - - - - - - LABEL1: strong edges  - - - - - - - - - - - - - - - - - - - - - - -
 % 1) Iterate down to p.NucleusEdgeThreshold to find strong-edge nuclei
 horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'symmetric');
@@ -61,9 +58,9 @@ for i = 1:length(edge_cutoffs)
         mask0(tmp_drop) = 0;
     end
     % c) Filter objects that aren't round/sufficently large (alternate btw strict/lenient criteria)
-    mask0 = imopen(mask0,diskstrel(round(p.MinNucleusRadius/2)));
+    mask0 = imopen(mask0,diskstrel(round(p.NuclearSmooth)));
     if mod(i-1,4) < 3
-        mask0 = bwareaopen(mask0,round(1.3*cutoff.Area(1)),4);
+        mask0 = bwareaopen(mask0,round(2*cutoff.Area(1)),4);
     else
         mask0 = bwareaopen(mask0,cutoff.Area(1),4);
     end
@@ -80,52 +77,67 @@ diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 % 2) Label1b: subdivide objects using concave points on perimeter (>220 degrees)
 diagnos.mask_split = diagnos.label1a>0;
 diagnos.mask_split((diagnos.label1a>0)&(imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
-diagnos.mask_split = diagnos.mask_split &~perimetersplit(diagnos.mask_split,p);
+[mask_cut, diagnos.cut_pts] = perimetersplit(diagnos.mask_split,p);
+diagnos.mask_split = diagnos.mask_split &~mask_cut;
 diagnos.mask_split = bwareaopen(diagnos.mask_split,cutoff.Area(1),4);
-cc_inflect = bwconncomp(diagnos.mask_split,4);
-diagnos.label1b = labelmatrix(cc_inflect);
+diagnos.label1b = bwlabel(diagnos.mask_split,4);
 
-% 3) Label1c: subdivide objects with additional borders from watershed
-w1 = imdilate(diagnos.watershed1,ones(3));
-w1(diagnos.label1b==0) = 0;
-pairs  = [w1(:),diagnos.label1b(:)];
-[~,~,ic] = unique(pairs,'rows');
-diagnos.label1c = reshape(ic,size(w1))-1;
-% Simplify objects in label1c to prevent bridgenuclei from hanging
-% [Count subobjects per larger object - cap @ 5] 
-max_complexity = 6; % Nuclei should be largely broken up by this point.
-get_obj = @(pxlist) unique(diagnos.label1c(pxlist));
-obj_match = cellfun(get_obj, cc_inflect.PixelIdxList,'UniformOutput',0)';
-complex_obj = find(cellfun(@length,obj_match)>max_complexity);
-% If complex objects are found, replace them with smoothed/re-watershedded image.
-n = 2;
-while ~isempty(complex_obj)
-    % Use larger smoothing kernel, recalculate watershed, and replace "complex" subregions as required
-    nuc_smooth2 = imfilter(nucleus1,gauss2D(min([p.MinNucleusRadius/2*n, (1.25*n)*p.NuclearSmooth])),'replicate'); % Gaussian filtered
-    watershed2 = watershedalt(nuc_smooth2, cell_mask, 4);
-    for i = 1:length(complex_obj)
-        subregion = cc_inflect.PixelIdxList{complex_obj(i)};
-        subregion_vals = double(sort(unique(watershed2(subregion))));
-        lut = zeros(1,max(subregion_vals)+1);
-        lut(subregion_vals+1) = [0,double(max(diagnos.label1c(:)))+(1:(length(subregion_vals)-1))];
-        diagnos.label1c(subregion) = lut(watershed2(subregion)+1);
+%% 3) Label1c: subdivide objects with additional borders from watershed
+tmp_cc = label2cc(diagnos.label1b,0);
+get_high = @(pix) pix(diagnos.edge_mag(pix) > prctile(diagnos.edge_mag(pix),50));
+mask_vals = cell2mat(cellfun(get_high,tmp_cc.PixelIdxList,'UniformOutput',0));
+mask_hi = false(size(diagnos.label1b));
+mask_hi(mask_vals) = 1;
+mask_hi = bwareaopen(mask_hi,round(p.MinNucleusRadius/2));
+BWconnect = bwmorph(mask_hi,'skel','Inf');
+for i = 3
+    BWconnect = imdilate(BWconnect,ones(i));
+    BWconnect = bwmorph(BWconnect,'skel','Inf');
+    % Reduce back result of dilation
+    for j = 1:floor(i/2)
+        BWendpoints = bwmorph(bwmorph(BWconnect,'endpoints'),'shrink',Inf);
+        BWconnect(BWendpoints) = 0;
     end
-    % Re-count subobjects
-    diagnos.label1c = imclose(diagnos.label1c,ones(2));
-    get_obj = @(pxlist) unique(diagnos.label1c(pxlist));
-    obj_match = cellfun(get_obj, cc_inflect.PixelIdxList,'UniformOutput',0)';
-    complex_obj = find(cellfun(@length,obj_match)>max_complexity);
-    n = n+1;
 end
+mask_hi = mask_hi|BWconnect;
+mask_obj = diagnos.label1b>0;
+mask_obj(mask_hi) = 0;
+mask_obj = imopen(mask_obj,ones(2));
+mask_obj = bwareaopen(mask_obj,round((p.MinNucleusRadius/2)^2),4);
+mask_all = diagnos.label1b>0;
+diagnos.label1c = IdentifySecPropagateSubfunction(double(bwlabel(mask_obj,4)),double(mask_all),mask_all,0.02);
 
+%% Combine inflection point & strong edge data - see if a strong edge unabigiously connects two moderately-inflected pts.
+tmp = diagnos.label1c;
+tmp(diagnos.label1c==0) = max(tmp(:))+1;
+border_mask = (tmp-imerode(tmp,ones(3)))>0;
+border_mask(diagnos.label1c==0) = 0;
+endpt_val = bwmorph(border_mask,'endpoints').*diagnos.cut_pts;
+endpt_val(imdilate(mask_cut,ones(5))) = 0;
+endpt_val(endpt_val==0) = nan;
+branch_pts = bwmorph(bwmorph(border_mask,'skel',inf),'branchpoints');
+cc_branch = bwconncomp(border_mask,8);
+avg_inflect = @(pix) nanmean(endpt_val(pix));
+num_branch = @(pix) sum(branch_pts(pix));
+num_end = @(pix) sum(~isnan(endpt_val(pix)));
+avg1 = cellfun(avg_inflect,cc_branch.PixelIdxList);
+num1 = cellfun(num_branch,cc_branch.PixelIdxList);
+num2 = cellfun(num_end,cc_branch.PixelIdxList);
+mask_tmp = diagnos.label1b>0;
+mask_tmp(cell2mat(cc_branch.PixelIdxList((avg1>195) & (num1<1) & (num2==2))')) = 0;
+
+diagnos.label1b2 = bwlabel(mask_tmp,4);
+diagnos.label1c(diagnos.label1b2==0) = 0;
+pairs  = [diagnos.label1b2(:),diagnos.label1c(:)];
+[~,~,ic] = unique(pairs,'rows');
+diagnos.label1c = reshape(ic,size(diagnos.label1b))-1;
+cc_inflect = label2cc(diagnos.label1b2);
 
 % 4) Bridge oversegmented nuclear subobjects (from watershed divisions) together by shape
 diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
-
 %%- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
 % "Weak" objects missed by standard methods
 if p.WeakObjectCutoff>0
-    
     % Drop mask1 "marked" watershed areas from watershed of Gaussian-smoothed image 
     label_dropped = imdilate(diagnos.watershed1,ones(3));
     markers = diagnos.label1>0;

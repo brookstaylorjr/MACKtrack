@@ -1,20 +1,19 @@
-function cut_lines = perimetersplit(mask1,p)
+function [cut_lines, all_pts] = perimetersplit(mask1,p)
 
 % Set concave angle threshold (should be roughly 180+45 degrees)
-angle_thresh = 222;
+angle_thresh = 220;
 
 s = (0:2) + min([2,round(p.MinNucleusRadius/4)]);
-s(s<1) = [];
 b = bwboundaries(mask1,8);
 sum_line = @(a,b) sum([a,b],2);
 shifts = mat2cell(repmat(s(1),[length(b),1]),ones(size(b)));
-[all_angles, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
-sum_angles = all_angles;
+[ang, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
+sum_angles = ang;
 sum_refs = ref_angles;
 for i = 2:length(s)
     shifts = mat2cell(repmat(s(i),[length(b),1]),ones(size(b)));
-    [all_angles, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
-    sum_angles = cellfun(sum_line,all_angles,sum_angles,'UniformOutput',0);
+    [ang, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
+    sum_angles = cellfun(sum_line,ang,sum_angles,'UniformOutput',0);
     sum_refs = cellfun(sum_line,sum_refs,ref_angles,'UniformOutput',0);
 end
 rescale_line = @(a) a/length(s);
@@ -23,17 +22,18 @@ sum_refs = cellfun(rescale_line,sum_refs,'UniformOutput',0);
 
 % Threshold perimeter angles (per object)
 cut_lines = false(size(mask1));
-
+all_pts = zeros(size(mask1));
 for n = 1:length(sum_angles)
     idx = find(sum_angles{n}>angle_thresh);
     new_idx = [];
-    dist = 8;
+    dist = round(p.MinNucleusRadius/2);
     while min(diff(idx)) < dist
         tmp = idx(find(sum_angles{n}(idx)==max(sum_angles{n}(idx)),1,'first'));
         new_idx = cat(1,new_idx,tmp);
         idx(ismember(idx,tmp-dist:tmp+dist)) = [];
     end
     idx = sort([new_idx;idx]);
+    all_pts(sub2ind(size(all_pts),b{n}(:,1),b{n}(:,2))) = sum_angles{n};
 
     if length(idx)>1
         obj_angles = sum_angles{n}(idx);
@@ -42,27 +42,40 @@ for n = 1:length(sum_angles)
 
         bisect = v_angles+obj_angles/2;
         bisect(bisect>360) = bisect(bisect>360)-360;
-        all_angles = zeros(size(pts,1),size(pts,2));
+        ang = zeros(size(pts,1),size(pts,2));
         for i = 1:size(pts,1)
             test_angles = atan2(-pts(:,1)+pts(i,1),pts(:,2)-pts(i,2))/ pi*180;
             test_angles(test_angles<0) = test_angles(test_angles<0)+360;
-            all_angles(:,i) = test_angles-bisect(i);   
+            ang(:,i) = test_angles-bisect(i);   
         end
-        all_angles(sub2ind(size(all_angles),1:size(pts,1),1:size(pts,1))) = nan;
-        all_angles = (abs(all_angles)+abs(all_angles)')/2;
-        while sum(~isnan(all_angles(:)))>1
-            [n1,n2] = find(all_angles==nanmin(all_angles(:)),1,'first');
+        ang(sub2ind(size(ang),1:size(pts,1),1:size(pts,1))) = nan;
+        ang = (abs(ang)+abs(ang)')/2;
+        
+        count = 1;
+        while sum(~isnan(ang(:)))>1
+        % 1st cut should be between adjacent points -> maximize perim distance/cut distance ratio.
+        % Subsequent cuts: minimize bisector angle difference (cuts should "point at" one another)
+        if count==1
+            d_perim = [diff(idx);length(b{n})-idx(end)+idx(1)];
+            d_cut = b{n}(idx,:)-circshift(b{n}(idx,:),-1);
+            d_cut = hypot(d_cut(:,1),d_cut(:,2));       
+            n1 = find(d_perim./d_cut == max( d_perim./d_cut),1,'first');
+            n2 = n1+1; n2(n2>length(idx)) = n2(n2>length(idx))-length(idx);
+        else
+            [n1,n2] = find(ang==nanmin(ang(:)),1,'first');
+        end
             d1 = 1+max([abs(b{n}(idx(n1),1)-b{n}(idx(n2),1)),abs(b{n}(idx(n1),2)-b{n}(idx(n2),2))]);
             r = round(linspace(b{n}(idx(n1),1),b{n}(idx(n2),1),d1));
             c = round(linspace(b{n}(idx(n1),2),b{n}(idx(n2),2),d1));
             rm_idx = sub2ind(size(cut_lines),r,c);
+            count = count+1;
             if (max(cut_lines(rm_idx))==0) && (min(mask1(rm_idx))==1) 
                 cut_lines(rm_idx) = 1;     
-                all_angles([n1 n2],:) = nan;
-                all_angles(:, [n1 n2]) = nan;
+                ang([n1 n2],:) = nan;
+                ang(:, [n1 n2]) = nan;
             else
-                all_angles(n1,n2) = nan;
-                all_angles(n2,n1) = nan;
+                ang(n1,n2) = nan;
+                ang(n2,n1) = nan;
             end
                 
         end

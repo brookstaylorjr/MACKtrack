@@ -29,6 +29,9 @@ cc_all = label2cc(int8(queue(1).cells>0), 0);
 cc_nucs = label2cc(queue(1).nuclei,0);
 cells_new = unique(queue(1).cells(queue(1).cells>0));
 cells_old = unique(queue(2).cells(queue(2).cells>0));
+shift_old = queue(2).ImageOffset;
+shift_new = queue(1).ImageOffset;
+
 % Data structures: masks/labels for resegmentation
 mask_reseg = queue(1).cells>0;
 fixlist = [];
@@ -49,11 +52,16 @@ swap_cells = [];
 swap_partners = [];
 swap_displacement = [];
 for n = reshape(checklist,1,length(checklist))
-    % Get objects's X/Y pos in old/new frames
-    x0=round(props_old(n).Centroid(1));
-    y0=round(props_old(n).Centroid(2));
+    % Get objects's X/Y pos in old/new frames (in new frame's coordinates)
+    x0=round(props_old(n).Centroid(1)-shift_old(2)+shift_new(2));
+    y0=round(props_old(n).Centroid(2)-shift_old(1)+shift_new(1));
     x1=round(props_new(n).Centroid(1));
     y1=round(props_new(n).Centroid(2));
+    x0(x0<1)=1; x0(x0>size(cc_old.ImageSize,2)) = size(cc_old.ImageSize,2);
+    x1(x1<1)=1; x1(x1>size(cc_old.ImageSize,2)) = size(cc_old.ImageSize,2);
+    y0(y0<1)=1; y0(y0>size(cc_old.ImageSize,1)) = size(cc_old.ImageSize,1);
+    y1(y1<1)=1; y1(y1>size(cc_old.ImageSize,1)) = size(cc_old.ImageSize,1);
+    
     % Generate its displacement line (convert to linear indicies)
     steps = max([abs(x0-x1), abs(y0-y1)])+1;
     displace_line = sub2ind(cc_all.ImageSize,round(linspace(y0,y1,steps)),round(linspace(x0,x1,steps)));
@@ -67,8 +75,8 @@ for n = reshape(checklist,1,length(checklist))
         swap_displacement = cat(2,swap_displacement,sum(ismember(displace_line2,cc_new.PixelIdxList{partner})));
     end
 end
-% SWAP/JUMP resolution: classify error as either swap or jump, and fix appropriately
 
+% SWAP/JUMP resolution: classify error as either swap or jump, and fix appropriately
 for i = 1:length(swap_cells)
     if swap_displacement(i) > (p.MinNucleusRadius*2)
         % Check to see if cell has matched partner in list, and if it also was a "big mover"
@@ -291,7 +299,11 @@ if ~isempty(addlist)
         nuc_mask1 = (queue(2).nuclei==r) & (mask_reseg);
         if sum(nuc_mask1(:))>0 % Old nucleus must overlap with cells 
             nuc_mask = nuc_mask|nuc_mask1;
-            nuc_seed(round(nprops_old(r).Centroid(2)), round(nprops_old(r).Centroid(1))) = r;
+            ctr_r = round(nprops_old(r).Centroid(2))-shift_old(1)+shift_new(1);
+            ctr_r(ctr_r<1) = 1; ctr_r(ctr_r>cc_new.ImageSize(1)) = cc_new.ImageSize(1);
+            ctr_c = round(nprops_old(r).Centroid(1))-shift_old(2)+shift_new(2);
+            ctr_c(ctr_c<1) = 1; ctr_c(ctr_c>cc_new.ImageSize(2)) = cc_new.ImageSize(2);
+            nuc_seed(ctr_r,ctr_c) = r;
             % Keep blocks consistent: create new dummy obj
             new_ind = length(CellData.labeldata(1).obj)+1;
             CellData.labeldata(1).obj = [CellData.labeldata(1).obj; new_ind];
@@ -314,8 +326,8 @@ if ~isempty(addlist)
     for i = 1:length(addlist)
         r = addlist(i);
         if CellData.blocks(r,1)~=0
-            CellData.labeldata(1).centroidx = [CellData.labeldata(1).centroidx; new_props(r).Centroid(1)];
-            CellData.labeldata(1).centroidy = [CellData.labeldata(1).centroidy; new_props(r).Centroid(2)];
+            CellData.labeldata(1).centroidx = [CellData.labeldata(1).centroidx; new_props(r).Centroid(1)-shift_new(2)];
+            CellData.labeldata(1).centroidy = [CellData.labeldata(1).centroidy; new_props(r).Centroid(2)-shift_new(1)];
             CellData.labeldata(1).area = [CellData.labeldata(1).area; new_props(r).Area];
             CellData.labeldata(1).perimeter = [CellData.labeldata(1).perimeter; new_props(r).Perimeter];
         end
@@ -352,7 +364,7 @@ if ~isempty(fixlist)
         try
             % Initialize cell mask for each cell; shift it by amount the nuclei putatively moved
             tmp = false(size(mask_fix));
-            [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});
+            [r,c] = ind2sub(size(tmp),cells_old.PixelIdxList{fix1(i)});   
             r = round(r + props_new(fix1(i)).Centroid(2) - props_old(fix1(i)).Centroid(2));
             c = round(c + props_new(fix1(i)).Centroid(1) - props_old(fix1(i)).Centroid(1));
             r = max(r,1); r=min(r,size(tmp,1));
