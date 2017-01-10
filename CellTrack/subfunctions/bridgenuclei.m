@@ -45,6 +45,7 @@ end
 % PASS 1: Check intially-combined objects -> add in to pixels_out, drop from obj_cc
 pass_1 = fcn.soft_pass(obj_rprops);
 pixelidx_out = obj_cc.PixelIdxList(pass_1);
+pixelidx_out = pixelidx_out(:);
 if verbose
     for i = 1:length(pass_1)
         str_1 = [' containing subobj. [ ',num2str(obj_match{i}'),' ]. (Area: ',num2str(obj_rprops(i,1)),...

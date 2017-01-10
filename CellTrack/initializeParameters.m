@@ -110,6 +110,7 @@ for i = 1:length(handles.parameters.GaussSizes)
 end
 gaussstring(end) = ']';
 set(handles.edit6J,'String',gaussstring)
+set(handles.popupmenu6C,'Value',handles.parameters.Confluence+1)
 
 
 %% - - - - - - - - - - Other parameters - - - - - - - - - - - - - -
@@ -240,6 +241,8 @@ if handles.parameters.NucleusFF > length(flatfields)
     set(handles.popupmenu6B,'Value',0);
 end
 set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
+set(handles.popupmenu6A,'Value',handles.parameters.NucleusFF+1)
+set(handles.popupmenu6B,'Value',handles.parameters.CellFF+1)
 guidata(handles.figure1,handles)
 
 

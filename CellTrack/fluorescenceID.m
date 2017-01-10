@@ -30,25 +30,29 @@ end
 % Smooth and log-compress cell fluorescence image
 img = imfilter(log(diagnos.img_cell+1),gauss2D(2),'symmetric');
 diagnos.log_cell = img;
-% Find image mode; determine whether it is a background or foreground intensity value
+
+% Get img histogram & mode
 v = img(:);
 bins = linspace(prctile(v,0.5),prctile(v,99.5),512);
 N = histcounts(v,bins);
 thresh1 = bins(find(N==max(N),1,'first'));
-bin_width = bins(2)-bins(1);
-contour_func = @(w) abs(sum(sum( (img<(thresh1 + bin_width*w))&(img>(thresh1- bin_width*w))))/numel(img(:)) - 0.05);
-w = fminbnd(contour_func,0,20);
-diagnos.mode_contours = (img<(thresh1 + bin_width*w)) &(img>(thresh1- bin_width*w));
-contours_close = imclose(diagnos.mode_contours,diskstrel(4));
-contours_open = imopen(contours_close,ones(2));
-lost1 = (-sum(sum(contours_open))+sum(sum(contours_close)))/sum(sum(contours_close));
-
+if p.Confluence == 2
+    % Find image mode; determine whether it is a background or foreground intensity value
+    bin_width = bins(2)-bins(1);
+    contour_func = @(w) abs(sum(sum( (img<(thresh1 + bin_width*w))&(img>(thresh1- bin_width*w))))/numel(img(:)) - 0.05);
+    w = fminbnd(contour_func,0,20);
+    diagnos.mode_contours = (img<(thresh1 + bin_width*w)) &(img>(thresh1- bin_width*w));
+    contours_close = imclose(diagnos.mode_contours,diskstrel(4));
+    contours_open = imopen(contours_close,ones(2));
+    lost1 = (-sum(sum(contours_open))+sum(sum(contours_close)))/sum(sum(contours_close));
+    p.Confluence = lost1> 0.17;
+end
 % Perform 1-D thresholding (stricter threshold; best if image mode is background)
-diagnos.mask_nuc = diagnos.img_nuc  > quickthresh(diagnos.img_nuc,false(size(diagnos.img_nuc)),'log');
-diagnos.mask0 = (img>trithreshold(img,bins,thresh1)) | diagnos.mask_nuc;
+%diagnos.mask_nuc = diagnos.img_nuc  > quickthresh(diagnos.img_nuc,false(size(diagnos.img_nuc)),'log');
+diagnos.mask0 = (img>trithreshold(img,bins,thresh1));
 
 % If mode was determined to be foreground: use object-based (lenient) threshold 
-if lost1> 0.17 % [threshold value separating contoured objects vs background - empirically determined, but may require adjusting]
+if p.Confluence % [threshold value separating contoured objects vs background - empirically determined, but may require adjusting]
     threshes= linspace(prctile(img(:),0.01),thresh1, 96);
         numobj = zeros(size(threshes));
         for j = 1:length(threshes)
@@ -66,7 +70,7 @@ if lost1> 0.17 % [threshold value separating contoured objects vs background - e
             err2 = sum(abs(polyval(f2,x2)-y2));
             tot_err(j) = err1+err2;
         end        
-        diagnos.mask1 = (img>threshes(v1(find(tot_err==min(tot_err),1,'last')))) | diagnos.mask_nuc;
+        diagnos.mask1 = (img>threshes(v1(find(tot_err==min(tot_err),1,'last'))));
 else
     diagnos.mask1 = diagnos.mask0;
 end

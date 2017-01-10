@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 03-Jan-2017 10:33:19
+% Last Modified by GUIDE v2.5 06-Jan-2017 19:25:01
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1318,6 +1318,13 @@ handles.parameters.CellFF = get(hObject,'Value') - 1;
 guidata(handles.figure1,handles)
 % ========================================================================================
 
+function popupmenu6C_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU6C: specify image type (used to choose a thresholding method) (Confluence)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.Confluence = get(hObject,'Value') - 1;
+guidata(handles.figure1,handles)
+% ========================================================================================
 
 
 %  - - - - - - - - - - - - - - -  - - - - - - UIPANEL 7 : OTHER PARAMETERS - - - - - - - - - - - - - - - - - - - - - - -

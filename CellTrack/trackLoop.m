@@ -233,7 +233,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         if strcmpi(parameters.ImageType,'phase')|| strcmpi(parameters.ImageType,'dic') % BRIGHTFIELD MODALITIES
             saturation_val = [-2 4];
             alpha = 0.30;
-        else % FLUORESCENCE MODALITIES - SNR varies dramatically, so guess a display range from img #1.
+        else % FLUORESCENCE MODALITIES - SNR varies dramatically image-to-image, so guess a display range from img #1.
             if ~exist('saturation_val','var')
                 [~,dist1] = modebalance(past(1).img_straight,0, bit_depth,'measure');
                 saturation_val = [-3 (prctile(past(1).img_straight(:),95)-dist1(1))/dist1(2)];

@@ -1,7 +1,8 @@
 function [cut_lines, all_pts] = perimetersplit(mask1,p)
 
 % Set concave angle threshold (should be roughly 180+45 degrees)
-angle_thresh = 220;
+angle_thresh = 225;
+angle_thresh2 = 210; % More lenient threshold (used after smoothing angles)
 
 s = (0:2) + min([2,round(p.MinNucleusRadius/4)]);
 b = bwboundaries(mask1,8);
@@ -23,8 +24,9 @@ sum_refs = cellfun(rescale_line,sum_refs,'UniformOutput',0);
 % Threshold perimeter angles (per object)
 cut_lines = false(size(mask1));
 all_pts = zeros(size(mask1));
+smooth_func = @(x) [x(end)+x(1)+x(2); x(1:end-2)+x(2:end-1)+x(3:end); x(end-1)+x(end)+x(1)]/3; % Circular running avg.
 for n = 1:length(sum_angles)
-    idx = find(sum_angles{n}>angle_thresh);
+    idx = find((sum_angles{n}>=angle_thresh) | (smooth_func(sum_angles{n})>=angle_thresh2));
     new_idx = [];
     dist = round(p.MinNucleusRadius/2);
     while min(diff(idx)) < dist

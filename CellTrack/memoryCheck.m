@@ -224,11 +224,13 @@ for n = reshape(checklist,1,length(checklist))
                     parent = CellData.Parent(r);
                     if parent>0
                         x = find(CellData.Parent==parent,2,'last');
-                        x(x==r) = [];   
-                        droplist = cat(2,droplist,x);
-                        addlist = cat(2,addlist,parent);
-                        fixlist = cat(2,fixlist,parent);
-                        disp(['   & "sister" cell (#', num2str(x),') reassigned back as parent #',num2str(parent)])
+                        x(x==r) = [];
+                        if ~isempty(x)
+                            droplist = cat(2,droplist,x);
+                            addlist = cat(2,addlist,parent);
+                            fixlist = cat(2,fixlist,parent);
+                            disp(['   & "sister" cell (#', num2str(x),') reassigned back as parent #',num2str(parent)])
+                        end
                     end
                     fixlist = cat(2,fixlist,n); % Add the kept cell to be fixed
                     CellData.blocks(n,2:end) = 0; % Drop remainder of existing cells's block

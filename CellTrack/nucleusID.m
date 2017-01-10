@@ -82,59 +82,73 @@ diagnos.mask_split = diagnos.mask_split &~mask_cut;
 diagnos.mask_split = bwareaopen(diagnos.mask_split,cutoff.Area(1),4);
 diagnos.label1b = bwlabel(diagnos.mask_split,4);
 
-%% 3) Label1c: subdivide objects with additional borders from watershed
-tmp_cc = label2cc(diagnos.label1b,0);
-get_high = @(pix) pix(diagnos.edge_mag(pix) > prctile(diagnos.edge_mag(pix),50));
-mask_vals = cell2mat(cellfun(get_high,tmp_cc.PixelIdxList,'UniformOutput',0));
-mask_hi = false(size(diagnos.label1b));
-mask_hi(mask_vals) = 1;
-mask_hi = bwareaopen(mask_hi,round(p.MinNucleusRadius/2));
-BWconnect = bwmorph(mask_hi,'skel','Inf');
-for i = 3
-    BWconnect = imdilate(BWconnect,ones(i));
-    BWconnect = bwmorph(BWconnect,'skel','Inf');
-    % Reduce back result of dilation
-    for j = 1:floor(i/2)
-        BWendpoints = bwmorph(bwmorph(BWconnect,'endpoints'),'shrink',Inf);
-        BWconnect(BWendpoints) = 0;
+if length(unique(diagnos.label1b(:)))>1
+    %% 3) Label1c: subdivide objects with additional borders from edge-transformed image
+    tmp_cc = label2cc(diagnos.label1b,0);
+    get_high = @(pix) pix(diagnos.edge_mag(pix) > prctile(diagnos.edge_mag(pix),50));
+    mask_vals = cell2mat(cellfun(get_high,tmp_cc.PixelIdxList,'UniformOutput',0));
+    mask_hi = false(size(diagnos.label1b));
+    mask_hi(mask_vals) = 1;
+    mask_hi = bwareaopen(mask_hi,round(p.MinNucleusRadius/2));
+    BWconnect = bwmorph(mask_hi,'skel','Inf');
+    for i = 3
+        BWconnect = imdilate(BWconnect,ones(i));
+        BWconnect = bwmorph(BWconnect,'skel','Inf');
+        % Reduce back result of dilation
+        for j = 1:floor(i/2)
+            BWendpoints = bwmorph(bwmorph(BWconnect,'endpoints'),'shrink',Inf);
+            BWconnect(BWendpoints) = 0;
+        end
     end
+    mask_hi = mask_hi|BWconnect;
+    mask_obj = diagnos.label1b>0;
+    mask_obj(mask_hi) = 0;
+    mask_obj = imopen(mask_obj,ones(2));
+    mask_obj = bwareaopen(mask_obj,round((p.MinNucleusRadius/2)^2),4);
+    mask_all = diagnos.label1b>0;
+    diagnos.label1c = IdentifySecPropagateSubfunction(double(bwlabel(mask_obj,4)),double(mask_all),mask_all,0.02);
+
+    %% Combine inflection point & strong edge data - see if a strong edge unabigiously connects two moderately-inflected pts.
+    % (Filter out objects that are too small to be split further)
+    filter_areas = @(pix) length(pix)<(2*cutoff.Area(1));
+    nosmall = label2cc(diagnos.label1b);
+    nosmall.PixelIdxList(cellfun(filter_areas,nosmall.PixelIdxList)) = [];
+    nosmall.NumObjects = length(nosmall.PixelIdxList);
+    nosmall = labelmatrix(nosmall)>0;
+    % Get borders from label1c, then identify if any lie a putative split point 
+    tmp = diagnos.label1c;
+    tmp(~nosmall) = 0;
+    tmp(tmp==0) = max(tmp(:))+1;
+    border_mask = (tmp-imerode(tmp,ones(3)))>0;
+    border_mask(diagnos.label1c==0) = 0;
+    endpt_val = bwmorph(border_mask,'endpoints').*diagnos.cut_pts;
+    endpt_val(imdilate(mask_cut,ones(5))) = 0;
+    endpt_val(endpt_val==0) = nan;
+    branch_pts = bwmorph(bwmorph(border_mask,'skel',inf),'branchpoints');
+    cc_branch = bwconncomp(border_mask,8);
+    avg_inflect = @(pix) nanmean(endpt_val(pix));
+    num_branch = @(pix) sum(branch_pts(pix));
+    num_end = @(pix) sum(~isnan(endpt_val(pix)));
+    check_avg = cellfun(avg_inflect,cc_branch.PixelIdxList);
+    check_branch = cellfun(num_branch,cc_branch.PixelIdxList);
+    check_ep = cellfun(num_end,cc_branch.PixelIdxList);
+    
+    mask_tmp = diagnos.label1b>0;
+    mask_tmp(cell2mat(cc_branch.PixelIdxList((check_avg>195) & (check_branch<1) & (check_ep==2))')) = 0;
+
+    diagnos.label1b2 = bwlabel(mask_tmp,4);
+    diagnos.label1c(diagnos.label1b2==0) = 0;
+    pairs  = [diagnos.label1b2(:),diagnos.label1c(:)];
+    [~,~,ic] = unique(pairs,'rows');
+    diagnos.label1c = reshape(ic,size(diagnos.label1b))-1;
+    cc_inflect = label2cc(diagnos.label1b2);
+
+    % 4) Bridge oversegmented nuclear subobjects (from watershed divisions) together by shape
+    diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
+else
+    diagnos.label1= diagnos.label1b;
 end
-mask_hi = mask_hi|BWconnect;
-mask_obj = diagnos.label1b>0;
-mask_obj(mask_hi) = 0;
-mask_obj = imopen(mask_obj,ones(2));
-mask_obj = bwareaopen(mask_obj,round((p.MinNucleusRadius/2)^2),4);
-mask_all = diagnos.label1b>0;
-diagnos.label1c = IdentifySecPropagateSubfunction(double(bwlabel(mask_obj,4)),double(mask_all),mask_all,0.02);
 
-%% Combine inflection point & strong edge data - see if a strong edge unabigiously connects two moderately-inflected pts.
-tmp = diagnos.label1c;
-tmp(diagnos.label1c==0) = max(tmp(:))+1;
-border_mask = (tmp-imerode(tmp,ones(3)))>0;
-border_mask(diagnos.label1c==0) = 0;
-endpt_val = bwmorph(border_mask,'endpoints').*diagnos.cut_pts;
-endpt_val(imdilate(mask_cut,ones(5))) = 0;
-endpt_val(endpt_val==0) = nan;
-branch_pts = bwmorph(bwmorph(border_mask,'skel',inf),'branchpoints');
-cc_branch = bwconncomp(border_mask,8);
-avg_inflect = @(pix) nanmean(endpt_val(pix));
-num_branch = @(pix) sum(branch_pts(pix));
-num_end = @(pix) sum(~isnan(endpt_val(pix)));
-avg1 = cellfun(avg_inflect,cc_branch.PixelIdxList);
-num1 = cellfun(num_branch,cc_branch.PixelIdxList);
-num2 = cellfun(num_end,cc_branch.PixelIdxList);
-mask_tmp = diagnos.label1b>0;
-mask_tmp(cell2mat(cc_branch.PixelIdxList((avg1>195) & (num1<1) & (num2==2))')) = 0;
-
-diagnos.label1b2 = bwlabel(mask_tmp,4);
-diagnos.label1c(diagnos.label1b2==0) = 0;
-pairs  = [diagnos.label1b2(:),diagnos.label1c(:)];
-[~,~,ic] = unique(pairs,'rows');
-diagnos.label1c = reshape(ic,size(diagnos.label1b))-1;
-cc_inflect = label2cc(diagnos.label1b2);
-
-% 4) Bridge oversegmented nuclear subobjects (from watershed divisions) together by shape
-diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
 %%- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
 % "Weak" objects missed by standard methods
 if p.WeakObjectCutoff>0
@@ -245,7 +259,7 @@ for i = 1:input_objects.NumObjects
         ranked_image(locs) = 4;
     else
         [~,sort_order] = sort(source_image(locs),'descend'); 
-        vals = cat(2,4*ones(1,floor(0.1*length(locs))),3*ones(1,floor(0.15*length(locs))),2*ones(1,floor(0.2*length(locs))));
+        vals = cat(2,4*ones(1,floor(0.08*length(locs))),3*ones(1,floor(0.12*length(locs))),2*ones(1,floor(0.15*length(locs))));
         vals = cat(2,vals,ones(1,length(locs)-length(vals)));
         ranked_image(locs(sort_order)) = vals;
     end

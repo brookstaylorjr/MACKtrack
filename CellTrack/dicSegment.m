@@ -32,7 +32,7 @@ end
 %% Straight-edge finding
 % Form base edge mask from the default Canny edge filter - break/filter small branches
 small = round(sqrt(p.NoiseSize));
-edges = edge(image_in,'canny');
+edges = edge(log(image_in),'canny');
 edges = bwmorph(edges,'skel',Inf);
 edges([1,end],:) = 0;edges(:,[1,end]) = 0;
 edge_broken = edges &~imdilate(bwmorph(edges,'branchpoints'),ones(3));
