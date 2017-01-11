@@ -162,7 +162,7 @@ for n = reshape(checklist,1,length(checklist))
                             fixlist = cat(1,fixlist(:),[n;children]);
                             borderlist = cat(1,borderlist(:),[n;children]); 
                             disp(['Cell # ',num2str(n),' error IIa ',...
-                                '- reassigning with children [',num2str(children'),']'])
+                                '- reassigning with children [',num2str(children(:)'),']'])
                         end
                     end
                 else 
@@ -181,7 +181,7 @@ for n = reshape(checklist,1,length(checklist))
                 end
                 fixlist = cat(1,fixlist(:),[n;tmplist]);
                 borderlist = cat(1,borderlist(:),[n;tmplist]);
-                disp(['Cell # ',num2str(n),' error IIa - reassigning with cells [',num2str(tmplist'),']'])
+                disp(['Cell # ',num2str(n),' error IIa - reassigning with cells [',num2str(tmplist(:)'),']'])
             case 3 % Remove the untracked cell from cell mask
                 mask_reseg(untracked & queue(1).cells==n) = 0;
                 fixlist = cat(1,fixlist(:),n);
@@ -246,9 +246,9 @@ for n = reshape(checklist,1,length(checklist))
                         tmplist = cat(1,tmplist(:),r);
                     end
                 end
-                fixlist = cat(1,fixlist,[n,tmplist]);
-                borderlist = cat(1,borderlist,[n,tmplist]);
-                disp(['Cell # ',num2str(n),' error IIb - reassigning with cells [',num2str(tmplist),']'])
+                fixlist = cat(1,fixlist,[n; tmplist]);
+                borderlist = cat(1,borderlist,[nl tmplist]);
+                disp(['Cell # ',num2str(n),' error IIb - reassigning with cells [',num2str(tmplist(:)'),']'])
             case 3 % Add back anything from old label that is now called background
                 queue(1).cells((queue(1).cells==0)&(queue(2).cells==n)) = n;
                 disp(['Cell # ',num2str(n),' error VI - adding back lost area'])

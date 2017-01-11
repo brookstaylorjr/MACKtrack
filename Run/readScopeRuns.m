@@ -24,7 +24,6 @@ pageString = urlread(url);
 % Build cell aray of table data
 
 for i = 1:length(tables)
-
     table = tables{i};
     rows = regexpi(table, '<tr.*?>(.*?)</tr>','tokens');
     table_data = cell(0);
