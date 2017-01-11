@@ -35,8 +35,10 @@ info.Module = 'nfkbModule';
 t_max = (size(measure.NFkBFraction,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 
 
-all_ktr = measure.NFkBNuclear;
+all_ktr = measure.NFkBFraction;
 all_ktr(all_ktr==0) = nan;
+
+
 %all_ktr = 1./all_ktr;
 
 % Add parent trajectories to children
@@ -50,8 +52,8 @@ end
 
 
 %% Filtering
-droprows = zeros(size(measure.NFkBFraction,1),1);
-droprows = [droprows, sum(isnan(measure.NFkBFraction(:,1:4)),2)>2]; % Cells existing @ expt start
+droprows = zeros(size(all_ktr,1),1);
+droprows = [droprows, sum(isnan(all_ktr(:,1:4)),2)>2]; % Cells existing @ expt start
 droprows = [droprows, sum(isnan(all_ktr(:,1:300)),2)>100]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
@@ -59,10 +61,11 @@ info.keep = max(droprows,[],2) == 0;
 %% Outputs
 % Extract measurement and apply filtering
 all_ktr = all_ktr(info.keep,:);
-%all_ktr = all_ktr - repmat(nanmean(all_ktr(:,1:4),2),[1,size(all_ktr,2)]);
+
+all_ktr = all_ktr - repmat(nanmean(all_ktr(:,1:4),2),[1,size(all_ktr,2)]);
 info.graph_limits = prctile(all_ktr(~isnan(all_ktr)),[3 95]);
 
-graph.var = all_ktr;
+graph.var = -all_ktr;
 
 graph.t = (0:(60/info.parameters.FramesPerHour):t_max)/60;
 

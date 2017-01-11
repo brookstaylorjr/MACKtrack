@@ -69,10 +69,10 @@ for n = reshape(checklist,1,length(checklist))
     % See if most of displacement line runs through another cell    
     displace_line2 = displace_line(ismember(displace_line,cc_all.PixelIdxList{1}));
     if numel(displace_line2)/numel(displace_line) > 0.5
-        swap_cells = cat(2,swap_cells,n);
+        swap_cells = cat(1,swap_cells,n);
         partner = mode(queue(1).cells(displace_line2));
-        swap_partners = cat(2,swap_partners,partner);
-        swap_displacement = cat(2,swap_displacement,sum(ismember(displace_line2,cc_new.PixelIdxList{partner})));
+        swap_partners = cat(1,swap_partners(:),partner);
+        swap_displacement = cat(1,swap_displacement(:),sum(ismember(displace_line2,cc_new.PixelIdxList{partner})));
     end
 end
 
@@ -104,8 +104,8 @@ for i = 1:length(swap_cells)
         else
             % No matched partner. Destroy old nucleus, flag it for re-adding, flag cell+partner for resegmentation
             queue(1).nuclei(cc_nucs.PixelIdxList{swap_cells(i)}) = 0;
-            addlist = cat(2,addlist,swap_cells(i));
-            fixlist = cat(2,fixlist,swap_cells(i),swap_partners(i));
+            addlist = cat(1,addlist(:),swap_cells(i));
+            fixlist = cat(1,fixlist(:),swap_cells(i),swap_partners(i));
             checklist((checklist==swap_cells(i))|(checklist==swap_partners(i))) = [];
             % Finally, empty implicated blocks so that they're remade on next track cycle.
             CellData.blocks(swap_cells(i),2:end) = 0;
@@ -149,7 +149,7 @@ for n = reshape(checklist,1,length(checklist))
                 % Dropped cell was parent - divvy up old parent to children 
                 if ismember(r,CellData.Parent)
                     children = find(CellData.Parent==r);
-                    children = children(:)';
+                    children = children(:);
                     nucs = queue(1).nuclei;
                     nucs( (~ismember(nucs,children)) | (queue(2).cells~=r)) = 0;
                     if sum(ismember(children,unique(nucs(:)))) == length(children)
@@ -159,16 +159,16 @@ for n = reshape(checklist,1,length(checklist))
                             queue(2).nuclei(queue(2).nuclei==r) = 0;
                             queue(2).nuclei = queue(2).nuclei + nucs;
                             queue(2).cells(queue(2).cells==r) = tmp(tmp>0);
-                            fixlist = cat(2,fixlist,[n,children]);
-                            borderlist = cat(2,borderlist,[n,children]); 
+                            fixlist = cat(1,fixlist(:),[n;children]);
+                            borderlist = cat(1,borderlist(:),[n;children]); 
                             disp(['Cell # ',num2str(n),' error IIa ',...
-                                '- reassigning with children [',num2str(children),']'])
+                                '- reassigning with children [',num2str(children'),']'])
                         end
                     end
                 else 
                     % Recreate dropped nucleus for resegmentation, edit block info
-                    addlist = cat(2,addlist,r);
-                    fixlist = cat(2,fixlist,n,r);
+                    addlist = cat(1,addlist(:),r);
+                    fixlist = cat(1,fixlist,n(:),r);
                     disp(['Cell # ',num2str(n),' error I - trying to add #',num2str(r)])
                 end
             case 2 % Flag all implicated cells for resegmentation
@@ -176,19 +176,19 @@ for n = reshape(checklist,1,length(checklist))
                 tmplist = [];
                 for r = reshape(group1,1,length(group1));
                     if numel(vals2(vals2==r)) > (delta_a/4)
-                        tmplist = cat(2,tmplist,r);
+                        tmplist = cat(1,tmplist(:),r);
                     end
                 end
-                fixlist = cat(2,fixlist,[n,tmplist]);
-                borderlist = cat(2,borderlist,[n,tmplist]);
-                disp(['Cell # ',num2str(n),' error IIa - reassigning with cells [',num2str(tmplist),']'])
+                fixlist = cat(1,fixlist(:),[n;tmplist]);
+                borderlist = cat(1,borderlist(:),[n;tmplist]);
+                disp(['Cell # ',num2str(n),' error IIa - reassigning with cells [',num2str(tmplist'),']'])
             case 3 % Remove the untracked cell from cell mask
                 mask_reseg(untracked & queue(1).cells==n) = 0;
-                fixlist = cat(2,fixlist,n);
+                fixlist = cat(1,fixlist(:),n);
                 disp(['Cell # ',num2str(n),' error III - removing untracked cell from mask'])
             case 4 % Drop anything that was background in previous frame
                 mask_reseg((queue(2).cells==0)&(queue(1).cells==n)) = 0;
-                fixlist = cat(2,fixlist,n);
+                fixlist = cat(1,fixlist(:),n);
                 disp(['Cell # ',num2str(n),' error IV - removing filled holes from mask'])
         end
     end
@@ -214,11 +214,12 @@ for n = reshape(checklist,1,length(checklist))
         % ERROR HANDLING: DECREASE
         switch error_case
             case 1 % Double-check newly-added nucleus with stricter criteria
-                r = mode(vals2(ismember(vals2,adds)));
+                tmp_subset = vals2(ismember(vals2,adds));
+                r = mode(tmp_subset(:)); r = r(1);
                 missing_frames = sum(sum(CellData.blocks([r,n],:)==0));
                 if missing_frames > 0
                     % New nuc didn't pass; drop it and shift other label values down
-                    droplist = cat(2,droplist,r);
+                    droplist = cat(1,droplist,r);
                     disp(['Cell # ',num2str(n),' error V - cell #',num2str(r), ' FAIL (drop, shifting cells)'])
                     % If the dropped cell just "divided", also reassign its sister and drop it
                     parent = CellData.Parent(r);
@@ -226,13 +227,13 @@ for n = reshape(checklist,1,length(checklist))
                         x = find(CellData.Parent==parent,2,'last');
                         x(x==r) = [];
                         if ~isempty(x)
-                            droplist = cat(2,droplist,x);
-                            addlist = cat(2,addlist,parent);
-                            fixlist = cat(2,fixlist,parent);
+                            droplist = cat(1,droplist(:),x);
+                            addlist = cat(1,addlist(:),parent);
+                            fixlist = cat(1,fixlist(:),parent);
                             disp(['   & "sister" cell (#', num2str(x),') reassigned back as parent #',num2str(parent)])
                         end
                     end
-                    fixlist = cat(2,fixlist,n); % Add the kept cell to be fixed
+                    fixlist = cat(1,fixlist,n); % Add the kept cell to be fixed
                     CellData.blocks(n,2:end) = 0; % Drop remainder of existing cells's block
                 else
                     disp(['Cell # ',num2str(n),' error V - cell #',num2str(r), ' PASS (keep)'])
@@ -242,11 +243,11 @@ for n = reshape(checklist,1,length(checklist))
                 tmplist = [];
                 for r = reshape(group1,1,length(group1));
                     if numel(vals2(vals2==r)) > (-delta_a/4)
-                        tmplist = cat(2,tmplist,r);
+                        tmplist = cat(1,tmplist(:),r);
                     end
                 end
-                fixlist = cat(2,fixlist,[n,tmplist]);
-                borderlist = cat(2,borderlist,[n,tmplist]);
+                fixlist = cat(1,fixlist,[n,tmplist]);
+                borderlist = cat(1,borderlist,[n,tmplist]);
                 disp(['Cell # ',num2str(n),' error IIb - reassigning with cells [',num2str(tmplist),']'])
             case 3 % Add back anything from old label that is now called background
                 queue(1).cells((queue(1).cells==0)&(queue(2).cells==n)) = n;
