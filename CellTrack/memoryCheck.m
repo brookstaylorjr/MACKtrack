@@ -247,7 +247,7 @@ for n = reshape(checklist,1,length(checklist))
                     end
                 end
                 fixlist = cat(1,fixlist,[n; tmplist]);
-                borderlist = cat(1,borderlist,[nl tmplist]);
+                borderlist = cat(1,borderlist,[n; tmplist]);
                 disp(['Cell # ',num2str(n),' error IIb - reassigning with cells [',num2str(tmplist(:)'),']'])
             case 3 % Add back anything from old label that is now called background
                 queue(1).cells((queue(1).cells==0)&(queue(2).cells==n)) = n;
