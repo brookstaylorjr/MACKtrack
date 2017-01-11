@@ -225,12 +225,13 @@ for n = reshape(checklist,1,length(checklist))
                     parent = CellData.Parent(r);
                     if parent>0
                         x = find(CellData.Parent==parent,2,'last');
-                        x(x==r) = [];
-                        if ~isempty(x)
-                            droplist = cat(1,droplist(:),x);
-                            addlist = cat(1,addlist(:),parent);
-                            fixlist = cat(1,fixlist(:),parent);
-                            disp(['   & "sister" cell (#', num2str(x),') reassigned back as parent #',num2str(parent)])
+                        x(x==r) = []; % Drop self
+                        droplist = cat(1,droplist(:),x(:));
+                        addlist = cat(1,addlist(:),parent);
+                        fixlist = cat(1,fixlist(:),parent);
+                        disp(['   & "sister" cell (#', num2str(x(1)),') reassigned back as parent #',num2str(parent)])
+                        if length(x)>1
+                            disp(['NOTE: > 1 sister found: cells [',num2str(x(:)'),'] (??) - both were dropped.'])
                         end
                     end
                     fixlist = cat(1,fixlist,n); % Add the kept cell to be fixed
