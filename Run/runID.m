@@ -53,7 +53,13 @@ if isnumeric(varargin{1})
         parameters.XYRange = eval(data.xy_ranges{idx});
         parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
         clear p;
-        eval(data.modify{idx});
+        % Sub in single quotes that are mis-formatted after google sheet read
+        tmp_str = data.modify{idx};
+        subs = strfind(tmp_str,'&#39');
+        for i = 1:length(subs); tmp_str(subs(i):subs(i)+4) = '~~''~~'; end
+        tmp_str(strfind(tmp_str,'~')) = [];
+        % Evaluate parameter updates and substitute in
+        eval(tmp_str);
         if exist('p','var'); parameters = combinestructures(p,parameters); end;
 
         mkdir([locations.data,filesep,parameters.SaveDirectory])
