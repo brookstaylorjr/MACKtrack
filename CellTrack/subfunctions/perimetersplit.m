@@ -1,4 +1,15 @@
 function [cut_lines, all_pts] = perimetersplit(mask1,p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% [cut_lines, all_pts] = perimetersplit(mask1,p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% PERIMTERSPLIT makes cuts in a mask representing (round) nuclei objects. Cuts are made between paired
+% inflection points, which are identified by their concavity (measured as an angle relative to nearby
+% points on the perimter of the object.
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+
+% Create outputs 
+cut_lines = false(size(mask1));
+all_pts = zeros(size(mask1));
 
 % Set concave angle threshold (should be roughly 180+45 degrees)
 angle_thresh = 225;
@@ -6,13 +17,17 @@ angle_thresh2 = 210; % More lenient threshold (used after smoothing angles)
 
 s = (0:2) + min([2,round(p.MinNucleusRadius/4)]);
 b = bwboundaries(mask1,8);
+if isempty(b)
+    return;
+end
+
 sum_line = @(a,b) sum([a,b],2);
-shifts = mat2cell(repmat(s(1),[length(b),1]),ones(size(b)));
+shifts = mat2cell(repmat(s(1),size(b)),ones(size(b)));
 [ang, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
 sum_angles = ang;
 sum_refs = ref_angles;
 for i = 2:length(s)
-    shifts = mat2cell(repmat(s(i),[length(b),1]),ones(size(b)));
+    shifts = mat2cell(repmat(s(i),size(b)),ones(size(b)));
     [ang, ref_angles] = cellfun(@perimeterangles,b,shifts,'UniformOutput',0);
     sum_angles = cellfun(sum_line,ang,sum_angles,'UniformOutput',0);
     sum_refs = cellfun(sum_line,sum_refs,ref_angles,'UniformOutput',0);
@@ -22,8 +37,6 @@ sum_angles = cellfun(rescale_line,sum_angles,'UniformOutput',0);
 sum_refs = cellfun(rescale_line,sum_refs,'UniformOutput',0);
 
 % Threshold perimeter angles (per object)
-cut_lines = false(size(mask1));
-all_pts = zeros(size(mask1));
 smooth_func = @(x) [x(end)+x(1)+x(2); x(1:end-2)+x(2:end-1)+x(3:end); x(end-1)+x(end)+x(1)]/3; % Circular running avg.
 for n = 1:length(sum_angles)
     idx = find((sum_angles{n}>=angle_thresh) | (smooth_func(sum_angles{n})>=angle_thresh2));

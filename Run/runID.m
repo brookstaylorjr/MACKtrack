@@ -35,16 +35,16 @@ if isnumeric(varargin{1})
 
     % Read in content from the "Scope Runs - Tracking Sets" spreadsheet
     data = readScopeRuns(locations.spreadsheet, cell2mat(varargin));
-
-
+    run_tot = numel(data.save_folder);
+    
     % Display the sets we're running
-    for idx = 1:numel(data.save_folder)
+    for idx = 1:run_tot
         disp(['- ',data.save_folder{idx}])
     end
 
 
     % Cycle/measure sets
-    for idx = 1:numel(data.save_folder)
+    for idx = 1:run_tot
 
         % PARAMETERS
         load([home_folder,'Parameters',filesep,data.parameter_files{idx}])
@@ -52,15 +52,8 @@ if isnumeric(varargin{1})
         parameters.TimeRange = eval(data.time_ranges{idx});
         parameters.XYRange = eval(data.xy_ranges{idx});
         parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
-        clear p;
-        % Sub in single quotes that are mis-formatted after google sheet read
-        tmp_str = data.modify{idx};
-        subs = strfind(tmp_str,'&#39');
-        for i = 1:length(subs); tmp_str(subs(i):subs(i)+4) = '~~''~~'; end
-        tmp_str(strfind(tmp_str,'~')) = [];
-        % Evaluate parameter updates and substitute in
-        eval(tmp_str);
-        if exist('p','var'); parameters = combinestructures(p,parameters); end;
+        data.modify{idx}
+        p = parameters; eval(data.modify{idx}); parameters = p;  % Overwrite parameters as necessary
 
         mkdir([locations.data,filesep,parameters.SaveDirectory])
         % TRACKING
@@ -80,7 +73,7 @@ if isnumeric(varargin{1})
         % MEASUREMENT
         disp(['Measuring ', parameters.SaveDirectory,'...'])
         try
-            MACKmeasure(parameters);      
+            MACKmeasure(parameters,run_tot>1);      
         catch ME
             disp(['Error in measurement:' , ME.message])
             for err = 1:length(ME.stack)
@@ -118,7 +111,7 @@ else
     % MEASUREMENT
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        MACKmeasure(parameters);      
+        MACKmeasure(parameters,0);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)

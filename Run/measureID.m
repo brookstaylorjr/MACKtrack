@@ -1,5 +1,7 @@
 function [] = measureID(varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [] = measureID(varargin)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % MEASUREID queues and measures multiple experimental sets from the "Scope Runs" Google Doc 
 % Choose sets by ID number. This function is identical to runID, but assumes cells have been
 % tracked already. (Alternately, you can also pass a parameters structure, or file location
@@ -34,30 +36,28 @@ if isnumeric(varargin{1})
     end
     % Read in content from the "Scope Runs - Tracking Sets" spreadsheet
     data = readScopeRuns(locations.spreadsheet, cell2mat(varargin));
+    run_tot = numel(data.save_folder);
 
 
     % Display the sets we're running
-    for idx = 1:numel(data.save_folder)
+    for idx = 1:run_tot
         disp(['- ',data.save_folder{idx}])
     end
 
     % Cycle/measure sets
-    for idx = 1:numel(data.save_folder)
-
+    for idx = 1:run_tot
         % PARAMETERS
         load([home_folder,'Parameters',filesep,data.parameter_files{idx}])
         parameters.ImagePath = data.image_paths{idx};
         parameters.TimeRange = eval(data.time_ranges{idx});
         parameters.XYRange = eval(data.xy_ranges{idx});
         parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
-        clear p;
-        eval(data.modify{idx});
-        if exist('p','var'); parameters = combinestructures(p,parameters); end;
+        p = parameters; eval(data.modify{idx}); parameters = p;  % Overwrite parameters as necessary
 
         % MEASUREMENT
         disp(['Measuring ', parameters.SaveDirectory,'...'])
         try
-            MACKmeasure(parameters);      
+            MACKmeasure(parameters,run_tot>1);      
         catch ME
             disp(['Error in measurement:' , ME.message])
             for err = 1:length(ME.stack)
@@ -83,7 +83,7 @@ else
     % MEASUREMENT
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        MACKmeasure(parameters);      
+        MACKmeasure(parameters,0);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)

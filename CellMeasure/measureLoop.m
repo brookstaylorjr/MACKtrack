@@ -76,14 +76,13 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
         
         j = parameters.TimeRange(iter);
         
-
         % Cycle through module names- construct name, load aux image, and call
         for m = 1:length(parameters.ModuleNames)
             ModuleData.name = parameters.ModuleNames{m};
             ModuleData.iter = iter;
             ModuleData.i = i;
             ModuleData.j = j;
-            AuxImages = cell(1,2);
+            AuxImages = cell(1,3);
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images
                 for aux = 1:3
