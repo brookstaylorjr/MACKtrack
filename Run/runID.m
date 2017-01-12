@@ -52,28 +52,31 @@ if isnumeric(varargin{1})
         parameters.TimeRange = eval(data.time_ranges{idx});
         parameters.XYRange = eval(data.xy_ranges{idx});
         parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
-        data.modify{idx}
         p = parameters; eval(data.modify{idx}); parameters = p;  % Overwrite parameters as necessary
 
         mkdir([locations.data,filesep,parameters.SaveDirectory])
         % TRACKING
-        parfor i = 1:length(parameters.XYRange)
-            xyPos = parameters.XYRange(i);
-            try
-             trackLoop(parameters,xyPos)
-            catch ME
-                disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
-                for err = 1:length(ME.stack)
-                    disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
+        if length(parameters.XYRange)>1
+            parfor i = 1:length(parameters.XYRange)
+                xyPos = parameters.XYRange(i);
+                try
+                 trackLoop(parameters,xyPos)
+                catch ME
+                    disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
+                    for err = 1:length(ME.stack)
+                        disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
+                    end
+                    error('...killing tracking.')
                 end
-                error('killing tracking')
             end
+        else
+            trackLoop(parameters,parameters.XYRange(1))
         end
 
         % MEASUREMENT
         disp(['Measuring ', parameters.SaveDirectory,'...'])
         try
-            MACKmeasure(parameters,run_tot>1);      
+            MACKmeasure(parameters,length(parameters.XYRange)>1);      
         catch ME
             disp(['Error in measurement:' , ME.message])
             for err = 1:length(ME.stack)
@@ -95,23 +98,27 @@ else
     
     mkdir([locations.data,filesep,parameters.SaveDirectory])
     % TRACKING
-    parfor i = 1:length(parameters.XYRange)
-        xyPos = parameters.XYRange(i);
-        try
-         trackLoop(parameters,xyPos)
-        catch ME
-            disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
-            for err = 1:length(ME.stack)
-                disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
+    if length(parameters.XYRange)>1
+        parfor i = 1:length(parameters.XYRange)
+            xyPos = parameters.XYRange(i);
+            try
+             trackLoop(parameters,xyPos)
+            catch ME
+                disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
+                for err = 1:length(ME.stack)
+                    disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
+                end
+                error('killing tracking')
             end
-            error('killing tracking')
         end
+    else
+        trackLoop(parameters,parameters.XYRange(1))
     end
 
     % MEASUREMENT
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        MACKmeasure(parameters,0);      
+        MACKmeasure(parameters,length(parameters.XYRange)>1);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)

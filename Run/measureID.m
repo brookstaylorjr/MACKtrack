@@ -57,7 +57,7 @@ if isnumeric(varargin{1})
         % MEASUREMENT
         disp(['Measuring ', parameters.SaveDirectory,'...'])
         try
-            MACKmeasure(parameters,run_tot>1);      
+            MACKmeasure(parameters,length(parameters.XYRange)>1);      
         catch ME
             disp(['Error in measurement:' , ME.message])
             for err = 1:length(ME.stack)
@@ -83,7 +83,7 @@ else
     % MEASUREMENT
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        MACKmeasure(parameters,0);      
+        MACKmeasure(parameters,length(parameters.XYRange)>1);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)
