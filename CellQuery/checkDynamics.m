@@ -86,7 +86,7 @@ handles.DataFcn = viz_fcns(1);
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
-    specifyLocations;
+    setLocations;
     uiwait;
     load([home_folder(1:slash_idx(end)), 'locations.mat'],'-mat')
 end

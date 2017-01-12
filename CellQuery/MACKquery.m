@@ -744,7 +744,7 @@ function pushbutton10B_Callback(hObject, eventdata, handles)
 % PUSHBUTTON10A: create new figure and call visualization function
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~exist(handles.locations.data,'dir')
-    specifyLocations;
+    setLocations;
     uiwait;
     load([handles.home_folder, 'locations.mat'],'-mat')
     handles.locations = locations;
@@ -759,7 +759,7 @@ function pushbutton11A_Callback(hObject, eventdata, handles)
 % PUSHBUTTON11A: call XY visualization function
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~exist(handles.locations.data,'dir')
-    specifyLocations;
+    setLocations;
     uiwait;
     load([handles.home_folder, 'locations.mat'],'-mat')
     handles.locations = locations;

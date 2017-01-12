@@ -80,7 +80,7 @@ try
     locations.scope = namecheck(locations.scope,'');
     locations.data = namecheck(locations.data,'');
 catch me
-    h = specifyLocations;
+    h = setLocations;
     uiwait(h);
     load([handles.home_folder, 'locations.mat'],'-mat')
 end
@@ -241,7 +241,7 @@ function pushbutton1C_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1C: specify new locations
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-h = specifyLocations;
+h = setLocations;
 uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
@@ -510,7 +510,7 @@ function pushbutton3B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3B: specify new mount points for input/output data
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-h = specifyLocations;
+h = setLocations;
 uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;

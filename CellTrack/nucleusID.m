@@ -18,7 +18,7 @@ function [output, diagnos] =  nucleusID(nuc_orig,p,data)
 
 %- - - - - - - - - - - - - - - - - - - SETUP - - - - - - - - - - - - - - - - - - - - - - -
 % Set cutoffs for nuclear shape
-cutoff.Area = [floor(pi*(p.MinNucleusRadius-1)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
+cutoff.Area = [floor(pi*(p.MinNucleusRadius)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
 cutoff.Compactness = p.Compactness;
 cutoff.Solidity = p.Solidity;
 
@@ -41,11 +41,12 @@ horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'symmetric');
 verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
-edge_cutoffs = prctile(diagnos.edge_mag(diagnos.edge_mag>p.NucleusEdgeThreshold),linspace(0,90,21));
+tmp1 = diagnos.edge_mag(cell_mask);
+edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),95),21);
 cc_list = {};
 for i = 1:length(edge_cutoffs)
     % a) Threshold, drop already-found objects
-    mask0  = cell_mask & diagnos.edge_mag>=edge_cutoffs((end-i)+1);
+    mask0  = cell_mask & diagnos.edge_mag>=edge_cutoffs(end-i+1);
     tmp_drop = cell2mat(cc_list');
     if ~isempty(tmp_drop)
         mask0(tmp_drop) = 0;
@@ -59,10 +60,10 @@ for i = 1:length(edge_cutoffs)
     end
     % c) Filter objects that aren't round/sufficently large (alternate btw strict/lenient criteria)
     mask0 = imopen(mask0,diskstrel(round(p.NuclearSmooth)));
-    if mod(i-1,4) < 3
-        mask0 = bwareaopen(mask0,round(2*cutoff.Area(1)),4);
+    if (mod(i-1,3) == 1) || (i==length(edge_cutoffs))
+        mask0 = bwareaopen(mask0,round(cutoff.Area(1)),4);
     else
-        mask0 = bwareaopen(mask0,cutoff.Area(1),4);
+        mask0 = bwareaopen(mask0,2*cutoff.Area(1),4);
     end
     % d) Add newly-found objects to list
     cc_new = bwconncomp(mask0,8);
@@ -74,24 +75,30 @@ cc_all.NumObjects = length(cc_list);
 cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
-% 2) Label1b: subdivide objects using concave points on perimeter (>220 degrees)
+%% 2) Label1b: subdivide objects using concave points on perimeter (>220 degrees)
+tmp_label  =diagnos.label1a; tmp_label(diagnos.label1a==0) = max(diagnos.label1a(:))+1;
 diagnos.mask_split = diagnos.label1a>0;
-diagnos.mask_split((diagnos.label1a>0)&(imdilate(diagnos.label1a,ones(3))-diagnos.label1a)>0)=0;
+diagnos.mask_split((diagnos.label1a>0) & (tmp_label-imerode(tmp_label,ones(3)))>0)=0;
 [mask_cut, diagnos.cut_pts] = perimetersplit(diagnos.mask_split,p);
 diagnos.mask_split = diagnos.mask_split &~mask_cut;
 diagnos.mask_split = bwareaopen(diagnos.mask_split,cutoff.Area(1),4);
 diagnos.label1b = bwlabel(diagnos.mask_split,4);
 
+
+
+%% 3) Label1c: subdivide objects with additional borders from edge-transformed image
 if length(unique(diagnos.label1b(:)))>1
-    %% 3) Label1c: subdivide objects with additional borders from edge-transformed image
+    % Isolate high edge (>median) pixels per object
     tmp_cc = label2cc(diagnos.label1b,0);
     get_high = @(pix) pix(diagnos.edge_mag(pix) > prctile(diagnos.edge_mag(pix),50));
     mask_vals = cell2mat(cellfun(get_high,tmp_cc.PixelIdxList,'UniformOutput',0));
     mask_hi = false(size(diagnos.label1b));
     mask_hi(mask_vals) = 1;
+    % Morphological cleanup and connection - dilate out, then shrink back result
     mask_hi = bwareaopen(mask_hi,round(p.MinNucleusRadius/2));
+    mask_hi = ~bwareaopen(~mask_hi,round(p.MinNucleusRadius+1),4);
     BWconnect = bwmorph(mask_hi,'skel','Inf');
-    for i = 3
+    for i = 3:2:round(sqrt(p.MinNucleusRadius))
         BWconnect = imdilate(BWconnect,ones(i));
         BWconnect = bwmorph(BWconnect,'skel','Inf');
         % Reduce back result of dilation
@@ -100,15 +107,21 @@ if length(unique(diagnos.label1b(:)))>1
             BWconnect(BWendpoints) = 0;
         end
     end
-    mask_hi = mask_hi|BWconnect;
+    mask_hi = BWconnect;
     mask_obj = diagnos.label1b>0;
-    mask_obj(mask_hi) = 0;
+    off_mask = mask_hi|BWconnect;
+    % For "solid" objects (i.e. entirely high-edge), get borders of these directly and substitute
+    solid_mask = imopen(mask_hi,diskstrel(p.NuclearSmooth));
+    solid_borders = solid_mask&~imerode(solid_mask,ones(3));
+    off_mask(solid_mask) = solid_borders(solid_mask);
+    % Break up existing mask w/ newly-found borders -> use propagate subfcn to fill existing mask.
+    mask_obj(off_mask) = 0;
     mask_obj = imopen(mask_obj,ones(2));
-    mask_obj = bwareaopen(mask_obj,round((p.MinNucleusRadius/2)^2),4);
+    mask_obj = bwareaopen(mask_obj,round(cutoff.Area(1)/4),4);
     mask_all = diagnos.label1b>0;
     diagnos.label1c = IdentifySecPropagateSubfunction(double(bwlabel(mask_obj,4)),double(mask_all),mask_all,0.02);
-
-    %% Combine inflection point & strong edge data - see if a strong edge unabigiously connects two moderately-inflected pts.
+    
+    % Combine inflection point & strong edge data - see if a strong edge unabigiously connects two moderately-inflected pts.
     % (Filter out objects that are too small to be split further)
     filter_areas = @(pix) length(pix)<(2*cutoff.Area(1));
     nosmall = label2cc(diagnos.label1b);
@@ -121,6 +134,7 @@ if length(unique(diagnos.label1b(:)))>1
     tmp(tmp==0) = max(tmp(:))+1;
     border_mask = (tmp-imerode(tmp,ones(3)))>0;
     border_mask(diagnos.label1c==0) = 0;
+    diagnos.edge_borders = (border_mask) + (diagnos.label1c>0);
     endpt_val = bwmorph(border_mask,'endpoints').*diagnos.cut_pts;
     endpt_val(imdilate(mask_cut,ones(5))) = 0;
     endpt_val(endpt_val==0) = nan;
@@ -143,11 +157,13 @@ if length(unique(diagnos.label1b(:)))>1
     diagnos.label1c = reshape(ic,size(diagnos.label1b))-1;
     cc_inflect = label2cc(diagnos.label1b2);
 
-    % 4) Bridge oversegmented nuclear subobjects (from watershed divisions) together by shape
+    % Bridge oversegmented nuclear subobjects (from edge-based divisions) together by shape
     diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
-else
+    
+else % No objects were found- skip all these steps.
     diagnos.label1= diagnos.label1b;
 end
+%%
 
 %%- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
 % "Weak" objects missed by standard methods
