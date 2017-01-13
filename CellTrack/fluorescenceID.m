@@ -45,32 +45,36 @@ if p.Confluence == 2
     contours_close = imclose(diagnos.mode_contours,diskstrel(4));
     contours_open = imopen(contours_close,ones(2));
     lost1 = (-sum(sum(contours_open))+sum(sum(contours_close)))/sum(sum(contours_close));
-    p.Confluence = lost1> 0.17;
+    confluent = lost1 > 0.17;
+else
+    confluent = p.Confluence;
 end
+
 % Perform 1-D thresholding (stricter threshold; best if image mode is background)
-%diagnos.mask_nuc = diagnos.img_nuc  > quickthresh(diagnos.img_nuc,false(size(diagnos.img_nuc)),'log');
-diagnos.mask0 = (img>trithreshold(img,bins,thresh1));
+if p.Confluence ~= 1 
+    diagnos.mask0 = (img>trithreshold(img,bins,thresh1));
+end
 
 % If mode was determined to be foreground: use object-based (lenient) threshold 
-if p.Confluence % [threshold value separating contoured objects vs background - empirically determined, but may require adjusting]
+if confluent % [threshold value separating contoured objects vs background - empirically determined, but may require adjusting]
     threshes= linspace(prctile(img(:),0.01),thresh1, 96);
-        numobj = zeros(size(threshes));
-        for j = 1:length(threshes)
-            tmp = bwconncomp(img>threshes(j),4);
-            numobj(j) = tmp.NumObjects;
-        end
-        v1 = 3:length(threshes)-3;
-        tot_err = zeros(size(v1));
-        for j = 1:length(v1)
-            x1 = threshes(1:v1(j)); y1 = numobj(1:v1(j));
-            f1 = polyfit(x1,y1,1);
-            err1 = sum(abs(polyval(f1,x1)-y1));
-            x2 = threshes(v1(j):end); y2 = numobj(v1(j):end);
-            f2 = polyfit(x2,y2,1);
-            err2 = sum(abs(polyval(f2,x2)-y2));
-            tot_err(j) = err1+err2;
-        end        
-        diagnos.mask1 = (img>threshes(v1(find(tot_err==min(tot_err),1,'last'))));
+    numobj = zeros(size(threshes));
+    for j = 1:length(threshes)
+        tmp = bwconncomp(img>threshes(j),4);
+        numobj(j) = tmp.NumObjects;
+    end
+    v1 = 3:length(threshes)-3;
+    tot_err = zeros(size(v1));
+    for j = 1:length(v1)
+        x1 = threshes(1:v1(j)); y1 = numobj(1:v1(j));
+        f1 = polyfit(x1,y1,1);
+        err1 = sum(abs(polyval(f1,x1)-y1));
+        x2 = threshes(v1(j):end); y2 = numobj(v1(j):end);
+        f2 = polyfit(x2,y2,1);
+        err2 = sum(abs(polyval(f2,x2)-y2));
+        tot_err(j) = err1+err2;
+    end        
+    diagnos.mask1 = (img>threshes(v1(find(tot_err==min(tot_err),1,'last'))));
 else
     diagnos.mask1 = diagnos.mask0;
 end
@@ -83,7 +87,12 @@ output.mask_cell = ~bwareaopen(~diagnos.mask_clean,p.MinHoleSize);
 
 % (Output formatting)
 diagnos = combinestructures(diagnos,output);
-output.mask0 = diagnos.mask0; % Conservative estimate of cell boundaries - used in memory checking
+
+if p.Confluence ~= 1
+    output.mask0 = diagnos.mask0; % Conservative estimate of cell boundaries - used in memory checking
+else
+    output.mask0 = diagnos.mask1;
+end
 
 function thresh = trithreshold(img,bins,mode_thresh)
 v = img(:);

@@ -58,40 +58,41 @@ diagnos.edge_straight = diagnos.edge_straight | (curv_image>L);
 diagnos.edge_straight = bwareaopen(diagnos.edge_straight,small);
 
 cell_mask = bwareaopen(cell_mask,round(pi*p.MinNucleusRadius.^2));
-    cell_broken = cell_mask&~imdilate(diagnos.edge_straight,ones(3));
+cell_broken = cell_mask&~imdilate(diagnos.edge_straight,ones(3));
 
 
-    obj1 = bwconncomp(cell_mask);
-    obj2 = bwlabel(bwareaopen(cell_broken,round(pi*p.MaxNucleusRadius.^2)));
-    obj2 = removemarked(obj2,nuc_mask,'keep');
-    edgeobj = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(5)));
-    edgeobj2 = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(3)));
+obj1 = bwconncomp(cell_mask);
+obj2 = bwlabel(bwareaopen(cell_broken,round(pi*p.MaxNucleusRadius.^2)));
+obj2 = removemarked(obj2,nuc_mask,'keep');
+edgeobj = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(5)));
+edgeobj2 = label2cc(imdilate(bwlabel(diagnos.edge_straight),ones(3)));
 
-    find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
-    unique_obj = cellfun(find_uniques,obj1.PixelIdxList,'UniformOutput',0);
-    test_length = @(vals) numel(vals(vals>0))>1;
-    idx = cellfun(test_length,unique_obj);
-    broken_obj = cell2mat(unique_obj(idx));
-    obj2(~ismember(obj2,broken_obj(broken_obj>0))) = 0;
+find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
+unique_obj = cellfun(find_uniques,obj1.PixelIdxList,'UniformOutput',0);
+test_length = @(vals) numel(vals(vals>0))>1;
+idx = cellfun(test_length,unique_obj);
+broken_obj = cell2mat(unique_obj(idx));
+obj2(~ismember(obj2,broken_obj(broken_obj>0))) = 0;
 
-    find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
-    unique_obj = cellfun(find_uniques,edgeobj.PixelIdxList,'UniformOutput',0);
-    idx = cellfun(test_length,unique_obj);
+find_uniques = @(locs) reshape(unique(obj2(locs)),1,numel(unique(obj2(locs))));
+unique_obj = cellfun(find_uniques,edgeobj.PixelIdxList,'UniformOutput',0);
+idx = cellfun(test_length,unique_obj);
 
-    keep_edges = cell2mat(edgeobj2.PixelIdxList(idx));
-    keep_edges = imerode(keep_edges,ones(3));
-    diagnos.modifier_mask(keep_edges) = 1;
+keep_edges = cell2mat(edgeobj2.PixelIdxList(idx));
+keep_edges = imerode(keep_edges,ones(3));
+diagnos.modifier_mask = false(size(cell_mask));
+diagnos.modifier_mask(keep_edges) = 1;
 
-    % Turn off pixels from modifier mask, do initial segmentation
-    cell_mask(diagnos.modifier_mask) = 0;
-    cell_mask = imopen(cell_mask,diskstrel(2));
-    image_log = log(image_in);
-    output.img_straight = abs((image_log-prctile(image_log(:),0.02))/diff(prctile(image_log(:),[0.02 98])));
-    output.img_straight(output.img_straight<0) = 0; output.img_straight(output.img_straight>1) = 1;
-    output.img_straight(imdilate(diagnos.edge_straight,ones(3))) = 1;
-    output.img_straight(diagnos.edge_straight) = 0;
+% Turn off pixels from modifier mask, do initial segmentation
+cell_mask(diagnos.modifier_mask) = 0;
+cell_mask = imopen(cell_mask,diskstrel(2));
+image_log = log(image_in);
+output.img_straight = abs((image_log-prctile(image_log(:),0.02))/diff(prctile(image_log(:),[0.02 98])));
+output.img_straight(output.img_straight<0) = 0; output.img_straight(output.img_straight>1) = 1;
+output.img_straight(imdilate(diagnos.edge_straight,ones(3))) = 1;
+output.img_straight(diagnos.edge_straight) = 0;
 
-output.cells = propagatesegment(data.nuclei, data.mask_cell>0, image_log,...
+output.cells = propagatesegment(data.nuclei, cell_mask, image_log,...
     round(p.MinCellWidth/2),data.nuclei,0.02);
 
 

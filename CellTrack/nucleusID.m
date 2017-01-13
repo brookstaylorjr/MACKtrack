@@ -189,9 +189,11 @@ if p.WeakObjectCutoff>0
             end
         end
     end
-    diagnos.watershed_remainder((imdilate(diagnos.watershed_remainder,ones(3))-diagnos.watershed_remainder)>0) = 0;
+    % Remove small objects from (merged) watershed
+    areas1 = cell2mat(struct2cell(regionprops(diagnos.watershed_remainder,'Area')));
+    diagnos.watershed_remainder(ismember(diagnos.watershed_remainder,find(areas1<cutoff.Area(1)))) = 0;
     diagnos.weak_ranked2 = rankpixels(diagnos.watershed_remainder, nucleus1); % Rerank in merged watershed
-
+    diagnos.watershed_remainder((imdilate(diagnos.watershed_remainder,ones(3))-diagnos.watershed_remainder)>0) = 0;
 
     % Check that brightest part of "nucleus" is relatively concentric-shaped and contiguous
     test_weak =  diagnos.weak_ranked2 - imerode(diagnos.weak_ranked2,ones(3));
