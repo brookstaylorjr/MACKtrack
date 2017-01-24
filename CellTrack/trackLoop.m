@@ -107,9 +107,13 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         % Calculate image jump, if parameters require it.
         if ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
             j =  parameters.TimeRange(cycle-1);
-            nucName1 = eval(parameters.NucleusExpr);
-            old_nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
-            new_offset = parameters.ImageOffset{end}+calculatejump(old_nuc,images.nuc);
+            if strcmpi(parameters.ImageType,'none')
+                prev_name = eval(parameters.NucleusExpr);
+            else
+                prev_name = eval(parameters.CellExpr);
+            end
+            prev_img = checkread([locations.scope,parameters.ImagePath,prev_name],bit_depth,1,parameters.debug);
+            new_offset = parameters.ImageOffset{end}+calculatejump(prev_img,images.cell);
             disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(new_offset),']'])       
         else
             new_offset = parameters.ImageOffset{end};
@@ -233,12 +237,21 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         if strcmpi(parameters.ImageType,'phase')|| strcmpi(parameters.ImageType,'dic') % BRIGHTFIELD MODALITIES
             saturation_val = [-2 4];
             alpha = 0.30;
-        else % FLUORESCENCE MODALITIES - SNR varies dramatically image-to-image, so guess a display range from img #1.
+        else % FLUORESCENCE MODALITIES - SNR varies between conditions, so guess a display range from an early img
             if ~exist('saturation_val','var')
-                [~,dist1] = modebalance(past(1).img_straight,0, bit_depth,'measure');
-                saturation_val = [-3 (prctile(past(1).img_straight(:),95)-dist1(1))/dist1(2)];
+                tmp1 = images.cell;
+                tmp1(tmp1==min(tmp1(:))) = [];
+                tmp1(tmp1==max(tmp1(:))) = [];
+                tmp1 = modebalance(tmp1,0, bit_depth,'display');               
+                % Non-confluent case - set low saturation @ 3xS.D. below bg level
+                if parameters.Confluence ~= 1
+                    saturation_val = [-3 prctile(tmp1(:),95)];
+                    alpha = 0.4;
+                else % Confluent case: unimodal distribution is foreground - use a different lower limit.
+                    saturation_val = [-4 prctile(tmp1(:),90)];
+                    alpha = 0.55;
+                end
             end
-            alpha = 0.4;
         end
         saveFig(images.bottom,CellLabel,NuclearLabel, [],bit_depth,...
             [outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  ...
