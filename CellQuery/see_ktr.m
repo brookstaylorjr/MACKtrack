@@ -63,7 +63,7 @@ info.keep = max(droprows,[],2) == 0;
 all_ktr = all_ktr(info.keep,:);
 
 all_ktr = all_ktr - repmat(nanmean(all_ktr(:,1:4),2),[1,size(all_ktr,2)]);
-info.graph_limits = prctile(all_ktr(~isnan(all_ktr)),[3 95]);
+info.graph_limits = prctile(all_ktr(~isnan(all_ktr)),[10 90]);
 
 graph.var = -all_ktr;
 

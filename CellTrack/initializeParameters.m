@@ -64,6 +64,8 @@ end
 set(handles.edit5F,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(2)));
 
 set(handles.edit5G,'String',num2str(handles.parameters.NuclearSmooth))
+set(handles.edit5H,'String',num2str(handles.parameters.NuclearInflection))
+
 
 %% - - - - - - - - - Cell parameters - - - - - - - - - - - - 
 set(handles.popupmenu0,'Value',find(strcmp(lower(handles.parameters.ImageType),{'phase','dic','fluorescence','none'})));

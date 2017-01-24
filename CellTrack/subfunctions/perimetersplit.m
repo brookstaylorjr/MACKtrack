@@ -12,8 +12,8 @@ cut_lines = false(size(mask1));
 all_pts = zeros(size(mask1));
 
 % Set concave angle threshold (should be roughly 180+45 degrees)
-angle_thresh = 225;
-angle_thresh2 = 210; % More lenient threshold (used after smoothing angles)
+angle_thresh = p.NuclearInflection;
+angle_thresh2 = p.NuclearInflection-15; % More lenient threshold (used after smoothing adjacent angles)
 
 s = (0:2) + min([2,round(p.MinNucleusRadius/4)]);
 b = bwboundaries(mask1,8);

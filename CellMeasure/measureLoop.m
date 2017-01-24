@@ -82,7 +82,8 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
             ModuleData.iter = iter;
             ModuleData.i = i;
             ModuleData.j = j;
-            AuxImages = cell(1,3);
+            ModuleData.AuxName = cell(1,3);
+            AuxImages = cell(size(ModuleData.AuxName));
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images
                 for aux = 1:3
@@ -93,7 +94,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                         curr_expr = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]);
                     end
                     try
-                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)];
+                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)]; 
                     catch
                         curr_name = '--';
                     end
@@ -103,7 +104,8 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                             imfo = imfinfo(curr_name);
                             ModuleData.BitDepth = imfo.BitDepth;
                         end
-                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);   
+                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth); 
+                        ModuleData.AuxName{aux} = curr_name;
                     end
                 end
                 

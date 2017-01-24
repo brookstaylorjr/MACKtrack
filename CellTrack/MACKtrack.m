@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 06-Jan-2017 19:25:01
+% Last Modified by GUIDE v2.5 13-Jan-2017 16:52:28
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -850,7 +850,7 @@ guidata(handles.figure1,handles)
 
 function edit5E_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5E: set lower compactness/solidity bound (for round nuclei)
+% EDIT5E: set strict compactness/solidity bound (for round nuclei)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
@@ -881,7 +881,7 @@ end
 
 function edit5F_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5F: set upper compactness/solidity bound (for oblong nuclei)
+% EDIT5F: set lenient compactness/solidity bound (for oblong nuclei)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
@@ -941,17 +941,17 @@ end
 
 function edit5H_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5H: set minimum solidity (morphological property, % of convex hull filled by shape)
+% EDIT5H: set minimum inflection angle for splitting nuclei
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
     % Parameter checking
     if ~isnumeric(newVal)
         warning('Resetting - value must be numeric')
-        newVal = handles.parameters.Solidity;
+        newVal = handles.parameters.NucleusInflection;
     end
     set(hObject,'String',num2str(newVal))
-    handles.parameters.Solidity = newVal;
+    handles.parameters.NucleusInflection = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
@@ -1660,8 +1660,7 @@ function pushbutton7A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON7A: add a new flatfield image (stored by name and image)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
-    [handles.locations.scope,handles.parameters.ImagePath]);
+[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image');
 if file1
     % Add file/filename to parameters
     new_img = double(imread([dir1,filesep,file1]));
@@ -1732,3 +1731,4 @@ if handles.parameters.NucleusFF > length(flatfields)
 end
 set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
 guidata(handles.figure1,handles)
+

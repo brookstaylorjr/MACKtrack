@@ -75,7 +75,7 @@ cc_all.NumObjects = length(cc_list);
 cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
-%% 2) Label1b: subdivide objects using concave points on perimeter (>220 degrees)
+%% 2) Label1b: subdivide objects using concave points on perimeter (~ >225 degrees)
 tmp_label  =diagnos.label1a; tmp_label(diagnos.label1a==0) = max(diagnos.label1a(:))+1;
 diagnos.mask_split = diagnos.label1a>0;
 diagnos.mask_split((diagnos.label1a>0) & (tmp_label-imerode(tmp_label,ones(3)))>0)=0;
@@ -148,7 +148,7 @@ if length(unique(diagnos.label1b(:)))>1
     check_ep = cellfun(num_end,cc_branch.PixelIdxList);
     
     mask_tmp = diagnos.label1b>0;
-    mask_tmp(cell2mat(cc_branch.PixelIdxList((check_avg>195) & (check_branch<1) & (check_ep==2))')) = 0;
+    mask_tmp(cell2mat(cc_branch.PixelIdxList((check_avg>(p.NuclearInflection-30)) & (check_branch<1) & (check_ep==2))')) = 0;
 
     diagnos.label1b2 = bwlabel(mask_tmp,4);
     diagnos.label1c(diagnos.label1b2==0) = 0;

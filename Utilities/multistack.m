@@ -18,8 +18,10 @@ if size(inputStack,1)>size(inputStack,2)
     inputStack = imrotate(inputStack,90);
 end
 
-
+name1 = get(gcf,'Name');
 clf(gcf,'reset')
+set(gcf,'Name',name1);
+
 zlength = size(inputStack,3);
 handles.input = inputStack;
 
