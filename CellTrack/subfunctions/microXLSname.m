@@ -7,7 +7,7 @@ function string_out = microXLSname(num_in)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-% Define row (A-H_
+% Define row (A-H)
 row = floor(num_in/100);
 
 % Define column (1-12, zero-padded)

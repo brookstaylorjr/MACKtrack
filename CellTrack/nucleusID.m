@@ -54,10 +54,10 @@ for i = 1:length(edge_cutoffs)
     % b) Skeletonize/ fill holes
     mask0 = bwmorph(mask0,'skel',2);
     mask0 = bwareaopen(mask0,p.NoiseSize,8);
-    mask0 = ~bwareaopen(~mask0,cutoff.Area(2)*4,4);    
+    mask0 = ~bwareaopen(~mask0,cutoff.Area(2)*4,4);  
     if ~isempty(tmp_drop)
         mask0(tmp_drop) = 0;
-    end
+    end 
     % c) Filter objects that aren't round/sufficently large (alternate btw strict/lenient criteria)
     mask0 = imopen(mask0,diskstrel(round(p.NuclearSmooth)));
     if (mod(i-1,3) == 1) || (i==length(edge_cutoffs))
@@ -75,6 +75,7 @@ cc_all.NumObjects = length(cc_list);
 cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
+
 %% 2) Label1b: subdivide objects using concave points on perimeter (~ >225 degrees)
 tmp_label  =diagnos.label1a; tmp_label(diagnos.label1a==0) = max(diagnos.label1a(:))+1;
 diagnos.mask_split = diagnos.label1a>0;
@@ -83,8 +84,6 @@ diagnos.mask_split((diagnos.label1a>0) & (tmp_label-imerode(tmp_label,ones(3)))>
 diagnos.mask_split = diagnos.mask_split &~mask_cut;
 diagnos.mask_split = bwareaopen(diagnos.mask_split,cutoff.Area(1),4);
 diagnos.label1b = bwlabel(diagnos.mask_split,4);
-
-
 
 %% 3) Label1c: subdivide objects with additional borders from edge-transformed image
 if length(unique(diagnos.label1b(:)))>1
