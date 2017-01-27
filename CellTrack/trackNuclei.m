@@ -186,7 +186,7 @@ for i = 1:size(blocks,1)
         % Filter 1: parents must be at least 10 hrs old
         p_ages = ((curr_frame-CellData.FrameIn(p_idx))/p.FramesPerHour);
         p_ages(CellData.FrameIn(p_idx)<4) = 1000;
-        if curr_frame<4
+        if curr_frame<3
             p_ages(:) = 0;
         end
         p_idx(p_ages<10) = [];

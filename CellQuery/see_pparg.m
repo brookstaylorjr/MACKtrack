@@ -40,9 +40,11 @@ info.graph_limits = prctile(all_pparg(~isnan(all_pparg)),[3 97]);
 
 % Add parent trajectories to children
 find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));
+graph.divisions = [];
 for i = 1:size(all_pparg,1)
-    if info.CellData(i,5)>0
+    if info.CellData(i,5)>0      
         all_pparg(i,1:info.CellData(i,3)) = all_pparg(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
+        graph.divisions = cat(1,graph.divisions,[i, info.CellData(i,3)]);
     end
 end
 

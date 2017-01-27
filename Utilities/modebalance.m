@@ -100,8 +100,8 @@ try
     % Turn convergence warning back on
     warning('on','stats:gmdistribution:FailedToConverge')
 
-    % Discard any subpopulation <5% of total pixels
-    invalids = obj.ComponentProportion<0.05;
+    % Discard any subpopulation <10% of total pixels
+    invalids = obj.ComponentProportion<0.10;
     test_mu = obj.mu;
     test_mu(invalids) = inf;
     
