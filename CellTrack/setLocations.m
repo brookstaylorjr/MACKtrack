@@ -22,7 +22,7 @@ function varargout = setLocations(varargin)
 
 % Edit the above text to modify the response to help setLocations
 
-% Last Modified by GUIDE v2.5 11-Jan-2017 11:48:36
+% Last Modified by GUIDE v2.5 27-Jan-2017 01:44:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
@@ -96,7 +96,7 @@ if  exist(handles.locations.data,'dir')
 end
 
 if ~handles.Locked1 && ~handles.Locked2
-    set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+    set(handles.pushbutton3,'ForegroundColor',[0 0 0])
 end
 
 guidata(handles.figure1,handles)
@@ -123,20 +123,20 @@ try
         handles.locations.scope = newfolder;
         handles.Locked1 = 0;
         if ~handles.Locked2
-            set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+            set(handles.pushbutton3,'ForegroundColor',[0 0 0])
         end
         guidata(handles.figure1,handles)
     else
         handles.Locked1 = 1;
         set(handles.edit1,'ForegroundColor',handles.gray)
-        set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+        set(handles.pushbutton3,'ForegroundColor',handles.gray)
         guidata(handles.figure1,handles)
     end
 catch ME
     set(hObject,'String','err')
     handles.Locked = 1;
     set(handles.edit1,'ForegroundColor',handles.gray)
-    set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+    set(handles.pushbutton3,'ForegroundColor',handles.gray)
     guidata(handles.figure1,handles)
     rethrow(ME)
 end
@@ -157,7 +157,7 @@ if (newfolder~=0)
     % Unlock save button
     handles.Locked1 = 0;
     if ~handles.Locked2
-        set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+        set(handles.pushbutton3,'ForegroundColor',[0 0 0])
     end
     guidata(handles.figure1,handles)
 end
@@ -176,20 +176,20 @@ try
         handles.locations.data = newfolder;
         handles.Locked2 = 0;
         if ~handles.Locked1
-            set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+            set(handles.pushbutton3,'ForegroundColor',[0 0 0])
         end
         guidata(handles.figure1,handles)
     else
         handles.Locked2 = 1;
         set(handles.edit2,'ForegroundColor',handles.gray)
-        set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+        set(handles.pushbutton3,'ForegroundColor',handles.gray)
         guidata(handles.figure1,handles)
     end
 catch ME
     set(hObject,'String','err')
     handles.Locked2 = 1;
     set(handles.edit1,'ForegroundColor',handles.gray)
-    set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+    set(handles.pushbutton3,'ForegroundColor',handles.gray)
     guidata(handles.figure1,handles)
     rethrow(ME)
 end
@@ -211,7 +211,7 @@ if (newfolder~=0)
     handles.Locked2 = 0;
     % Unlock save button
     if ~handles.Locked1
-        set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+        set(handles.pushbutton3,'ForegroundColor',[0 0 0])
     end
     guidata(handles.figure1,handles)
 end
@@ -227,23 +227,24 @@ try
     handles.locations.spreadsheet = newaddr;
     guidata(handles.figure1,handles)
     set(handles.edit3,'ForegroundColor',handles.blue)
-    set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+    set(handles.pushbutton3,'ForegroundColor',[0 0 0])
     handles.Locked3 = 0;
 
 catch ME
     set(hObject,'String','err')
     handles.Locked3 = 1;
     set(handles.edit1,'ForegroundColor',handles.gray)
-    set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+    set(handles.pushbutton3,'ForegroundColor',handles.gray)
     guidata(handles.figure1,handles)
     rethrow(ME)
 end
 % ========================================================================================
 
 
-function pushbutton_end_Callback(hObject, eventdata, handles)
+
+function pushbutton3_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PUSHBUTTON_END: save to 'locations.mat'
+% PUSHBUTTON3: save to 'locations.mat'
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~handles.Locked1 && ~handles.Locked2 && ~handles.Locked3
     locations = handles.locations;
@@ -251,4 +252,3 @@ if ~handles.Locked1 && ~handles.Locked2 && ~handles.Locked3
     close(handles.figure1);
 end
 % ========================================================================================
-
