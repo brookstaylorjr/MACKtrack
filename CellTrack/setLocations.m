@@ -252,9 +252,3 @@ if ~handles.Locked1 && ~handles.Locked2 && ~handles.Locked3
 end
 % ========================================================================================
 
-
-% --- Executes during object creation, after setting all properties.
-function uipanel3_CreateFcn(hObject, eventdata, handles)
-% hObject    handle to uipanel3 (see GCBO)
-% eventdata  reserved - to be defined in a future version of MATLAB
-% handles    empty - handles not created until after all CreateFcns called
