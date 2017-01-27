@@ -49,9 +49,9 @@ end
 
 
 %% Filtering
-droprows = zeros(size(measure.MeanPPARg,1),1);
-%droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:4)),2)>2]; % Cells existing @ expt start
-droprows = [droprows, sum(isnan(all_pparg(:,1:400)),2)>30]; % Long-lived cells
+droprows = zeros(size(all_pparg,1),1);
+droprows = [droprows, sum(isnan(all_pparg(:,end-3:end)),2)>2]; % Cells existing @ expt end
+droprows = [droprows, sum(isnan(all_pparg),2)>100]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
 

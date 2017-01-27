@@ -22,7 +22,7 @@ corr_img = flatfieldcorrect(double(AuxImages{1}),double(parameters.Flatfield{1})
 % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
 corr_img = corr_img - min(corr_img(:));
 tmp = corr_img;
-tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
+tmp(imdilate(labels.Nucleus>0,diskstrel(round(parameters.MinNucleusRadius*2)))) = []; % Drop foreground objects for correction calculation
 [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
 corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
 AuxImages{1} = corr_img;
@@ -51,7 +51,7 @@ if ~isempty(AuxImages{2})
     % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
     corr_img = corr_img - min(corr_img(:));
     tmp = corr_img;
-    tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
+    tmp(imdilate(labels.Nucleus>0,diskstrel(round(parameters.MinNucleusRadius*2)))) = []; % Drop foreground objects for correction calculation
     [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
     corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
     AuxImages{2} = corr_img;
