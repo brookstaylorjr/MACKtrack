@@ -42,7 +42,7 @@ verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
 tmp1 = diagnos.edge_mag(cell_mask);
-edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),95),21);
+edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),97),21);
 cc_list = {};
 for i = 1:length(edge_cutoffs)
     % a) Threshold, drop already-found objects
@@ -87,77 +87,16 @@ diagnos.label1b = bwlabel(diagnos.mask_split,4);
 
 %% 3) Label1c: subdivide objects with additional borders from edge-transformed image
 if length(unique(diagnos.label1b(:)))>1
-    % Isolate high edge (>median) pixels per object
-    tmp_cc = label2cc(diagnos.label1b,0);
-    get_high = @(pix) pix(diagnos.edge_mag(pix) > prctile(diagnos.edge_mag(pix),50));
-    mask_vals = cell2mat(cellfun(get_high,tmp_cc.PixelIdxList,'UniformOutput',0));
-    mask_hi = false(size(diagnos.label1b));
-    mask_hi(mask_vals) = 1;
-    % Morphological cleanup and connection - dilate out, then shrink back result
-    mask_hi = bwareaopen(mask_hi,round(p.MinNucleusRadius/2));
-    mask_hi = ~bwareaopen(~mask_hi,round(p.MinNucleusRadius+1),4);
-    BWconnect = bwmorph(mask_hi,'skel','Inf');
-    for i = 3:2:round(sqrt(p.MinNucleusRadius))
-        BWconnect = imdilate(BWconnect,ones(i));
-        BWconnect = bwmorph(BWconnect,'skel','Inf');
-        % Reduce back result of dilation
-        for j = 1:floor(i/2)
-            BWendpoints = bwmorph(bwmorph(BWconnect,'endpoints'),'shrink',Inf);
-            BWconnect(BWendpoints) = 0;
-        end
+    
+    if p.MinNucleusRadius < 6
+       [diagnos.label1c, cc_obj] = edgesplit(diagnos.label1b, diagnos.watershed1, nucleus1, p);
+    else
+        [diagnos.label1c, cc_obj] = edgesplit(diagnos.label1b, diagnos.edge_mag, diagnos.cut_pts, p, mask_cut);
     end
-    mask_hi = BWconnect;
-    mask_obj = diagnos.label1b>0;
-    off_mask = mask_hi|BWconnect;
-    % For "solid" objects (i.e. entirely high-edge), get borders of these directly and substitute
-    solid_mask = imopen(mask_hi,diskstrel(p.NuclearSmooth));
-    solid_borders = solid_mask&~imerode(solid_mask,ones(3));
-    off_mask(solid_mask) = solid_borders(solid_mask);
-    % Break up existing mask w/ newly-found borders -> use propagate subfcn to fill existing mask.
-    mask_obj(off_mask) = 0;
-    mask_obj = imopen(mask_obj,ones(2));
-    mask_obj = bwareaopen(mask_obj,round(cutoff.Area(1)/4),4);
-    mask_all = diagnos.label1b>0;
-    diagnos.label1c = IdentifySecPropagateSubfunction(double(bwlabel(mask_obj,4)),double(mask_all),mask_all,0.02);
-    
-    % Combine inflection point & strong edge data - see if a strong edge unabigiously connects two moderately-inflected pts.
-    % (Filter out objects that are too small to be split further)
-    filter_areas = @(pix) length(pix)<(2*cutoff.Area(1));
-    nosmall = label2cc(diagnos.label1b);
-    nosmall.PixelIdxList(cellfun(filter_areas,nosmall.PixelIdxList)) = [];
-    nosmall.NumObjects = length(nosmall.PixelIdxList);
-    nosmall = labelmatrix(nosmall)>0;
-    % Get borders from label1c, then identify if any lie a putative split point 
-    tmp = diagnos.label1c;
-    tmp(~nosmall) = 0;
-    tmp(tmp==0) = max(tmp(:))+1;
-    border_mask = (tmp-imerode(tmp,ones(3)))>0;
-    border_mask(diagnos.label1c==0) = 0;
-    diagnos.edge_borders = (border_mask) + (diagnos.label1c>0);
-    endpt_val = bwmorph(border_mask,'endpoints').*diagnos.cut_pts;
-    endpt_val(imdilate(mask_cut,ones(5))) = 0;
-    endpt_val(endpt_val==0) = nan;
-    branch_pts = bwmorph(bwmorph(border_mask,'skel',inf),'branchpoints');
-    cc_branch = bwconncomp(border_mask,8);
-    avg_inflect = @(pix) nanmean(endpt_val(pix));
-    num_branch = @(pix) sum(branch_pts(pix));
-    num_end = @(pix) sum(~isnan(endpt_val(pix)));
-    check_avg = cellfun(avg_inflect,cc_branch.PixelIdxList);
-    check_branch = cellfun(num_branch,cc_branch.PixelIdxList);
-    check_ep = cellfun(num_end,cc_branch.PixelIdxList);
-    
-    mask_tmp = diagnos.label1b>0;
-    mask_tmp(cell2mat(cc_branch.PixelIdxList((check_avg>(p.NuclearInflection-30)) & (check_branch<1) & (check_ep==2))')) = 0;
-
-    diagnos.label1b2 = bwlabel(mask_tmp,4);
-    diagnos.label1c(diagnos.label1b2==0) = 0;
-    pairs  = [diagnos.label1b2(:),diagnos.label1c(:)];
-    [~,~,ic] = unique(pairs,'rows');
-    diagnos.label1c = reshape(ic,size(diagnos.label1b))-1;
-    cc_inflect = label2cc(diagnos.label1b2);
+    %diagnos.edge_borders = (border_mask) + (label_subobj>0);
 
     % Bridge oversegmented nuclear subobjects (from edge-based divisions) together by shape
-    diagnos.label1 = bridgenuclei(diagnos.label1c, cc_inflect, cutoff,p.ShapeDef, p.debug);
+    diagnos.label1 = bridgenuclei(diagnos.label1c, cc_obj, cutoff,p.ShapeDef, p.debug);
     
 else % No objects were found- skip all these steps.
     diagnos.label1= diagnos.label1b;

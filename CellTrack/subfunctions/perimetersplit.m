@@ -39,6 +39,8 @@ sum_refs = cellfun(rescale_line,sum_refs,'UniformOutput',0);
 % Threshold perimeter angles (per object)
 smooth_func = @(x) [x(end)+x(1)+x(2); x(1:end-2)+x(2:end-1)+x(3:end); x(end-1)+x(end)+x(1)]/3; % Circular running avg.
 for n = 1:length(sum_angles)
+   
+    sum_angles{n}(isnan(sum_angles{n})) = 0;
     idx = find((sum_angles{n}>=angle_thresh) | (smooth_func(sum_angles{n})>=angle_thresh2));
     new_idx = [];
     dist = round(p.MinNucleusRadius/2);

@@ -330,30 +330,43 @@ try
     sampleFile = eval(filestring);
     % Try to get an exact match (for tracking) or a partial one (for screens)
     pass = 1;
+    partial_match = 0;
     if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
         id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)),1,'first');
         if ~isempty(id)
             id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
-            id = id(randperm(length(id),1));
-            sampleFile = [handles.file_names{id}];
+            if length(id)>1
+                id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
+                id = id(randperm(length(id),1));
+                sampleFile = [handles.file_names{id}];
+                partial_match = 1;
+            end
             handles.parameters.NucleusMatch = filestring;
             filestring = ['''',sampleFile,''''];
         else
             pass = 0;
         end
     end
-    
-    allowedLength = 75-length(sampleFile);
+    if ~partial_match
+        allowedLength = 75-length(sampleFile);
+    else
+        allowedLength = 64-length(sampleFile);
+    end
     if length(sampleDirec)>allowedLength
         sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
     end
     if pass
         set(handles.text2G,'String',[sampleDirec,sampleFile],'ForegroundColor',handles.blue);
-        handles.parameters.NucleusExpr = filestring;           
+        handles.parameters.NucleusExpr = filestring;
+        if partial_match
+            set(handles.text2G,'String', [get(handles.text2G,'String'),' [EXAMP.]'])
+        end 
     else
         set(handles.text2G,'String',['"',sampleFile,'" not found in current directory' ],'ForegroundColor','r');
         handles.Locked = 1;
     end
+
+    
 
 catch ME
      set(handles.text2G,'String','Invalid MATLAB string used for nuclear image expression','ForegroundColor','r');
@@ -916,7 +929,7 @@ function edit5G_Callback(hObject, eventdata, handles)
 % EDIT5G: set nuclear smoothing size (nan is ok)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
-    newVal = eval(get(hObject,'String'));
+    newVal = round(eval(get(hObject,'String')));
     % Parameter checking
     if ~isnumeric(newVal)
         warning('Resetting - value must be numeric')
@@ -948,10 +961,10 @@ try
     % Parameter checking
     if ~isnumeric(newVal)
         warning('Resetting - value must be numeric')
-        newVal = handles.parameters.NucleusInflection;
+        newVal = handles.parameters.NuclearInflection;
     end
     set(hObject,'String',num2str(newVal))
-    handles.parameters.NucleusInflection = newVal;
+    handles.parameters.NuclearInflection = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)

@@ -23,11 +23,18 @@ end
 
 % Loading/saving expressions and directories
 set(handles.edit1A,'String',handles.parameters.ImagePath)
-set(handles.edit2A,'String',handles.parameters.NucleusExpr)
-set(handles.edit2B,'String',handles.parameters.CellExpr)
+
 set(handles.edit2C,'String',handles.parameters.XYExpr)
 set(handles.edit2D,'String',handles.parameters.TimeExpr)
 set(handles.edit3A,'String',handles.parameters.SaveDirectory)
+
+if ~isfield(handles.parameters,'IsScreen') || handles.parameters.IsScreen == 0
+    set(handles.edit2A,'String',handles.parameters.NucleusExpr)
+    set(handles.edit2B,'String',handles.parameters.CellExpr)
+else
+    set(handles.edit2A,'String',handles.parameters.NucleusMatch)
+    set(handles.edit2B,'String',handles.parameters.CellMatch)
+end
 
 %% - - - - - - - - - Nuclear parameters - - - - - - - - - - - - 
 nuc_edge = handles.parameters.NucleusEdgeThreshold;
@@ -231,6 +238,8 @@ if isfield(handles.parameters,'Flatfield')
     end
 end
 set(handles.listbox7B,'String',flatfields)
+set(handles.listbox7B,'Value',1)
+
 
 % (Also update popupup menus)
 if handles.parameters.CellFF > length(flatfields)

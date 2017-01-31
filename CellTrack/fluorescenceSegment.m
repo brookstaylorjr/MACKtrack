@@ -19,6 +19,7 @@ function [output, diagnos] = fluorescenceSegment(data, image_in, p)
 diagnos = struct;
 cell_mask = data.mask_cell>0;
 nuc_mask = data.nuclei>0;
+
 % Form base edge mask from the default Canny edge filter - break/filter small branches
 small = round(5);
 edges = cannyalt(image_in,2);
