@@ -2,7 +2,7 @@
 
 
 % First, load in the data
-load('/Volumes/labdata/devon/Imaging experiments/20170104_OP9TRE_doxcheck/Tracked/AllData.mat')
+load('Z:\devon/Imaging experiments/20170104_OP9TRE_doxcheck/Tracked/AllData.mat')
 
 % Load some other stuff, too
 colors = setcolors; % define some pretty colors
@@ -92,7 +92,7 @@ ha = tight_subplot(1,length(subset),[0.03 0.03],[0.2 0.1],[0.06 0.04],1);
 for i = 1:length(subset)
     dscatter(x_data{subset(i)}, y_data{subset(i)},'Parent',ha(i))
     set(ha(i),'XLim',xlim,'YLim',ylim,'XGrid','on','YGrid','on')
-    text(mean(xlim),max(ylim),[num2str(i),') ', condition_names{i}],...
+    text(mean(xlim),max(ylim),[num2str(subset(i)),') ', condition_names{subset(i)}],...
     'HorizontalAlignment','center','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w',...
     'Interpreter','none')
     xlabel(ha(i), x_title)
