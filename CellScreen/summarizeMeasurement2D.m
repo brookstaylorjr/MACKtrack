@@ -46,7 +46,7 @@ ha = tight_subplot(n_rows,n_cols,[0.01 0.01]);
 
 colormaps=  loadcolormaps;
 for i = 1:length(ha)
-    dscatter(all_x{i},all_y{i},'parent',ha(i))
+    dscatter2(all_x{i},all_y{i},'parent',ha(i))
     set(ha(i),'XLim',x_rng,'YLim',y_rng,'XTickLabel',{},'YTickLabel',{},'XGrid','on','Ygrid','on')
     text(mean(x_rng),max(y_rng),[num2str(i),') ', all_cond{i},' ( n=',num2str(length(all_x{i})),' )'],...
         'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(i),'BackgroundColor','w')

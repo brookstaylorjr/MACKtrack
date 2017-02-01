@@ -1,33 +1,33 @@
-function hAxes = dscatter(X,Y, varargin)
-% DSCATTER creates a scatter plot coloured by density.
+function hAxes = dscatter2(X,Y, varargin)
+% DSCATTER2 creates a scatter plot coloured by density.
 %
-%   DSCATTER(X,Y) creates a scatterplot of X and Y at the locations
+%   DSCATTER2(X,Y) creates a scatterplot of X and Y at the locations
 %   specified by the vectors X and Y (which must be the same size), colored
 %   by the density of the points.
 %
-%   DSCATTER(...,'MARKER',M) allows you to set the marker for the
+%   DSCATTER2(...,'MARKER',M) allows you to set the marker for the
 %   scatter plot. Default is 's', square.
 %
-%   DSCATTER(...,'MSIZE',MS) allows you to set the marker size for the
+%   DSCATTER2(...,'MSIZE',MS) allows you to set the marker size for the
 %   scatter plot. Default is 10.
 %
-%   DSCATTER(...,'FILLED',false) sets the markers in the scatter plot to be
+%   DSCATTER2(...,'FILLED',false) sets the markers in the scatter plot to be
 %   outline. The default is to use filled markers.
 %
-%   DSCATTER(...,'PLOTTYPE',TYPE) allows you to create other ways of
+%   DSCATTER2(...,'PLOTTYPE',TYPE) allows you to create other ways of
 %   plotting the scatter data. Options are "surf','mesh' and 'contour'.
 %   These create surf, mesh and contour plots colored by density of the
 %   scatter data.
 %
-%   DSCATTER(...,'BINS',[NX,NY]) allows you to set the number of bins used
+%   DSCATTER2(...,'BINS',[NX,NY]) allows you to set the number of bins used
 %   for the 2D histogram used to estimate the density. The default is to
 %   use the number of unique values in X and Y up to a maximum of 200.
 %
-%   DSCATTER(...,'SMOOTHING',LAMBDA) allows you to set the smoothing factor
+%   DSCATTER2(...,'SMOOTHING',LAMBDA) allows you to set the smoothing factor
 %   used by the density estimator. The default value is 20 which roughly
 %   means that the smoothing is over 20 bins around a given point.
 %
-%   DSCATTER(...,'LOGY',true) uses a log scale for the yaxis.
+%   DSCATTER2(...,'LOGY',true) uses a log scale for the yaxis.
 %
 %   Examples:
 %
