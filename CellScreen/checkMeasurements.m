@@ -31,7 +31,13 @@ ha = tight_subplot(length(use_m),num_images,[0.005 0.005]);
 
 for i = 1:length(use_m)
     bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.1 99.1]);
-    bins = linspace(bin_range(1),bin_range(2),60);
+    if sum(isnan(bin_range))==0
+        bins = linspace(bin_range(1),bin_range(2),60);
+    else
+        bins = [0 0];
+        bin_range = [0 1];
+        %struct1.Measurements.(m_names{use_m(i)}) = [];
+    end
     for j= 1:num_images
         g_idx = j+(i-1)*num_images;
         cell_subset = struct1.CellData(:,1)==j;
@@ -41,6 +47,7 @@ for i = 1:length(use_m)
         if j == 1
             ylabel(ha(g_idx),m_names{use_m(i)},'FontSize',11,'FontWeight','normal','interpreter','none')
         end
+
         if i ==1
             title_name = struct1.Images{j};
             idx1 = strfind(title_name,'_w');

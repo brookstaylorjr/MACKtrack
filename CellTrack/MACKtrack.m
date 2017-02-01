@@ -1675,6 +1675,7 @@ function pushbutton7A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 [file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image');
 if file1
+    set(handles.listbox7B,'Value',1);
     % Add file/filename to parameters
     new_img = double(imread([dir1,filesep,file1]));
     if ~isfield(handles.parameters,'Flatfield')
@@ -1694,11 +1695,15 @@ function pushbutton7B_Callback(hObject, eventdata, handles)
 % PUSHBUTTON7B: remove selected flatfield image
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 index_selected = get(handles.listbox7B,'Value');
-handles.parameters.Flatfield(index_selected) = [];
-handles.parameters.FlatfieldNames(index_selected) = [];
-disp('Deleted uploaded flatfield image')
-updateflatfields(handles);
-guidata(handles.figure1,handles);
+if index_selected <= length(handles.parameters.Flatfield)
+    set(handles.listbox7B,'Value',1);
+    handles.parameters.Flatfield(index_selected) = [];
+    handles.parameters.FlatfieldNames(index_selected) = [];
+    disp('Deleted uploaded flatfield image')
+    updateflatfields(handles);
+    guidata(handles.figure1,handles);
+end
+
 
 
 
@@ -1707,15 +1712,18 @@ function pushbutton7C_Callback(hObject, eventdata, handles)
 % PUSHBUTTON7C: swap selected flatfield image for a new image
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 index_selected = get(handles.listbox7B,'Value');
-[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
-    [handles.locations.scope,handles.parameters.ImagePath]);
-if file1
-    % Add file/filename to parameters
-    new_img = double(imread([dir1,filesep,file1]));
-    handles.parameters.Flatfield{index_selected} = new_img;
-    handles.parameters.FlatfieldNames{index_selected} = [dir1,filesep,file1];
-    % Update listbox and save parameters
-    updateflatfields(handles);
+
+if index_selected <= length(handles.parameters.Flatfield)
+    [file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
+        [handles.locations.scope,handles.parameters.ImagePath]);
+    if file1
+        % Add file/filename to parameters
+        new_img = double(imread([dir1,filesep,file1]));
+        handles.parameters.Flatfield{index_selected} = new_img;
+        handles.parameters.FlatfieldNames{index_selected} = [dir1,filesep,file1];
+        % Update listbox and save parameters
+        updateflatfields(handles);
+    end
 end
 
 

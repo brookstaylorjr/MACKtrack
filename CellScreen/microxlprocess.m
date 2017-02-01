@@ -123,6 +123,11 @@ for i = 1:length(wells)
             end
         end
         t3 = toc;
+        
+        % Clean data: remove tmp measurmements
+        if isfield(Data.Measurements,'tmp')
+            Data.Measurements = rmfield(Data.Measurements,'tmp');  
+        end
 
         % 4) DISPLAY status
         str = ['- - - - [',image_dir,'] - - - - - -'];
