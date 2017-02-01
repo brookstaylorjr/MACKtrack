@@ -1,9 +1,10 @@
-
-function [] = checkMeasurements(struct1,figtitle)
+function [] = compareImages(struct1,figtitle)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-%  [] = checkMeasurements(measurement_struct)
+%  [] = compareImages(measurement_struct)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% Visualize all measurements - title appropriately, show number of individuals per well, and histogram (relative)
+% COMPAREIMAGES shows all measurements, divided by image (i.e. well/scene), for one particular condition of AllData
+% (screenLoop's output, e.g. AllData.DMI)
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 num_images = length(unique(struct1.Images));
 

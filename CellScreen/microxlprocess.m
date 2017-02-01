@@ -112,7 +112,7 @@ for i = 1:length(wells)
         % overall index | well index | cell index
         % - - - - - - - - - - - - - - - - - - - -
         Data.CellData = cat(1, Data.CellData,...
-            [idx*ones(parameters.TotalCells,1),j*ones(parameters.TotalCells,1), (1:parameters.TotalCells)']);
+            [i*ones(parameters.TotalCells,1),idx*ones(parameters.TotalCells,1), (1:parameters.TotalCells)']);
         fnames = fieldnames(CellMeasurements);
         for n = 1:length(fnames)
             if ~isfield(Data.Measurements,fnames{n})

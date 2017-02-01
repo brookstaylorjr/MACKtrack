@@ -10,8 +10,6 @@ function [CellMeasurements, ModuleDataOut] = morphologyModule(CellMeasurements,p
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 iteration = ModuleData.iter;
-
-
 % On first call, initialize all new CellMeasurements fields 
 if ~isfield(CellMeasurements,'Area')
     % Morphology-based cell measurements
