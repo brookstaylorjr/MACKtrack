@@ -191,7 +191,8 @@ newfolder = get(handles.edit1A,'String');
 if ~isempty(newfolder) && strcmp(newfolder(end),filesep)
     newfolder =newfolder(1:end-1);
 end
-newfolder = newfolder(1:max(strfind(newfolder,filesep)));
+tmp1 = newfolder; tmp1(strfind(tmp1,'\')) = '/';
+newfolder = newfolder(1:max(strfind(tmp1,'/')));
 
 % Remove leading slash, add trailing slash
 if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)

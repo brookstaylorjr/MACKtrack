@@ -276,7 +276,8 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         name1 = name1(seps+1:end);
     end
     str = '\n- - - - - - - - - - - - - - -';
-    if cycle < parameters.StackSize 
+    name1(strfind(name1,'\')) = '/';
+    if cycle < parameters.StackSize
         str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)]);
     else
         str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Save Cycle ', num2str(saveCycle)]);
