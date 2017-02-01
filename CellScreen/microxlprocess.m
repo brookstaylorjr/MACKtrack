@@ -130,9 +130,10 @@ for i = 1:length(wells)
         end
 
         % 4) DISPLAY status
-        tmp_dir = image_dir; tmp_dir(strfind(tmp_dir,'\')) = '/';
-        str = ['- - - - [',tmp_dir,'] - - - - - -'];
-        str = sprintf([str,'\n', 'Segmentation (', image_names{nuc_id(j)}, ') - ',  num2str(t1),' sec ']);
+        tmp1 = image_dir;
+        tmp1(strfind(tmp1,'\')) = '/';
+        str = ['- - - - [',tmp1,'] - - - - - -'];
+        str = sprintf([str,'\n', 'Segmentation (', image_names{nuc_id(j)}, ') - ',  num2str(t1),' sec ']);     
         str = sprintf([str,'\n', 'Saving (', 'NuclearLabel-',wells{i},'_',numseq(j,2),'.mat', ') - ',  ...
             num2str(t2),' sec ']);
         str = sprintf([str,'\n', 'Measurement - ',  num2str(t3),' sec ']);
