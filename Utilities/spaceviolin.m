@@ -13,7 +13,7 @@ function violin = spaceviolin(vects, places, varargin)
 % 'YLim'         2 element vector with graph [y_min, y_max]. Default is 5th and 95th percentile of all data
 % 'ShowBins'     Show additional histogram  graph ('on' or 'off' - default is 'off')
 % 'Area'         Total area of graph taken up by each shape (default = 0.01)
-% 'BinScale'     Scaling factor for number of bins (default # is given by Freedman-Diaconis rule) (scalar or vector)
+% 'BinScale'     Scaling factor (from default) for number of histogram bins (can specify scalar or a vector of length N)
 % 'Bins'         Vector of bin centers - if provided, 'BinScale' will be ignored
 % 'XSpace'       Axis whitespace before the first violin plot, and after the last (default = 0.1)
 % 'Axes'         Axes handle of axes where new violin figure will be plotted (default: create new figure)

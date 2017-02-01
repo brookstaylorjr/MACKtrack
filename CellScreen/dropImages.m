@@ -1,7 +1,7 @@
 function data_out = dropImages (data_in, drop_images)
 
 data_out = data_in;
-drops = ismember(data_out.CellData(:,1),drop_images);
+drops = ismember(data_out.CellData(:,2),drop_images);
 
 data_out.CellData(drops,:) = [];
 

@@ -1,8 +1,8 @@
-function [] = compareImages(struct1,figtitle)
+function [] = summarizeCondition(struct1,figtitle)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-%  [] = compareImages(measurement_struct)
+%  [] = summarizeCondition(measurement_struct)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% COMPAREIMAGES shows all measurements, divided by image (i.e. well/scene), for one particular condition of AllData
+% SUMMARIZECONDITION shows all measurements, divided by image (i.e. well/scene), for one particular condition of AllData
 % (screenLoop's output, e.g. AllData.DMI)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -31,7 +31,7 @@ figure('Name',figtitle,'Position',positionfig(150*num_images,100*length(use_m)))
 ha = tight_subplot(length(use_m),num_images,[0.005 0.005]);
 
 for i = 1:length(use_m)
-    bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.1 99.1]);
+    bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.1 97]);
     if sum(isnan(bin_range))==0
         bins = linspace(bin_range(1),bin_range(2),60);
     else
@@ -41,7 +41,7 @@ for i = 1:length(use_m)
     end
     for j= 1:num_images
         g_idx = j+(i-1)*num_images;
-        cell_subset = struct1.CellData(:,1)==j;
+        cell_subset = struct1.CellData(:,2)==j;
         histogram(struct1.Measurements.(m_names{use_m(i)})(cell_subset),bins,'FaceColor',clr(i,:),'Parent',ha(g_idx),...
             'EdgeColor','none')
         set(ha(g_idx),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_range,'YGrid','on')
