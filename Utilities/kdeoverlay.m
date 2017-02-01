@@ -60,7 +60,9 @@ end
 %%
 % If bandwidth isn't defined, get an estimate
 x_val = linspace(min([xlim(:);all]) ,max([xlim(:);all]),1024);
-[~,~,bandwidth] = ksdensity(all,x_val,'function','pdf');
+if isnan(bandwidth)
+    [~,~,bandwidth] = ksdensity(all,x_val,'function','pdf');
+end
 
 hold(h_ax,'on')
 for i = 1:length(vects)

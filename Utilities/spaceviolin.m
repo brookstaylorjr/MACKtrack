@@ -95,7 +95,7 @@ bin_scale = bin_scale(1:length(vects));
 for i = 1:length(vects)
     if isnan(bins)
         bin_width = 2*iqr(all)*((numel(all)/length(vects))^(-1/3))/bin_scale(i);
-        x = prctile(all,1):bin_width:prctile(all,99);
+        x = prctile(all,1):bin_width:prctile(all,99.5);
     else
         bin_width = bins(2)-bins(1);
         x = bins(:)';

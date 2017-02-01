@@ -11,7 +11,7 @@ colormaps = loadcolormaps; % define some pretty colormaps
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
 summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 
-summarizeCondition(AllData.SD1LAP1dox) % Summary 2: can look at all measurements within a single condition -> make sure all images are ok. 
+summarizeCondition(AllData.SD1LAP1dox) % Summary 2: can look at all measurements within a single condition -> make sure all images are ok (also shows all measurements made during analysis)
 
 summarizeMeasurement2D(AllData,'Area','MeanNuc1') % Summary 3: scatter plots of 2 variables of interest 
 
@@ -19,7 +19,7 @@ summarizeMeasurement2D(AllData,'Area','MeanNuc1') % Summary 3: scatter plots of 
 
 
 
-%% - - - - - - - - SECTION2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 
+%% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 
 
 
 [cebp_by_condition, cebp_by_well] = restructuredata(AllData,'MeanNuc1'); % 1st measurment we want to compare
@@ -27,26 +27,51 @@ summarizeMeasurement2D(AllData,'Area','MeanNuc1') % Summary 3: scatter plots of 
 condition_names = fieldnames(AllData); % Get names of experiments
 
 
-subset = 13:16; % Let's look at conditions #5-8,the dose response curve for SD1LAP0
+subset = 5:8; % Let's look at conditions #5-8,the dose response curve for SD1LAP0
 color_theme = colors.theme1(end:-1:1); % This is 4 colors: dark gray, dark blue, light blue, then red.
 color_theme = repmat(color_theme,[1 ceil(length(subset)/length(color_theme))]); % Repeat colors if there are >4 subsets
 
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %  EXAMPLE 2A: violin plots for selected experiments
+
+% ~~~~~Modify this~~~~~~
+x_data = cebp_by_condition;
+% ~~~~~~~~~~~~~~~~~~~~~~~
+
 % (Type 'help spaceviolin' to see the options you can set)
 fig1 = figure('Position', positionfig(450, 390)); ax1 = axes('Parent',fig1);
-spaceviolin(cebp_by_condition(subset),1:length(subset),'Color',color_theme,'XSpace', 0.2,'Area',0.011,'YLim',[-500 6000],'Axes',ax1); 
+spaceviolin(x_data(subset),1:length(subset),'Color',color_theme,'XSpace', 0.2,'Area',0.011,'YLim',[-500 6000],'Axes',ax1); 
 ylabel('CEBP Expression'); 
 set(gca,'XTick',1:4,'XTickLabel',{})
-legend(condition_names(subset),'Location','northwest')
+legend(condition_names(subset),'Location','northwest','Interpreter','none')
+
+% VARIANT: compare multiple cell lines (log transform)
+log_filter = @(vect) real(log(vect)); % (Make sure negative vals don't mess us up)
+x_data = cellfun(log_filter,x_data,'UniformOutput',0);
+
+subset2 = [5:8, 13:16, 21:24];
+bins = linspace(5,10.5,40);
+fig1 = figure('Position', positionfig(900, 200)); ax1 = axes('Parent',fig1);
+spaceviolin(x_data(subset2),[1:4, 7:10, 13:16],'Color',color_theme,'XSpace', 0.2,'Area',0.005,'YLim',[4.75 11],...
+    'Connect','off','Axes',ax1,'LineWidth',0,'Bins',bins); 
+ylabel('CEBP Expression'); 
+set(gca,'XTick',[],'XTickLabel',{})
+legend(condition_names(subset2),'Location','northeast','Interpreter','none')
 
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % EXAMPLE 2B: stacked/semi-transparent kernel density estimates (smoothed histograms)
 ax1 = kdeoverlay(cebp_by_condition(subset),'Color',color_theme,'Alpha',0.25  ,'XLim',[-200, 3500],'LineWidth',2); 
 xlabel('CEBP Expression'); ylabel('Relative Frequency')
-legend(condition_names(subset),'Location','northeast','FontSize',10)
+legend(condition_names(subset),'Location','northeast','FontSize',10,'Interpreter','none')
+
+% Variation: do log transform on data 1st
+log_filter = @(vect) real(log(vect)); % (Make sure negative vals don't mess us up)
+x_data = cellfun(log_filter,cebp_by_condition,'UniformOutput',0);
+[ax1, bw] = kdeoverlay(x_data(subset),'Color',color_theme,'Alpha',0.25, 'Xlim',[5 10.5],'LineWidth',2,'Bandwidth',0.12); 
+xlabel('CEBP Expression (log)'); ylabel('Relative Frequency')
+
 
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
@@ -68,7 +93,8 @@ for i = 1:length(subset)
     dscatter(x_data{subset(i)}, y_data{subset(i)},'Parent',ha(i))
     set(ha(i),'XLim',xlim,'YLim',ylim,'XGrid','on','YGrid','on')
     text(mean(xlim),max(ylim),[num2str(i),') ', condition_names{i}],...
-    'HorizontalAlignment','center','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w')
+    'HorizontalAlignment','center','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w',...
+    'Interpreter','none')
     xlabel(ha(i), x_title)
     if i>1
         set(ha(i),'YTickLabel',{})
@@ -84,7 +110,7 @@ colormap(colormaps.byr)
 
 % _____Modify these______
 x_data = cebp_by_well;
-threshold = 595;
+threshold = 620;
 name1 = 'Mean CEBP Expression';
 name2 = 'Expressing cells';
 xlabels = {'0 dox', '0.5 dox', '1.0 dox', '1.5 dox'};

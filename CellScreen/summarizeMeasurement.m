@@ -24,7 +24,7 @@ end
 
 [by_condition, by_well, by_image] = restructuredata(AllData,measure_name);
 
-%% Section 1: small-multiple histograms (by EXPERIMENT)
+%% Graph 1: small-multiple histograms (by EXPERIMENT)
 bin_lim = prctile(all_vals1, pct);
 bins = linspace(bin_lim(1),bin_lim(2),64);
 n_cols = 6;
@@ -51,9 +51,10 @@ for i = 1:length(ha)
 end
 
 
-%% Section 2: bar plots (means, performed by WELL, and means, performed by IMAGE)
+%% Graph 2: bar plots (means, performed by WELL, and means, performed by IMAGE)
 colors = setcolors;
-clr2 = clr(round(linspace(1,100,length(by_well))),:);
+color_theme = cat(2,{[1 1 1]}, colors.grays(4), colors.peacock);
+color_theme = repmat(color_theme,[1 ceil(length(by_well)/length(color_theme))]); % Repeat colors if there are >4 subsets
 
 % Prep figure
 figure('Position',positionfig(900,400));
@@ -70,7 +71,7 @@ end
 
 hold(ha(1),'on')
 for i = 1:length(all_means)
-    bar(i,all_means(i),'FaceColor',clr2(i,:),'EdgeColor','none','Parent',ha(1))
+    bar(i,all_means(i),'FaceColor',color_theme{i},'EdgeColor','k','Parent',ha(1))
 end
 set(ha(1),'XLim',[0 length(all_means)*1.4],'XTick',[],'Box','on')
 h = terrorbar(1:length(all_means),all_means,all_err,0.5);
@@ -92,7 +93,7 @@ end
 
 hold(ha(2),'on')
 for i = 1:length(all_means)
-    bar(i,all_means(i),'FaceColor',clr2(i,:),'EdgeColor','none','Parent',ha(2))
+    bar(i,all_means(i),'FaceColor',color_theme{i},'EdgeColor','k','Parent',ha(2))
 end
 set(ha(2),'XLim',[0 length(all_means)*1.4],'XTick',[],'Box','on')
 h = terrorbar(1:length(all_means),all_means,all_err,0.5);
@@ -101,7 +102,11 @@ hold(ha(2),'off')
 text(0.5*mean(get(ha(2),'XLim')),max(get(ha(2),'YLim')),' Avearage across IMAGES (w/ standard deviation)',...
     'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(2),'Interpreter','none')
 
-l_ax = legend(all_cond,'Position',[0.7933  0.0758 0.15 0.9],'Interpreter','none');
+cond_names = all_cond;
+for i = 1:length(cond_names)
+    cond_names{i} = [num2str(i),') ',cond_names{i}];
+end
+l_ax = legend(cond_names,'Position',[0.7933  0.0758 0.15 0.9],'Interpreter','none');
 
 
 
