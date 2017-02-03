@@ -32,8 +32,8 @@ for frm = 1:length(queue_in)
 
     % Make 1st entry in labeldata
     labeldata(frm).obj = (1:length(props))';
-    labeldata(frm).centroidx = vect_centroidx';
-    labeldata(frm).centroidy = vect_centroidy';
+    labeldata(frm).centroidx = vect_centroidx' - p.ImageOffset{frm}(2);
+    labeldata(frm).centroidy = vect_centroidy'-p.ImageOffset{frm}(1);
     labeldata(frm).area = vect_area';
     labeldata(frm).perimeter = vect_perimeter';    
     labeldata(frm).obj(labeldata(frm).area==0) = 0;

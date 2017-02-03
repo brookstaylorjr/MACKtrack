@@ -16,7 +16,7 @@ function [output, diagnos] =  phaseID(phaseOrig,p,X)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Subfunctions
-% otsuthresh.m, tsaithresh.m, noisethresh.m, fillholes.m
+% quickthresh.m, tsaithresh.m, noisethresh.m, fillholes.m
 %
 
 % Notes
@@ -43,7 +43,7 @@ verticalEdge = imfilter(phaseOrig,fspecial('sobel')'/8,'replicate');
 diagnos.combined_edge = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 
 %________________________ 3. Control for sparsely populated images ___________________________
-diagnos.subsetThreshold = otsuthresh(diagnos.combined_edge,false(size(diagnos.combined_edge)),'none');
+diagnos.subsetThreshold = quickthresh(diagnos.combined_edge,false(size(diagnos.combined_edge)),'none');
 diagnos.image_subset = imdilate(diagnos.combined_edge>(diagnos.subsetThreshold), ones(80));
 
 

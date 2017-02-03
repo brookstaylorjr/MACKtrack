@@ -20,7 +20,11 @@ bit_depth = imfo.BitDepth;
 
 images = struct;
 images.nucleus = checkread([locations.scope,p.ImagePath,eval(p.NucleusExpr)],bit_depth);
-images.cell = checkread([locations.scope,p.ImagePath,eval(p.CellExpr)],bit_depth);
+if ~strcmpi(p.ImageType,'none')
+    images.cell = checkread([locations.scope,p.ImagePath,eval(p.CellExpr)],bit_depth);
+else
+    images.cell = images.nucleus;
+end
 
 % Add measurement images
 modules = p.ModuleNames;
@@ -36,26 +40,55 @@ for ind1 = 1:length(modules)
         end
     end
 end
-% Rotate images if necessary
+% Rotate images (to make wider than tall)
 imgnames = fieldnames(images);
+rotate_flag = 0;
 for k = 1:length(imgnames)
     if size(images.(imgnames{k}),1)>size(images.(imgnames{k}),2)
         images.(imgnames{k}) = imrotate(images.(imgnames{k}),90);
+        rotate_flag = 1;
     end
 end
 
-switch p.ImageType
-    case 'DIC'
+% Convert any parameter flatfield images to functions
+if isfield(p,'Flatfield')
+    X = [];
+    warning off MATLAB:nearlySingularMatrix
+    for i = 1:length(p.Flatfield)
+        if size(X,1) ~= numel(p.Flatfield{i})
+            X = backgroundcalculate(size(p.Flatfield{i}));
+        end        
+        corr_img = p.Flatfield{i};
+        pStar = (X'*X)\(X')*corr_img(:);
+        % Apply correction
+        corr_img = reshape(X*pStar,size(corr_img));
+        if rotate_flag
+            corr_img = imrotate(corr_img,90);
+        end
+        p.Flatfield{i} = corr_img-min(corr_img(:));
+    end
+end
+
+
+switch lower(p.ImageType)
+    case 'dic'
         % Set function names
         fnstem = 'dic';
-        % Set images and overlays
         X = []; 
     case 'phase'
-        % Set function names
         fnstem = 'phase';
-        % Set auxilary information
         X = backgroundcalculate(p.ImageSize);
+    case 'none'
+        fnstem = 'primary';
+        X = [];
+    case 'fluorescence'
+        fnstem = 'fluorescence';
+        X = images.nucleus; 
+        
 end
+
+% Turn off combine structures warning
+warning('off','MATLAB:combstrct')
 
 % - - - - 1st mask: make mask from cell image - - - - 
 tic
@@ -66,20 +99,20 @@ handles.diagnostics.cell = diag_tmp;
 tocs.CellMasking = toc;
 
 % - - - - 1st label: make label matrix from nuclear image - - - -
+tic
 [data_tmp, diag_tmp] = nucleusID(images.nucleus,p,data);
 % Save information
 handles.diagnostics.nuclei = diag_tmp;
-data = combinestructures(data,data_tmp);
+data = combinestructures(data_tmp,data);
 tocs.NucMasking = toc;
 
 
-% - - - - Check cells (binucleates, missed nuclei, etc.) - - - -
+% - - - - Check cells (misc check for binucleates, missed nuclei, etc.) - - - -
 tic
-checkfn = str2func([fnstem,'Check']);
-[data_tmp,diag_tmp] = checkfn(data,images.cell,p);
+[data_tmp,diag_tmp] = doubleCheck(data,images.cell,p);
 % Save information
 handles.diagnostics.check = diag_tmp;
-data = combinestructures(data,data_tmp);
+data = combinestructures(data_tmp,data);
 tocs.CheckCells = toc;
 
 % - - - - 2nd label: make label matrix by segmenting cell image - - - - 
@@ -88,7 +121,7 @@ segmentfn = str2func([fnstem,'Segment']);
 [data_tmp, diag_tmp] = segmentfn(data,images.cell,p);
 % Save information
 handles.diagnostics.segmentation = diag_tmp;
-data = combinestructures(data,data_tmp);
+data = combinestructures(data_tmp,data);
 tocs.Segmentation = toc;
 
 % Display times
@@ -106,6 +139,8 @@ assignin('base','trackdata',data);
 % - - - - Make all display images - - - - 
 display_list = {};
 
+
+setcolors;
 % Make overlay list: nuclei, cells, and all primary measured images
 overlayList = fieldnames(images);
 % Create overlay list images
@@ -115,15 +150,28 @@ for k = 1:length(overlayList)
     x = [-2 5];
     disp_img(disp_img<x(1)) = x(1);
     disp_img(disp_img>x(2)) = x(2);
-    disp_img = (disp_img - x(1))/(x(2)-x(1))*255;
+    disp_img = (disp_img - x(1))/(x(2)-x(1))*255;  
+    % Overlay nuclear borders as orange
+    border1 = (imdilate(data.nuclei,ones(3))-data.nuclei)>0;
+    R = disp_img; R(border1) = R(border1)*0.25 + 0.75*248;
+    G = disp_img; G(border1) = G(border1)*0.25 + 0.75*152;
+    B = disp_img; B(border1) = B(border1)*0.25 + 0.75*29;
+    
+    if ~strcmpi(p.ImageType,'none')
+        %  Overlay cell borders as light blue
+        border1 = (imdilate(data.cells,ones(3))-data.cells)>0;
+        R(border1) = R(border1)*0.25 + 0.75*118;
+        G(border1) = G(border1)*0.25 + 0.75*180;
+        B(border1) = B(border1)*0.25 + 0.75*203;
+    end
+    
+    disp_img = cat(3,R,G,B);
     disp_img = uint8(round(disp_img));
-    % Overlay cell borders
-    disp_img((imdilate(data.cells,ones(3))-data.cells)>0) = 128;
-    % Overlay nuclear borders (from Check module)
-    disp_img((imdilate(data.nuclei,ones(3))-data.nuclei)>0) = 0;
     handles.overlays.(overlayList{k}) = disp_img;
     display_list = cat(2,display_list,['overlay-',overlayList{k}]);
 end
+
+
 
 % - - - - Make full list of all diagnostic data - - - -
 infoFields = fieldnames(handles.diagnostics);
@@ -141,10 +189,15 @@ handles.display_list = display_list;
 
 % - - - - Initialize figure + popup - - - - 
 % Initialize axes and slider and set properties
+handles.imageSize = size(handles.overlays.(overlayList{1}));
 handles.diagnosticFig = figure;
 handles.diagnosticAxes = axes('Parent',handles.diagnosticFig);
 handles.diagnosticPopup  = uicontrol('Style', 'popupmenu','String',display_list,'Callback',{@popup_Callback,handles},'FontName','sans serif',...
     'BackgroundColor',[.99 .99 1]);
+% Make "Reset zoom" button
+handles.reset  = uicontrol('Style', 'pushbutton','String','Reset zoom','BackgroundColor',[.99 .99 1]);
+set(handles.reset,'Callback',{@reset_Callback,handles});
+% Display image
 imagesc(handles.overlays.(overlayList{1}),'Parent',handles.diagnosticAxes), colormap gray
 set(handles.diagnosticAxes,'YTick',[],'XTick',[])
 set(handles.diagnosticFig,'ResizeFcn',{@fig_resize,handles},'Toolbar','figure');
@@ -152,6 +205,7 @@ assignin('base','p',handles.parameters)
 if isfield(handles,'figure1')
     guidata(handles.figure1,handles)
 end
+fig_resize([],[],handles)
 
 function popup_Callback(hObject,~,handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -181,6 +235,20 @@ figPos = get(handles.diagnosticFig,'Position');
 h = figPos(4);
 w = figPos(3);
 set(handles.diagnosticPopup,'Position',[floor(w/2)-200 5 400 24])
+set(handles.reset,'Position',[floor(w/2)+210,12, 70, 18]);
 axis image
 set(handles.diagnosticAxes,'OuterPosition',[0 30/h 1 (h-42)/h],'LooseInset',get(handles.diagnosticAxes,'TightInset')+[10/w 5/h 10/w 5/h])
+% ========================================================================================
+
+
+function reset_Callback(~,~,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% Reset zoom state of figure
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+xlim = [1 handles.imageSize(2)];
+ylim = [1 handles.imageSize(1)];
+
+set(gca,'xlim',xlim,'ylim',ylim)
+
 % ========================================================================================

@@ -1,4 +1,4 @@
-function [measure, info] = loadID(id, options)
+function [measure, info] = loadID(id)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [measure, info] = loadID(id, options)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -7,7 +7,6 @@ function [measure, info] = loadID(id, options)
 %
 % INPUTS
 % id          ID# of sets get data from
-% options     (optional) structure specifying smoothing on data and pixel-to-micron conv.
 %
 % OUTPUTS:
 % measure     full measurement information struct
@@ -15,12 +14,6 @@ function [measure, info] = loadID(id, options)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Set default smoothing/unit conversion options: 
-if nargin<2
-    options.Smoothing = ' None';
-    options.SmoothingWindow = 3;
-    options.PixelConversion = 4.03;
-    options.FramesPerHour = 12;
-end
 
 % Load locations (for images and output data)
 home_folder = mfilename('fullpath');
@@ -51,13 +44,7 @@ info.ImageDirectory = [locations.scope, AllMeasurements.parameters.ImagePath];
 measure = struct;
 for i = 1:length(info.fields)
     if ~strcmpi(info.fields{i},'parameters') && ~strcmpi(info.fields{i},'CellData')
-        
-        if ~iscell(AllMeasurements.(info.fields{i}))
-            measure.(info.fields{i}) = smoothMeasurement(AllMeasurements.(info.fields{i}), ...
-                options,info.CellData, info.fields{i});
-        else
-            measure.(info.fields{i}) = AllMeasurements.(info.fields{i});
-        end
+        measure.(info.fields{i}) = AllMeasurements.(info.fields{i}); 
     end
 end
 info.fields = fieldnames(measure);
@@ -89,15 +76,15 @@ try
                     end
                 end
                 img = checkread([locations.scope, p.ImagePath, eval(expr)],bit_depth,1,1);
-                nfkb_thresh(ind) = otsuthresh(img,false(size(img)),'log');
+                nfkb_thresh(ind) = quickthresh(img,false(size(img)),'log');
                 [~,p.img_distr(:,ind)] = modebalance(img,2,bit_depth,'measure');
             end
             p.nfkb_thresh = mean(nfkb_thresh);
             AllMeasurements.parameters = p;
             save(info.savename,'AllMeasurements')
         end
+    % Load NFkB measurement (unimodal background) for endogenous NFkB    
     elseif isfield(AllMeasurements, 'NFkBdimNuclear')
-
         if ~isfield(p, 'adj_distr')
             disp('Measuring and saving initial (flatfield-corrected) image distributions')
             p.adj_distr = zeros(2,length(p.XYRange));
@@ -122,7 +109,39 @@ try
                 pStar = (X'*X)\(X')*double(img(:));
                 warning on MATLAB:nearlySingularMatrix
                 % Apply background correction
-                img = reshape((double(img(:) - X*pStar)),size(img));x
+                img = reshape((double(img(:) - X*pStar)),size(img));
+                img = img-min(img(:)); % Set minimum to zero
+                [~,p.adj_distr(:,ind)] = modebalance(img,1,bit_depth,'measure');
+            end
+                AllMeasurements.parameters = p;
+                save(info.savename,'AllMeasurements')
+        end
+        % Load nuclear image for nucIntenstiy Module (dim assumed - unimodal model)
+    elseif isfield(AllMeasurements, 'MeanIntensityNuc')
+        if ~isfield(p, 'adj_distr')
+            disp('Measuring and saving initial (flatfield-corrected) image distributions')
+            p.adj_distr = zeros(2,length(p.XYRange));
+            for ind = 1:length(p.XYRange)
+                i = p.XYRange(ind);
+                j = min(p.TimeRange);
+                expr = p.nucintensityModule.ImageExpr;
+                if ~exist('bit_depth','var')
+                    if isfield(p,'BitDepth')
+                        bit_depth = p.BitDepth;
+                    else
+                        imfo = imfinfo([locations.scope, p.ImagePath, eval(expr)]);
+                        bit_depth = imfo.BitDepth;
+                    end
+                end
+                img = checkread([locations.scope, p.ImagePath, eval(expr)],bit_depth,1,1);
+                if ind==1
+                    X = backgroundcalculate(size(img));
+                end
+                warning off MATLAB:nearlySingularMatrix
+                pStar = (X'*X)\(X')*double(img(:));
+                warning on MATLAB:nearlySingularMatrix
+                % Apply background correction
+                img = reshape((double(img(:) - X*pStar)),size(img));
                 img = img-min(img(:)); % Set minimum to zero
                 [~,p.adj_distr(:,ind)] = modebalance(img,1,bit_depth,'measure');
             end
@@ -131,7 +150,8 @@ try
         end
     end
 catch me
-    warning('Couldn''t find original images to add background distributions - these may be required for some visualization functions.');
+    disp(me)
+    warning('Couldn''t find original images to measure background distributions - these may be required for some visualization functions.');
 end
 
 

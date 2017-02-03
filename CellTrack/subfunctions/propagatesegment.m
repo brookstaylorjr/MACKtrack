@@ -26,7 +26,7 @@ image_clamp(image_clamp<0) = 0; image_clamp(image_clamp>1) = 1;
 % Run propagate (requires compiled binary)
 label1 = IdentifySecPropagateSubfunction(double(seeds),double(image_clamp),mask,lambda);
 
-
+%%
 % Correct for errors segmentation: look for thin pieces
 SEround = diskstrel(strel_size);
 borders = (imdilate(label1,ones(3))-label1)>0.5;

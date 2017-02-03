@@ -19,7 +19,6 @@ function [CellMeasurements, ModuleDataOut] = neighborModule(CellMeasurements,par
 conversion = 4.03;
 
 
-
 % On first call, initialize all new CellMeasurements fields
 if ~isfield(CellMeasurements,'OccupiedPerimeter')
     CellMeasurements.OccupiedPerimeter = nan(parameters.TotalCells,parameters.TotalImages);

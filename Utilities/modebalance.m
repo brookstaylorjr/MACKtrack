@@ -26,8 +26,8 @@ function [output_img, varargout] = modebalance(input_img, num_modes, bit_depth, 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Validate number of subpopulations (needs to be 1 or 2)
-if ~ismember(num_modes,[1 2]);
-    error('Error in MODEBALANCE: only uni- or bi-modal populations can be modeled')
+if ~ismember(num_modes,[0 1 2 3]);
+    error('Error in MODEBALANCE: only 1,2, or 3 subpopulations can be modeled')
 end
 
 if nargin<4
@@ -45,22 +45,33 @@ n = hist(imgvect,x)/numel(imgvect);
 % Get mode of distribution, and calculate percentiles on left side
 mode_loc = find(n==max(n),1,'first');
 pct1 = cumsum(n(mode_loc:-1:1)) / sum(n(1:mode_loc));
-% Determine 1st guess at background mean and variance
+bg_prct = min([0.99,2*sum(n(1:mode_loc))]);
+
+% Determine 1st guess at background mean and variance using 68% rule
 mu1 = x(mode_loc);
-if max(pct1>0.68)
-    sigma1 = (x(mode_loc) - x(mode_loc - find(pct1>0.68,1,'first')))^2;
-else
-    sigma1 = x(mode_loc).^2;
+try
+    if max(pct1)>0.68
+        sigma1 = (x(mode_loc) - x(mode_loc - find(pct1>0.68,1,'first')));
+    else
+        sigma1 = (x(mode_loc)-min(imgvect(:)))/3;
+    end
+catch me % Entire image may be "saturated" - 
+    sigma1 = std(input_img(:));
+    mu1 = mode(input_img(:));
 end
 
 % Turn convergence warning off
 warning('off','stats:gmdistribution:FailedToConverge')
+
 try
     switch num_modes
+        case 0 % No GMM fit - use background guess only.
+            obj.Sigma = sigma1^2;
+            obj.mu = mu1;
         case 1 % Unimodal case
             % Assign starting GMM structure
             S.mu = mu1;
-            S.Sigma = sigma1;
+            S.Sigma = sigma1^2;
             S.PComponents = 1;
             % Set maxIter for GM modeling (should be small for speed, <50)
             gmopt = statset('MaxIter',5);
@@ -68,50 +79,63 @@ try
             obj = gmdistribution.fit(imgvect,1,'Start',S,'SharedCov',true, 'Options',gmopt);  
         case 2 % Bimodal case
             % Assign starting GMM structure
-            S.mu = [mu1; mu1+2*sqrt(sigma1)];
-            S.Sigma = cat(3,sigma1, sigma1*4);
-            S.PComponents = [0.75 0.25]; % This may not be the best thing to do, here...
+            S.mu = [mu1; mu1+3*sqrt(sigma1)];
+            S.Sigma = cat(3,sigma1^2, (sigma1*3)^2);
+            S.PComponents = [bg_prct 1-bg_prct];
             % Set maxIter for GM modeling (should be small for speed, <50)
-            gmopt = statset('MaxIter',12);
+            gmopt = statset('MaxIter',50);
             % Model distribution
             obj = gmdistribution.fit(imgvect,2,'Start',S,'CovType','diagonal','Options',gmopt);
+        case 3 % Trimodal case
+            S.mu = [mu1; mu1+2.5*sigma1; mu1+5*sigma1];
+            S.Sigma = cat(3,sigma1, (sigma1*3)^2, (sigma1*3)^2);
+            S.PComponents = [bg_prct (1-bg_prct)/2 (1-bg_prct)/2];
+            % Set maxIter for GM modeling (should be small for speed, <50)
+            gmopt = statset('MaxIter',50);
+            % Model distribution
+            obj = gmdistribution.fit(imgvect,3,'Start',S,'CovType','diagonal','Options',gmopt);
+            
     end
 
     % Turn convergence warning back on
     warning('on','stats:gmdistribution:FailedToConverge')
+
+    % Discard any subpopulation <10% of total pixels
+    invalids = obj.ComponentProportion<0.10;
+    test_mu = obj.mu;
+    test_mu(invalids) = inf;
+    
     % Get the minimum mean and its standard deviation (background) and normalize that to [0,1]
-    mu_ind = find(obj.mu == min(obj.mu));
+    mu_ind = find(test_mu == min(test_mu));
     background_mu = obj.mu(mu_ind);
     if size(obj.Sigma,1) > 1
         background_sigma = sqrt(obj.Sigma(mu_ind,mu_ind));
     else
         background_sigma = sqrt(obj.Sigma(mu_ind));
     end
-
-    if strcmp(balance_mode,'measure')
-        varargout{1} = [background_mu(1); background_sigma(1)];
-        output_img = input_img; % Don't modify image
-    elseif strcmp(balance_mode,'correct')
-        if length(varargin)<1
-            error('Error in MODEBALANCE: corrected images need a distribution to match of form [mu; sigma]')
-        end
-        match_dist = varargin{1};
-        output_img = (input_img-background_mu(1))/background_sigma(1)*match_dist(2); % Match standard deviation
-        output_img = output_img + match_dist(1); % Match mean
-        output_img(output_img<0) = 0;
-        output_img(output_img > ((2^bit_depth)-1)) = (2^bit_depth)-1;
-        varargout{1} = match_dist(2)/background_sigma(1);
-    else % display
-        output_img = (input_img - background_mu(1))/(background_sigma(1));
-    end
 catch me
-    warning('Backround distribution fitting failed for this image - outputting original image, centered at zero')
-    std_dev = std(input_img(:));
-    if  std_dev > eps
-        output_img = (input_img - nanmean(input_img(:)))/std_dev;
-    else
-        output_img = (input_img - nanmean(input_img(:)));
-    end       
+    warning('Background distribution fitting failed for this image - balancing around image mode')
+    background_mu =  mu1;
+    background_sigma = sigma1;
 end
+
+
+if strcmp(balance_mode,'measure')
+    varargout{1} = [background_mu(1); background_sigma(1)];
+    output_img = input_img; % Don't modify image
+elseif strcmp(balance_mode,'correct')
+    if length(varargin)<1
+        error('Error in MODEBALANCE: corrected images need a distribution to match of form [mu; sigma]')
+    end
+    match_dist = varargin{1};
+    output_img = (input_img-background_mu(1))/background_sigma(1)*match_dist(2); % Match standard deviation
+    output_img = output_img + match_dist(1); % Match mean
+    output_img(output_img<0) = 0;
+    output_img(output_img > ((2^bit_depth)-1)) = (2^bit_depth)-1;
+    varargout{1} = match_dist(2)/background_sigma(1);
+else % display
+    output_img = (input_img - background_mu(1))/(background_sigma(1));
+end
+
 
 

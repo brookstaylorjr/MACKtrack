@@ -24,7 +24,6 @@ pageString = urlread(url);
 % Build cell aray of table data
 
 for i = 1:length(tables)
-
     table = tables{i};
     rows = regexpi(table, '<tr.*?>(.*?)</tr>','tokens');
     table_data = cell(0);
@@ -74,6 +73,14 @@ data.time_ranges = table_data(2:end,strcmpi(table_data(1,:),'t'));
 data.parameter_files = table_data(2:end,strcmpi(table_data(1,:),'params file'));
 data.save_dir = table_data(2:end,strcmpi(table_data(1,:),'save path'));
 data.modify = table_data(2:end,strcmpi(table_data(1,:),'other params'));
+% For parameter modifier column: sub in single quotes that are misformatted after google sheet read
+for idx = 1:length(data.modify)
+        tmp_str = data.modify{idx};
+        subs = strfind(tmp_str,'&#39');
+        for i = 1:length(subs); tmp_str(subs(i):subs(i)+4) = '~~''~~'; end
+        tmp_str(strfind(tmp_str,'~')) = [];
+        data.modify{idx} = tmp_str;
+end
 
 % Double check that all necessary data was found and subset data
 types = fieldnames(data);

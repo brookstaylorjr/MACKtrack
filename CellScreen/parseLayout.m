@@ -29,7 +29,7 @@ for j = 1:length(ltr)
         end
     end
 end  
-disp(['- - - - - - Measuring following conditions from images under directory ''',layout_dir,'''- - - - - '])
+disp(['- - - - - - Measuring, under ''',layout_dir,'''- - - - - '])
 for i = 1:length(cond_names)
     if ~iscell(cond_wells{i})
         cond_wells{i} = {cond_wells{i}};

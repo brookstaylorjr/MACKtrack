@@ -1,10 +1,12 @@
 function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % TRACKNUCLEI tracks nuclei across 2 frames (frame 1 to frame 2), using later frames for error checking.
 %
 % queue_in       stack of label matricies to be analyzed
 % CellData       structure containing information/properties for all cells
-% currentImage   current image being analyzed (frame1 image number)
+% curr_frame     current image being analyzed (frame1 image number)
 % p              parameters structure from setupTracking.m script
 %
 % CellDataOut    modified from CellData
@@ -13,8 +15,13 @@ function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, 
 disp('Tracking decisions:')
 % Define edge image for use later in decision-making
 imgedge = false(size(queue_in(1).nuclei));
-imgedge([1:p.MinNucleusRadius,end-p.MinNucleusRadius:end],:) = 1;
-imgedge(:,[1:p.MinNucleusRadius,end-p.MinNucleusRadius:end]) = 1;
+offset = p.ImageOffset{end}-p.ImageOffset{end-1};
+row_low = max([1, 1+p.MinNucleusRadius+offset(1)]);
+row_hi = min([size(imgedge,1),size(imgedge,1)-p.MinNucleusRadius+offset(1)]);  
+col_low = max([1, p.MinNucleusRadius+offset(1)]);
+col_hi = min([size(imgedge,2),size(imgedge,2)-p.MinNucleusRadius+offset(2)]);  
+imgedge([1:row_low,row_hi:end],:) = 1; % Edge rows
+imgedge(:,[1:col_low,col_hi:end]) = 1; % Edge cols
 
 % Get regionprops of new frame (top of queue)
 props = regionprops(queue_in(end).nuclei,'Area', 'Centroid', 'Perimeter');
@@ -27,8 +34,8 @@ vect_perimeter = cell2mat(tmpcell(3,:));
 
 % Make new (temporary) structure, concatenate into old labeldata
 tmp.obj = (1:length(props))';
-tmp.centroidx = vect_centroidx';
-tmp.centroidy = vect_centroidy';
+tmp.centroidx = vect_centroidx' - p.ImageOffset{end}(2);
+tmp.centroidy = vect_centroidy' - p.ImageOffset{end}(1);
 tmp.area = vect_area';
 tmp.perimeter = vect_perimeter';    
 tmp.obj(tmp.area==0) = 0;
@@ -56,6 +63,7 @@ for i = 1:(size(blocks,1)-1)
     newlinks = linkblock(blocks(i,:), blocks, i+1, labeldata, p);
     links = cat(1,links,newlinks);
 end
+all_links = links;
 
 % Rank/resolve links on distance travelled and similarity (average of perimeter/area changes)
 while ~isempty(links)
@@ -71,7 +79,6 @@ while ~isempty(links)
     else
         links(1,:) = [];
     end
-
 end
 
 % Pull pre-existing blocks (in numerically consistent order) 
@@ -97,11 +104,10 @@ blocks = blocks(:,2:end); % Drop the old frame
 labeldata(1) = []; 
 
 % Decision-making on PRE-EXISTING blocks
-mask_added = false(size(queue_in(1).nuclei));
 for i = 1:size(blocks_pre,1)
     if blocks_pre(i,1) == 0
         if sum(blocks_pre(i,:))==0 % If object doesn't ever reappear in stack again, let it die off
-            % Make sure we didn't kill the cell off already.
+            % [Make sure we didn't kill the cell off already]
             if CellData.FrameOut(i) > curr_frame
                 CellData.FrameOut(i) = curr_frame-1;
                 disp(['Set cell #',num2str(i),'''s frame out: ',num2str(curr_frame-1)])
@@ -113,12 +119,19 @@ for i = 1:size(blocks_pre,1)
             frm1obj = length(labeldata(1).obj)+1;
             frmX = find(blocks_pre(i,:)>0,1,'first');
             frmXobj = blocks_pre(i,frmX);
-            xpt1 = floor(CellData.labeldata(1).centroidx(frm0obj) + (labeldata(frmX).centroidx(frmXobj) - CellData.labeldata(1).centroidx(frm0obj))/frmX);
-            ypt1 = floor(CellData.labeldata(1).centroidy(frm0obj) + (labeldata(frmX).centroidy(frmXobj) - CellData.labeldata(1).centroidy(frm0obj))/frmX);
-            rad1 = floor(sqrt(CellData.labeldata(1).area(frm0obj) + (labeldata(frmX).area(frmXobj) - CellData.labeldata(1).area(frm0obj))/frmX)/pi);
-            tmp_mask(ypt1,xpt1) = 1;
+            xpt1 = floor(CellData.labeldata(1).centroidx(frm0obj) + (labeldata(frmX).centroidx(frmXobj)...
+                         - CellData.labeldata(1).centroidx(frm0obj))/frmX);
+            ypt1 = floor(CellData.labeldata(1).centroidy(frm0obj) + (labeldata(frmX).centroidy(frmXobj)...
+                        - CellData.labeldata(1).centroidy(frm0obj))/frmX);
+            % Put image offset back in, cap to image size.
+            y_place = ypt1 + p.ImageOffset{1}(1);
+            x_place = xpt1 + p.ImageOffset{1}(2);
+            x_place(x_place<1) = 1; x_place(x_place>size(queue_in(end).nuclei,2)) = size(queue_in(end).nuclei,2);
+            y_place(y_place<1) = 1; y_place(y_place>size(queue_in(end).nuclei,1)) = size(queue_in(end).nuclei,1);
+            rad1 = floor(sqrt(CellData.labeldata(1).area(frm0obj) + (labeldata(frmX).area(frmXobj)...
+                - CellData.labeldata(1).area(frm0obj))/frmX)/pi);
+            tmp_mask(y_place,x_place) = 1;
             tmp_mask = imdilate(tmp_mask,diskstrel(rad1));
-            mask_added = mask_added|tmp_mask; % Keep track of all added objects
             queue_in(1).nuclei(tmp_mask) = frm1obj;
             % Add new object into block/labelinfo
             blocks_pre(i,1) = frm1obj;
@@ -137,8 +150,8 @@ newblocks = [];
 blockparent = [];
 blockedge = [];
 for i = 1:size(blocks,1)
-    % PRELIMINARY CHECK: is object in >60% of frames?
-    if (sum(blocks(i,:)>0)/size(blocks,2)) <= 0.6
+    % PRELIMINARY CHECK: is new object in >66% of frames?
+    if sum(blocks(i,:)>0) <= round(0.66*size(blocks,2))
         blocks(i,:) = NaN;
     % OPTION 1: is object near the edge (drift-in)?
     elseif max(imgedge(queue_in(1).nuclei==blocks(i,1))) > 0 
@@ -150,62 +163,57 @@ for i = 1:size(blocks,1)
     
     % OPTION 2: division. Look at parent/sister candidates: can a suitable match be found?        
     else
-        % Get 5 closest potential parents, then match/calculate distance to sisters
-        candidates = CellData.labeldata(1).obj(CellData.labeldata(1).obj>0);
-        parent_dist = sqrt( (CellData.labeldata(1).centroidx(candidates) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
-            (CellData.labeldata(1).centroidy(candidates) - labeldata(1).centroidy(blocks(i,1))).^2 );
-        [~,p_sort1] = sort(parent_dist,'ascend');
-        candidates = candidates(p_sort1(1:5));
-        p_distances = parent_dist(p_sort1(1:5));
-        blocknums = zeros(size(p_distances));
-        for j = 1:length(blocknums)
-            tmp = find(CellData.blocks(:,1)==candidates(j));
-            if ~isempty(tmp)
-                % Make sure (potential) sister is going to continue to exist
-                if sum(blocks_pre(tmp,:)==0) < 2
-                    blocknums(j) = tmp;
-                end
-            end
+        % Get all potential parents (within specified DriftDistance)
+        p_obj = CellData.labeldata(1).obj(CellData.labeldata(1).obj>0);
+        p_dist = sqrt( (CellData.labeldata(1).centroidx(p_obj) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
+            (CellData.labeldata(1).centroidy(p_obj) - labeldata(1).centroidy(blocks(i,1))).^2 );
+        p_obj = p_obj(p_dist<=p.DriftDistance); % (May want to consider expanding this radius)
+        p_idx = find(ismember(CellData.blocks(:,1),p_obj));
+
+        % Ensure "child" isn't due to spurious false positive -> if obj in new block only coincide w/ obj in candidate "parent"
+        % blocks for a couple frames, combine those blocks.
+        sep = sum((double(repmat(blocks(i,:)>0,[length(p_idx), 1])) + double(blocks_pre(p_idx,:)>0))==1,2);
+        if max(sep) > round(p.StackSize*0.66)
+            ind1 = p_idx(find(sep==max(sep),1,'first'));
+            row1 = blocks_pre(ind1,:);
+            sub_row =  blocks(i,:);
+            row1(row1==0) = sub_row(row1==0);
+            blocks_pre(ind1,:) = row1;
+            blocks(i,:) = nan;
+            continue;
         end
-        p_distances = p_distances(blocknums>0);
-        blocknums = blocknums(blocknums>0);
-        p_distances(blocks_pre(blocknums,1)==0) = [];
-        blocknums(blocks_pre(blocknums,1)==0) = [];
-        %s_distances = sqrt( (labeldata(1).centroidx(blocks_pre(blocknums,1)) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
-         %   (labeldata(1).centroidy(blocks_pre(blocknums,1)) - labeldata(1).centroidy(blocks(i,1))).^2 );
-        % For all candidates, parent should be CLOSER than sister
-        %blocknums = blocknums(p_distances<s_distances);
-        %p_distances = p_distances(p_distances<s_distances);
-        % Of remaining candidates, minimize distance to parent
-        p_block = blocknums(find(p_distances==min(p_distances),1,'first'));
-        % a) Both daughters must exist in at least (n-1)/n frames 
-        if ~isempty(p_block)
-            test2a = max([sum(blocks_pre(p_block,:)==0), sum(blocks(i,:)==0)]) < 2;
-        else
-            test2a = 0;
+
+        % Filter 1: parents must be at least 10 hrs old
+        p_ages = ((curr_frame-CellData.FrameIn(p_idx))/p.FramesPerHour);
+        p_ages(CellData.FrameIn(p_idx)<4) = 1000;
+        if curr_frame<3
+            p_ages(:) = 0;
         end
-        % b) New daughter must be nearby (within 3 nuclear diameters) of parent
-        test2b =  min(p_distances) < (3*labeldata(1).perimeter(blocks(i,1))/pi);
-        % c) If the parent has a parent, it must be at least 6 hrs old
-        if CellData.Parent(p_block)==0
-            test2c = 1;
-        else 
-            idx = CellData.Parent(p_block);
-            test2c = ((curr_frame-CellData.FrameIn(idx))/p.FramesPerHour) > 6;
-        end
-        if test2a&&test2b&&test2c
+        p_idx(p_ages<10) = [];
+        % Filter 2: sister/parent candidates cannot be short-lived
+        p_idx(sum(blocks_pre(p_idx,:)==0,2)>=round(size(blocks_pre,2)*0.66)) = [];
+        % Filter 3: sister + parent must be present (to compute "landing")
+        p_idx(blocks_pre(p_idx,1)==0) = [];
+        
+        % Compute ideal "landing spot" for sister -> assume symmetrically-opposed division
+        if ~isempty(p_idx)
+            x_coord = 2*CellData.labeldata(1).centroidx(CellData.blocks(p_idx,1)) - labeldata(1).centroidx(blocks_pre(p_idx,1));
+            y_coord = 2*CellData.labeldata(1).centroidy(CellData.blocks(p_idx,1)) - labeldata(1).centroidy(blocks_pre(p_idx,1));
+            test1 = hypot(x_coord - labeldata(1).centroidx(blocks(i,1)),y_coord - labeldata(1).centroidy(blocks(i,1)));
+            p_idx = p_idx(find(test1==min(test1),1,'first'));
+
             % Create new lineages
-            newblocks = cat(1,newblocks, blocks(i,:), blocks_pre(p_block,:));
+            newblocks = cat(1,newblocks, blocks(i,:), blocks_pre(p_idx,:));
             blockedge = cat(1,blockedge, 0, 0);
-            blockparent = cat(1,blockparent,p_block, p_block);
-            blocks_pre(p_block,:) = 0; % Zero parent     
-            CellData.FrameOut(p_block) = curr_frame-1; % Assign parent the proper frame out
+            blockparent = cat(1,blockparent,p_idx, p_idx);
+            blocks_pre(p_idx,:) = 0; % Zero parent     
+            CellData.FrameOut(p_idx) = curr_frame-1; % Assign parent the proper frame out
             cellnum = size(blocks_pre,1)+length(blockedge)-1;
-            disp(['Created sisters (from #', num2str(p_block),') '...
+            disp(['Created sisters (from #', num2str(p_idx),') '...
                 '#',num2str(cellnum),' & #',num2str(cellnum+1),...
                 ': [',num2str(newblocks(end-1,:)),'] and [',num2str(newblocks(end,:)),']'])
             
-        % CHECK 4: if no suitable parent is found, we better be REAL sure this cell exists.
+        % OPTION 3: if no suitable parent is found, we better be very sure this cell exists
         elseif (sum(blocks(i,:)==0)) < 2
             % Create new lineage
             newblocks = cat(1,newblocks,blocks(i,:));

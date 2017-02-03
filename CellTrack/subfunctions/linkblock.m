@@ -1,10 +1,12 @@
 function links = linkblock(block1, blocks, start_pt, labeldata, p)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% links = linkblock(block1, blocks, start_pt, labeldata, p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % LINKBLOCK is a tracking subfunction- it takes single block, and finds all possible blocks
 % it could be linked to
 %
-% block1       incomplete row of cells (across queue of frames) to be matched
-% block1props   area, perimeter, and centroid information for block1
+% block1       incomplete row of nuc-objects (across queue of frames) to be matched
+% block1props  area, perimeter, and centroid information for block1
 % blocks       all candidate (incomplete) blocks that block1 can possibly match with
 % blockprops   area, perimeter, and centroid information for all blocks
 % start_pt     row index (of blocks) to begin search
@@ -12,7 +14,8 @@ function links = linkblock(block1, blocks, start_pt, labeldata, p)
 % p            parameters structure (need p.DriftDistance)
 %
 % links       list of candidate links- gives pair of blocks, the frames that they crossover, 
-%               and distance and similarity between them
+%               and distance and similarity between them. Format:
+%               link =  [obj1 obj1frame obj2 obj2frame dist delta_area/perim]
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 links = [];
 % Find frame range of block complementary blocks (i.e. ones that are zeroes where current block is defined)

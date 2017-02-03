@@ -1,5 +1,7 @@
 function [labelOut] = watershedalt(imageIn,maskIn, connectivity)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [labelOut] = watershedalt(imageIn,maskIn, connectivity)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % WATERSHEDALT fluorescence image variant on watershed- conditions imageIn using maskIn, 
 % then modifies output to ensure borders and background are set to zero.
 %

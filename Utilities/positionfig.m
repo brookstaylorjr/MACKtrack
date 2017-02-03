@@ -22,7 +22,7 @@ margin = 20; % allowable distance to nearest edge of screen
 
 % Get primary monitor position - we'll put everything on this monitor, working left-to-right
 all_monitors = get(0, 'MonitorPositions');
-idx = 1;
+idx = find(all_monitors(:,1)==1,1,'first');
 monitor_pos = all_monitors(idx,:);
 while min(monitor_pos(3:4)) < 512
     try

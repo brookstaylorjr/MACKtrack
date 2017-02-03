@@ -1,6 +1,6 @@
-function varargout = specifyLocations(varargin)
-% SPECIFYLOCATIONS MATLAB code for specifyLocations.fig
-%      SPECIFYLOCATIONS, by itself, creates a new SPECIFYLOCATIONS or raises the existing
+function varargout = setLocations(varargin)
+% SETLOCATIONS MATLAB code for setLocations.fig
+%      SETLOCATIONS, by itself, creates a new SETLOCATIONS window or raises the existing
 %      singleton*.
 %
 %      H = SPECIFYLOCATIONS returns the handle to a new SPECIFYLOCATIONS or the handle to
@@ -11,25 +11,25 @@ function varargout = specifyLocations(varargin)
 %
 %      SPECIFYLOCATIONS('Property','Value',...) creates a new SPECIFYLOCATIONS or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before specifyLocations_OpeningFcn gets called.  An
+%      applied to the GUI before setLocations_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to specifyLocations_OpeningFcn via varargin.
+%      stop.  All inputs are passed to setLocations_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help specifyLocations
+% Edit the above text to modify the response to help setLocations
 
-% Last Modified by GUIDE v2.5 13-Apr-2015 14:33:53
+% Last Modified by GUIDE v2.5 27-Jan-2017 01:44:54
 
 % Begin initialization code - DO NOT EDIT
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @specifyLocations_OpeningFcn, ...
-                   'gui_OutputFcn',  @specifyLocations_OutputFcn, ...
+                   'gui_OpeningFcn', @setLocations_OpeningFcn, ...
+                   'gui_OutputFcn',  @setLocations_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
 if nargin && ischar(varargin{1})
@@ -44,7 +44,7 @@ end
 % End initialization code - DO NOT EDIT
 
 
-function specifyLocations_OpeningFcn(hObject, eventdata, handles, varargin)
+function setLocations_OpeningFcn(hObject, eventdata, handles, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
@@ -52,7 +52,7 @@ function specifyLocations_OpeningFcn(hObject, eventdata, handles, varargin)
 % handles    structure with handles and user data (see GUIDATA)
 % varargin   command line arguments to secifyLocations (see VARARGIN)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% Choose default command line output for specifyLocations
+% Choose default command line output for setLocations
 handles.output = hObject;
 
 % Update handles structure
@@ -96,13 +96,13 @@ if  exist(handles.locations.data,'dir')
 end
 
 if ~handles.Locked1 && ~handles.Locked2
-    set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+    set(handles.pushbutton3,'ForegroundColor',[0 0 0])
 end
 
 guidata(handles.figure1,handles)
 
 
-function varargout = specifyLocations_OutputFcn(hObject, eventdata, handles) 
+function varargout = setLocations_OutputFcn(hObject, eventdata, handles) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Set default command line output from handles structure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -123,20 +123,20 @@ try
         handles.locations.scope = newfolder;
         handles.Locked1 = 0;
         if ~handles.Locked2
-            set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+            set(handles.pushbutton3,'ForegroundColor',[0 0 0])
         end
         guidata(handles.figure1,handles)
     else
         handles.Locked1 = 1;
         set(handles.edit1,'ForegroundColor',handles.gray)
-        set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+        set(handles.pushbutton3,'ForegroundColor',handles.gray)
         guidata(handles.figure1,handles)
     end
 catch ME
     set(hObject,'String','err')
     handles.Locked = 1;
     set(handles.edit1,'ForegroundColor',handles.gray)
-    set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+    set(handles.pushbutton3,'ForegroundColor',handles.gray)
     guidata(handles.figure1,handles)
     rethrow(ME)
 end
@@ -157,7 +157,7 @@ if (newfolder~=0)
     % Unlock save button
     handles.Locked1 = 0;
     if ~handles.Locked2
-        set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+        set(handles.pushbutton3,'ForegroundColor',[0 0 0])
     end
     guidata(handles.figure1,handles)
 end
@@ -176,20 +176,20 @@ try
         handles.locations.data = newfolder;
         handles.Locked2 = 0;
         if ~handles.Locked1
-            set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+            set(handles.pushbutton3,'ForegroundColor',[0 0 0])
         end
         guidata(handles.figure1,handles)
     else
         handles.Locked2 = 1;
         set(handles.edit2,'ForegroundColor',handles.gray)
-        set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+        set(handles.pushbutton3,'ForegroundColor',handles.gray)
         guidata(handles.figure1,handles)
     end
 catch ME
     set(hObject,'String','err')
     handles.Locked2 = 1;
     set(handles.edit1,'ForegroundColor',handles.gray)
-    set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+    set(handles.pushbutton3,'ForegroundColor',handles.gray)
     guidata(handles.figure1,handles)
     rethrow(ME)
 end
@@ -211,7 +211,7 @@ if (newfolder~=0)
     handles.Locked2 = 0;
     % Unlock save button
     if ~handles.Locked1
-        set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+        set(handles.pushbutton3,'ForegroundColor',[0 0 0])
     end
     guidata(handles.figure1,handles)
 end
@@ -227,23 +227,24 @@ try
     handles.locations.spreadsheet = newaddr;
     guidata(handles.figure1,handles)
     set(handles.edit3,'ForegroundColor',handles.blue)
-    set(handles.pushbutton_end,'ForegroundColor',[0 0 0])
+    set(handles.pushbutton3,'ForegroundColor',[0 0 0])
     handles.Locked3 = 0;
 
 catch ME
     set(hObject,'String','err')
     handles.Locked3 = 1;
     set(handles.edit1,'ForegroundColor',handles.gray)
-    set(handles.pushbutton_end,'ForegroundColor',handles.gray)
+    set(handles.pushbutton3,'ForegroundColor',handles.gray)
     guidata(handles.figure1,handles)
     rethrow(ME)
 end
 % ========================================================================================
 
 
-function pushbutton_end_Callback(hObject, eventdata, handles)
+
+function pushbutton3_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PUSHBUTTON_END: save to 'locations.mat'
+% PUSHBUTTON3: save to 'locations.mat'
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~handles.Locked1 && ~handles.Locked2 && ~handles.Locked3
     locations = handles.locations;

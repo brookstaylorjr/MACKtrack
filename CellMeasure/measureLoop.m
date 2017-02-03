@@ -12,6 +12,22 @@ parameters.XYDir = [parameters.locations.data,filesep,parameters.SaveDirectory,f
 CellMeasurements = struct;      
 ModuleData = struct;
 
+% Convert any parameter flatfield images to functions
+if isfield(parameters,'Flatfield')
+    X = [];
+    warning off MATLAB:nearlySingularMatrix
+    for i = 1:length(parameters.Flatfield)
+        if size(X,1) ~= numel(parameters.Flatfield{i})
+            X = backgroundcalculate(size(parameters.Flatfield{i}));
+        end        
+        corr_img = parameters.Flatfield{i};
+        pStar = (X'*X)\(X')*corr_img(:);
+        % Apply correction
+        corr_img = reshape(X*pStar,size(corr_img));
+        parameters.Flatfield{i} = corr_img-min(corr_img(:));
+    end
+end
+
 % Load and add CellData field to CellMeasurements
 if exist([parameters.XYDir,'CellData.mat'],'file')
     load([parameters.XYDir,'CellData.mat']);
@@ -60,17 +76,17 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
         
         j = parameters.TimeRange(iter);
         
-
         % Cycle through module names- construct name, load aux image, and call
         for m = 1:length(parameters.ModuleNames)
             ModuleData.name = parameters.ModuleNames{m};
             ModuleData.iter = iter;
             ModuleData.i = i;
             ModuleData.j = j;
-            AuxImages = cell(1,2);
+            ModuleData.AuxName = cell(1,3);
+            AuxImages = cell(size(ModuleData.AuxName));
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images
-                for aux = 1:2
+                for aux = 1:3
                     % Check name
                     if aux==1
                         curr_expr = parameters.(ModuleData.name).ImageExpr;
@@ -78,7 +94,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                         curr_expr = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]);
                     end
                     try
-                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)];
+                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)]; 
                     catch
                         curr_name = '--';
                     end
@@ -88,9 +104,11 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                             imfo = imfinfo(curr_name);
                             ModuleData.BitDepth = imfo.BitDepth;
                         end
-                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);   
+                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth); 
+                        ModuleData.AuxName{aux} = curr_name;
                     end
                 end
+                
                 % Call measurement function
                 currentfn = str2func(ModuleData.name);
                 [CellMeasurements, ModuleData] = currentfn(CellMeasurements,parameters,labels, AuxImages, ModuleData);            

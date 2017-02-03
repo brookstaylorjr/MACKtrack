@@ -22,7 +22,7 @@ if nargin>1
            if ~isfield(combined_struct,names{j})
                combined_struct.(names{j}) = varargin{i}.(names{j});
            elseif ~isequal(combined_struct.(names{j}),varargin{i}.(names{j}))
-               warning(['Warning (''combinestructures''): structures have same field (''',names{j},''') / different data. Using 1st struct''s info'])         
+               warning('MATLAB:combstrct', ['(''combinestructures''): structures have same field (''',names{j},''') / different data. Using 1st struct''s info'])         
            end
         end
     end

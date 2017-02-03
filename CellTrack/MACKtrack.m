@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 08-Jun-2015 12:09:45
+% Last Modified by GUIDE v2.5 13-Jan-2017 16:52:28
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -80,7 +80,7 @@ try
     locations.scope = namecheck(locations.scope,'');
     locations.data = namecheck(locations.data,'');
 catch me
-    h = specifyLocations;
+    h = setLocations;
     uiwait(h);
     load([handles.home_folder, 'locations.mat'],'-mat')
 end
@@ -105,17 +105,17 @@ check_savedir(handles.parameters.SaveDirectory,handles);
 handles = guidata(handles.figure1);
 
 % OSX-specific formatting
-os = computer;
-if strcmp(os(1:4),'MACI')
-    a = fieldnames(handles);
-    for i = 1:length(a)
-        currentField = a{i};
-        if strcmp(currentField(1:4),'edit')
-            oldPos = get(handles.(currentField),'Position');
-            set(handles.(currentField),'Position', oldPos+[0 -3 0 4]);
-        end
-    end
-end
+% os = computer;
+% if strcmp(os(1:4),'MACI')
+%     a = fieldnames(handles);
+%     for i = 1:length(a)
+%         currentField = a{i};
+%         if strcmp(currentField(1:4),'edit')
+%             oldPos = get(handles.(currentField),'Position');
+%             set(handles.(currentField),'Position', oldPos+[0 -1 0 2]);
+%         end
+%     end
+% end
 % ========================================================================================
 
 function varargout = MACKtrack_OutputFcn(hObject, eventdata, handles) 
@@ -167,17 +167,16 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
-    if handles.is_dir(handles.sorted_index(index_selected))
-        newfolder = [get(handles.edit1A,'String'),filename];
-        % Remove leading slash, add trailing slash
-        if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-            newfolder = [newfolder,filesep];
-        end
-        if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
-            newfolder = newfolder(2:end);
-        end
+    newfolder = [get(handles.edit1A,'String'),filename];
+    % Remove leading slash, add trailing slash
+    if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
+        newfolder = [newfolder,filesep];
+    end
+    if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
+        newfolder = newfolder(2:end);
+    end
+    if exist([handles.locations.scope,newfolder],'dir')
         load_listbox(newfolder,handles)
-    
     end
 end
 % ========================================================================================
@@ -192,7 +191,8 @@ newfolder = get(handles.edit1A,'String');
 if ~isempty(newfolder) && strcmp(newfolder(end),filesep)
     newfolder =newfolder(1:end-1);
 end
-newfolder = newfolder(1:max(strfind(newfolder,filesep)));
+tmp1 = newfolder; tmp1(strfind(tmp1,'\')) = '/';
+newfolder = newfolder(1:max(strfind(tmp1,'/')));
 
 % Remove leading slash, add trailing slash
 if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
@@ -200,7 +200,7 @@ if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
 end
 if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
     newfolder = newfolder(2:end);
-    end
+end
 load_listbox(newfolder,handles)
 
 % ========================================================================================
@@ -242,7 +242,7 @@ function pushbutton1C_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON1C: specify new locations
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-h = specifyLocations;
+h = setLocations;
 uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
@@ -265,21 +265,10 @@ function load_listbox(dir_path, handles)
 if ~exist([handles.locations.scope,dir_path],'dir')
     dir_path = '';
 end
-dir_struct = dir([handles.locations.scope,dir_path]);
-% Clean directory of any invisible files
-drop_ind = 1;
-for i=1:length(dir_struct)
-    if strcmp(dir_struct(drop_ind).name(1),'.')
-        dir_struct(drop_ind) = [];
-    else
-        drop_ind = drop_ind+1;
-    end
-end
+
 % Place remaining files in listbox and update edit1A (add filesep)
-[sorted_names,sorted_index] = sortrows({dir_struct.name}');
-handles.file_names = sorted_names;
-handles.is_dir = [dir_struct.isdir];
-handles.sorted_index = sorted_index;
+handles.file_names = quickdir([handles.locations.scope,dir_path]);
+
 set(handles.listbox1A,'String',handles.file_names,...
  'Value',1)
 
@@ -313,9 +302,10 @@ function check_expr(handles)
 % handles  structure with handles and user data
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-% Don't let user proceed unless file expression is valid
+% Don't let user proceed (or update parameter filename) unless file expression is valid
 handles.Locked = 0;
 
+% Ensure i/j vectors are valid
 try
     % Define/check i and j indicies
     handles.parameters.XYExpr = get(handles.edit2C,'String');
@@ -324,52 +314,105 @@ try
     handles.parameters.XYRange = eval(handles.parameters.XYExpr);
     handles.parameters.TimeRange = eval(handles.parameters.TimeExpr);
     i = min(handles.parameters.XYRange);
-    j = min(handles.parameters.TimeRange); 
-   
-    % Check nuclear expression/ existence of sample nuclear image in parent directory
-    try 
-        sampleNuc = eval(get(handles.edit2A,'String'));
-        sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
-        allowedLength = 75-length(sampleNuc);
-        if length(sampleDirec)>allowedLength
-            sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
-        end
-        if exist([handles.locations.scope,handles.parameters.ImagePath,sampleNuc],'file')
-            set(handles.text2G,'String',[sampleDirec,sampleNuc],'ForegroundColor',handles.blue);
-            handles.parameters.NucleusExpr = get(handles.edit2A,'String');        
-        else
-            set(handles.text2G,'String',['"',sampleNuc,'" not found in current directory' ],'ForegroundColor','r');
-            handles.Locked = 1;
-        end 
-    catch ME
-         set(handles.text2G,'String','Error in string construction','ForegroundColor','r');
-         handles.Locked = 1;
-    end
-
-    % Check cell expression/ existence of sample cell file in parent directory
-    try 
-        sampleCell = eval(get(handles.edit2B,'String'));
-        sampleDirec = [handles.locations.scope,handles.parameters.ImagePath];
-        allowedLength = 75-length(sampleCell);
-        if length(sampleDirec)>allowedLength
-            sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
-        end
-        if exist([handles.locations.scope,handles.parameters.ImagePath,sampleCell],'file')
-            set(handles.text2I,'String',[sampleDirec,sampleCell],'ForegroundColor',handles.blue);
-            handles.parameters.CellExpr = get(handles.edit2B,'String');        
-        else
-            set(handles.text2I,'String',['"',sampleCell,'" not found in current directory' ],'ForegroundColor','r');
-            handles.Locked = 1;
-        end 
-    catch ME
-         set(handles.text2I,'String','Error in string construction','ForegroundColor','r');
-         handles.Locked = 1;
-    end
-
+    j = min(handles.parameters.TimeRange);
+    
 catch ME
     set(handles.text2G,'String','Error in i/j vector construction','ForegroundColor','r');
     set(handles.text2I,'String','Error in i/j vector construction','ForegroundColor','r');
+    error('Invalid time or XY vector used')
     handles.Locked = 1;
+end
+    
+   
+% Check nuclear expression/ existence of sample nuclear image in parent directory
+try 
+    filestring = get(handles.edit2A,'String');
+    sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
+    sampleFile = eval(filestring);
+    % Try to get an exact match (for tracking) or a partial one (for screens)
+    pass = 1;
+    partial_match = 0;
+    if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
+        id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)),1,'first');
+        if ~isempty(id)
+            id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
+            if length(id)>1
+                id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
+                id = id(randperm(length(id),1));
+                sampleFile = [handles.file_names{id}];
+                partial_match = 1;
+            end
+            handles.parameters.NucleusMatch = filestring;
+            filestring = ['''',sampleFile,''''];
+        else
+            pass = 0;
+        end
+    end
+    if ~partial_match
+        allowedLength = 75-length(sampleFile);
+    else
+        allowedLength = 64-length(sampleFile);
+    end
+    if length(sampleDirec)>allowedLength
+        sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
+    end
+    if pass
+        set(handles.text2G,'String',[sampleDirec,sampleFile],'ForegroundColor',handles.blue);
+        handles.parameters.NucleusExpr = filestring;
+        if partial_match
+            set(handles.text2G,'String', [get(handles.text2G,'String'),' [EXAMP.]'])
+        end 
+    else
+        set(handles.text2G,'String',['"',sampleFile,'" not found in current directory' ],'ForegroundColor','r');
+        handles.Locked = 1;
+    end
+
+    
+
+catch ME
+     set(handles.text2G,'String','Invalid MATLAB string used for nuclear image expression','ForegroundColor','r');
+     handles.Locked = 1;
+end
+
+% Check cell expression/ existence of sample cell file in parent directory (if applicable)
+if ~strcmpi(handles.parameters.ImageType,'none')
+    try 
+        filestring = get(handles.edit2B,'String');
+        sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
+        sampleFile = eval(filestring);
+        % Try to get an exact match (for tracking) or a partial one (for screens)
+        pass = 1;
+        if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
+            if ~isempty(id)
+                id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
+                id = id(randperm(length(id),1));
+                sampleFile = handles.file_names{id};
+                handles.parameters.CellMatch = filestring;
+                filestring = ['''',sampleFile,''''];
+            else
+                pass = 0;
+            end
+        end
+    
+        allowedLength = 75-length(sampleFile);
+        if length(sampleDirec)>allowedLength
+            sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
+        end
+        if pass
+            set(handles.text2I,'String',[sampleDirec,sampleFile],'ForegroundColor',handles.blue);
+            handles.parameters.CellExpr = filestring;        
+        else
+            set(handles.text2I,'String',['"',sampleFile,'" not found in current directory' ],'ForegroundColor','r');
+            handles.Locked = 1;
+        end
+    catch ME
+         set(handles.text2I,'String','Invalid MATLAB string used for cell image expression','ForegroundColor','r');
+         handles.Locked = 1;
+         ME
+    end
+else
+    set(handles.text2I,'ForegroundColor',handles.gray);
+    handles.Locked = 0;
 end
 
 % Change behavior based on lock
@@ -381,6 +424,13 @@ end
 handles.Locked;
 guidata(handles.figure1,handles)
 % ========================================================================================
+
+
+function partialmatch(string,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PARTIALMATCH if specified, then just matches first instance of string in a file list
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
 
 function pushbutton2A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -474,7 +524,7 @@ function pushbutton3B_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3B: specify new mount points for input/output data
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-h = specifyLocations;
+h = setLocations;
 uiwait(h);
 load([handles.home_folder, 'locations.mat'],'-mat')
 handles.locations = locations;
@@ -533,11 +583,9 @@ if ~handles.Locked2
     set(handles.pushbutton4C,'ForegroundColor',handles.gray,'String','Testing...')
     set(handles.pushbutton4D,'ForegroundColor',handles.gray)
     drawnow;
-    if strcmp(handles.parameters.ImageType,'None')
-        testPrimary(handles);
-    else
-        testImages(handles) % DIC or phase
-    end
+    % Test images
+    testImages(handles) % DIC or phase
+
     set(handles.pushbutton4C,'ForegroundColor',handles.blue,'String','Test')
     set(handles.pushbutton4D,'ForegroundColor',handles.blue, 'String','Run')
 end
@@ -557,11 +605,7 @@ if ~handles.Locked2
         if get(handles.checkbox4B,'Value')
             parfor i = 1:length(parameters.XYRange)
                 xyPos = parameters.XYRange(i);
-                if strcmp(handles.parameters.ImageType,'None')
-                    trackPrimary(parameters,xyPos)
-                else
-                    trackLoop(parameters,xyPos) % DIC or phase
-                end
+                trackLoop(parameters,xyPos) % DIC or phase
             end        
             % 3) Measure loop (AllMeasurements.mat output)
             disp('Measuring...')
@@ -573,11 +617,7 @@ if ~handles.Locked2
         else
             for i = 1:length(parameters.XYRange)
                 xyPos = parameters.XYRange(i);
-                if strcmp(handles.parameters.ImageType,'None')
-                    trackPrimary(parameters,xyPos)
-                else
-                    trackLoop(parameters,xyPos) % DIC or phase
-                end
+                trackLoop(parameters,xyPos) % DIC or phase
             end        
             % 3) Measure loop (AllMeasurements.mat output)
             disp('Measuring...')
@@ -802,18 +842,43 @@ catch ME
 end
 % ========================================================================================
 
+
+function popupmenu5A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUP5A: choose parameter to define nuclear shape: compactness or solidity
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+idx = get(hObject,'Value');
+fullstr = get(hObject,'String');
+handles.parameters.ShapeDef = fullstr{idx};
+set(handles.text5E,'String', [handles.parameters.ShapeDef,':']);
+set(handles.edit5E,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(1)));
+try
+    set(handles.edit5F,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(2)));
+catch me
+    set(handles.edit5F,'String', num2str(handles.parameters.(handles.parameters.ShapeDef)(1)));
+    handles.parameters.(handles.parameters.ShapeDef)(2) = handles.parameters.(handles.parameters.ShapeDef)(1);
+end
+guidata(handles.figure1,handles)
+
+
+
 function edit5E_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5E: set lower compactness bound (for round nuclei)
+% EDIT5E: set strict compactness/solidity bound (for round nuclei)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
-    if newVal > handles.parameters.Compactness(2)
-        warning('Resetting - round compactness value shound be less than oblong compactness value')
-        newVal = handles.parameters.Compactness(2);
+    if strcmp(handles.parameters.ShapeDef,'Compactness')
+        test1 = @(v1,v2) v1>v2;
+    else
+        test1 = @(v1,v2) v1<v2;
+    end
+    if test1(newVal,handles.parameters.(handles.parameters.ShapeDef)(2))
+        warning('Resetting value - lenient compactness should be higher than strict, lenient soliditiy should be lower')
+        newVal = handles.parameters.(handles.parameters.ShapeDef)(2);
     end
     set(hObject,'String',num2str(newVal))
-    handles.parameters.Compactness(1) = newVal;
+    handles.parameters.(handles.parameters.ShapeDef)(1) = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
@@ -830,17 +895,22 @@ end
 
 function edit5F_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT5F: set upper compactness bound (for oblong nuclei)
+% EDIT5F: set lenient compactness/solidity bound (for oblong nuclei)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
     % Parameter checking
-    if newVal < handles.parameters.Compactness(1)
-        warning('Resetting - oblong compactness value shound be greater than round compactness value')
-        newVal = handles.parameters.Compactness(1);
+    if strcmp(handles.parameters.ShapeDef,'Compactness')
+        test1 = @(v1,v2) v1<v2;
+    else
+        test1 = @(v1,v2) v1>v2;
+    end
+    if test1(newVal,handles.parameters.(handles.parameters.ShapeDef)(1))
+        warning('Resetting value - lenient compactness should be higher than strict, lenient soliditiy should be lower')
+        newVal = handles.parameters.(handles.parameters.ShapeDef)(1);
     end
     set(hObject,'String',num2str(newVal))
-    handles.parameters.Compactness(2) = newVal;
+    handles.parameters.(handles.parameters.ShapeDef)(2) = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
@@ -853,6 +923,62 @@ catch ME
     rethrow(ME)
 end
 % ========================================================================================
+
+
+function edit5G_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% EDIT5G: set nuclear smoothing size (nan is ok)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+try
+    newVal = round(eval(get(hObject,'String')));
+    % Parameter checking
+    if ~isnumeric(newVal)
+        warning('Resetting - value must be numeric')
+        newVal = handles.parameters.NuclearSmooth;
+    end
+    set(hObject,'String',num2str(newVal))
+    handles.parameters.NuclearSmooth = newVal;
+    handles.Locked2 = 0;
+    set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+    set(handles.pushbutton4D,'ForegroundColor',handles.blue)
+    guidata(handles.figure1,handles)
+catch ME
+    set(hObject,'String','err')
+    handles.Locked2 = 1;
+    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
+    set(handles.pushbutton4D,'ForegroundColor',handles.gray)
+    rethrow(ME)
+end
+% ========================================================================================
+
+
+
+function edit5H_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% EDIT5H: set minimum inflection angle for splitting nuclei
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+try
+    newVal = eval(get(hObject,'String'));
+    % Parameter checking
+    if ~isnumeric(newVal)
+        warning('Resetting - value must be numeric')
+        newVal = handles.parameters.NuclearInflection;
+    end
+    set(hObject,'String',num2str(newVal))
+    handles.parameters.NuclearInflection = newVal;
+    handles.Locked2 = 0;
+    set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+    set(handles.pushbutton4D,'ForegroundColor',handles.blue)
+    guidata(handles.figure1,handles)
+catch ME
+    set(hObject,'String','err')
+    handles.Locked2 = 1;
+    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
+    set(handles.pushbutton4D,'ForegroundColor',handles.gray)
+    rethrow(ME)
+end
+% ========================================================================================
+
 
 
 % %%%%%%%%%%%%%%%%%%%%%% UIPANEL 6 : Phase/DIC PARAMETERS %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
@@ -1189,6 +1315,31 @@ end
 
 % ========================================================================================
 
+function popupmenu6A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU6A: specify flatfield correction image for nuclear channel (NucleusFF)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.NucleusFF = get(hObject,'Value') - 1;
+guidata(handles.figure1,handles)
+% ========================================================================================
+
+
+function popupmenu6B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU6B: specify flatfield correction image for cell channel (CellFF)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.CellFF = get(hObject,'Value') - 1;
+guidata(handles.figure1,handles)
+% ========================================================================================
+
+function popupmenu6C_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU6C: specify image type (used to choose a thresholding method) (Confluence)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.Confluence = get(hObject,'Value') - 1;
+guidata(handles.figure1,handles)
+% ========================================================================================
+
 
 %  - - - - - - - - - - - - - - -  - - - - - - UIPANEL 7 : OTHER PARAMETERS - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -1301,7 +1452,7 @@ end
 
 function edit7H_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT7H: set frames per hour for display (FramesPerHour)
+% EDIT7H: set frames imaged per hour - default is 12 (FramesPerHour)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
     newVal = eval(get(hObject,'String'));
@@ -1324,29 +1475,23 @@ end
 
 function edit7J_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% EDIT7J: set scaled stimulus for display- single value or location of .mat vector (ScaledStimulus)
+% EDIT7J: vector of timepoints where image "jumped" (activates cross-correlation normalization 
+% for these images) (ImageJumps)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
-    newVal = get(hObject,'String');
-    if exist(newVal,'file')
-        load(newVal,'-mat')
-        disp('yaaa!')
-        handles.parameters.ScaledStimulus = ScaledStimulus;
-        handles.parameters.ScaledStimulusName = newVal;
-        handles.ScaledStimulus
-    else
-        newVal = eval(get(hObject,'String'));
-        newVal = max([0,newVal]);
-        newVal = min([newVal,1]);
-        set(hObject,'String',num2str(newVal))
-        handles.parameters.ScaledStimulus = newVal;
-        handles.parameters.ScaledStimulusName = get(hObject,'String');
+    newVal = eval(get(hObject,'String'));
+    jumpstring = '[';
+    for i = 1:length(newVal)
+        jumpstring = [jumpstring,num2str(newVal(i)),','];
     end
+    if strcmp(jumpstring(end),','); jumpstring = jumpstring(1:end-1); end
+    jumpstring = [jumpstring,']'];    
+    set(hObject,'String',jumpstring)
+    handles.parameters.ImageJumps = newVal;
     handles.Locked2 = 0;
     set(handles.pushbutton4C,'ForegroundColor',handles.blue)
     set(handles.pushbutton4D,'ForegroundColor',handles.blue)
     guidata(handles.figure1,handles)
-    
 catch ME
     set(hObject,'String','err')
     handles.Locked2 = 1;
@@ -1355,22 +1500,6 @@ catch ME
     rethrow(ME)
 end
 % ========================================================================================
-
-function pushbutton7J_Callback(hObject, eventdata, handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PUSHBUTTON7J: Load an existing vector for the scaled stimulus
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[FileName,PathName] = uigetfile('*','Select scaled stimulus vector file');
-if (FileName~=0)
-    load([PathName,FileName],'-mat')
-    handles.parameters.ScaledStimulus = ScaledStimulus;
-    handles.parameters.ScaledStimulusName =[PathName,FileName];
-    set(handles.edit7J,'String',[PathName,FileName])
-    guidata(handles.figure1,handles)
-
-end
-% ========================================================================================
-
 
 
 function listbox7_Callback(hObject, eventdata, handles)
@@ -1421,7 +1550,18 @@ catch ME
 end
 % ========================================================================================
 
-
+function checkbox7A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX7A: check/set measurement use for selected module
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+ 
+% Get selected module
+index_selected = get(handles.listbox7,'Value');
+module_list = get(handles.listbox7,'String');
+module = module_list{index_selected};
+ 
+handles.parameters.(module).Use = get(hObject,'Value');
+guidata(handles.figure1,handles)
 
 
 function edit7K_Callback(hObject, eventdata, handles)
@@ -1481,16 +1621,136 @@ catch ME
 end
 % ========================================================================================
 
-
-function checkbox7A_Callback(hObject, eventdata, handles)
+function edit7M_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% CHECKBOX7A: check/set measurement use for selected module
+% EDIT7M: check/set tertiary measurement image expression for selected module
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 % Get selected module
 index_selected = get(handles.listbox7,'Value');
 module_list = get(handles.listbox7,'String');
 module = module_list{index_selected};
-
-handles.parameters.(module).Use = get(hObject,'Value');
+handles.parameters.(module).ImageExpr3 = get(hObject,'String');   
 guidata(handles.figure1,handles)
+try
+    i = min(handles.parameters.XYRange);
+    j = min(handles.parameters.TimeRange);
+    filePath = [handles.locations.scope,handles.parameters.ImagePath,eval(get(hObject,'String'))];
+    if exist(filePath,'file')
+        set(handles.text7M_2,'ForegroundColor',handles.blue)    
+    else
+        set(handles.text7M_2,'ForegroundColor',handles.gray)
+    end
+    
+catch ME
+    set(handles.text7M_2,'ForegroundColor',handles.gray)
+    disp(ME.message)
+end
+
+
+function listbox7B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% LISTBOX7A: show all added flatfield images - show image/image location if item is double-clicked
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+get(handles.figure1,'SelectionType');
+% If user input is a double click, proceed
+if strcmp(get(handles.figure1,'SelectionType'),'open')
+    index_selected = get(handles.listbox7B,'Value');
+    figure,imagesc(handles.parameters.Flatfield{index_selected})
+    set(gca,'XTick',[],'YTick',[]), colorbar
+    axis equal
+    title1 = handles.parameters.FlatfieldNames{index_selected};
+    title2 = {};
+    splits = [1:96:length(title1),length(title1)+1];
+    for i = 1:(length(splits)-1)
+    title2 = cat(1,title2,{title1(splits(i):(splits(i+1)-1))});
+    end
+    title(title2,'Interpreter','none',...
+        'FontSize',8,'FontWeight','normal')
+end
+
+
+function pushbutton7A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON7A: add a new flatfield image (stored by name and image)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image');
+if file1
+    set(handles.listbox7B,'Value',1);
+    % Add file/filename to parameters
+    new_img = double(imread([dir1,filesep,file1]));
+    if ~isfield(handles.parameters,'Flatfield')
+        handles.parameters.Flatfield{1} = new_img;
+        handles.parameters.FlatfieldNames{1} = [dir1,filesep,file1];
+        set(handles.listbox7B,'Value',1)
+    else
+        handles.parameters.Flatfield = cat(2,handles.parameters.Flatfield, {new_img});
+        handles.parameters.FlatfieldNames = cat(2,handles.parameters.FlatfieldNames,{[dir1,filesep,file1]});
+    end
+    updateflatfields(handles);
+    guidata(handles.figure1,handles);
+end
+
+function pushbutton7B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON7B: remove selected flatfield image
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+index_selected = get(handles.listbox7B,'Value');
+if index_selected <= length(handles.parameters.Flatfield)
+    set(handles.listbox7B,'Value',1);
+    handles.parameters.Flatfield(index_selected) = [];
+    handles.parameters.FlatfieldNames(index_selected) = [];
+    disp('Deleted uploaded flatfield image')
+    updateflatfields(handles);
+    guidata(handles.figure1,handles);
+end
+
+
+
+
+function pushbutton7C_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% PUSHBUTTON7C: swap selected flatfield image for a new image
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+index_selected = get(handles.listbox7B,'Value');
+
+if index_selected <= length(handles.parameters.Flatfield)
+    [file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
+        [handles.locations.scope,handles.parameters.ImagePath]);
+    if file1
+        % Add file/filename to parameters
+        new_img = double(imread([dir1,filesep,file1]));
+        handles.parameters.Flatfield{index_selected} = new_img;
+        handles.parameters.FlatfieldNames{index_selected} = [dir1,filesep,file1];
+        % Update listbox and save parameters
+        updateflatfields(handles);
+    end
+end
+
+
+function updateflatfields(handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% Update list of flatfields based on parameters (similar to lines in initializeParameters.m)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+flatfields = {};
+if isfield(handles.parameters,'Flatfield')
+    for i = 1:length(handles.parameters.Flatfield)
+        flatfields = cat(1,flatfields,{['Flatfield{',num2str(i),...
+            '}(',num2str(size(handles.parameters.Flatfield{i},1)),' x ',...
+            num2str(size(handles.parameters.Flatfield{i},1)),')']});
+    end
+end
+set(handles.listbox7B,'String',flatfields)
+% Also update popupup menus accordingly
+if handles.parameters.CellFF > length(flatfields)
+    handles.parameters.CellFF = 0;
+    set(handles.popupmenu6A,'Value',0);
+end
+set(handles.popupmenu6B,'String',cat(1,{'None'},flatfields));
+if handles.parameters.NucleusFF > length(flatfields)
+    handles.parameters.NucleusFF = 0;
+    set(handles.popupmenu6B,'Value',0);
+end
+set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
+guidata(handles.figure1,handles)
+

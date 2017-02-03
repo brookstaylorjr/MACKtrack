@@ -17,16 +17,38 @@ load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 
 images = struct;
 tocs = struct;
-switch parameters.ImageType
-    case 'DIC'
-        % Set function names
+switch lower(parameters.ImageType)
+    case 'dic'
         fnstem = 'dic';
         X = []; 
     case 'phase'
-        % Set function names
         fnstem = 'phase';
         X = backgroundcalculate(parameters.ImageSize);
+    case 'fluorescence'
+        fnstem = 'fluorescence';
+        X = [];
+    case 'none';
+        fnstem = 'primary';
+        X = [];
 end
+
+% Convert any parameter flatfield images to functions
+if isfield(parameters,'Flatfield')
+    X = [];
+    warning off MATLAB:nearlySingularMatrix
+    for i = 1:length(parameters.Flatfield)
+        if size(X,1) ~= numel(parameters.Flatfield{i})
+            X = backgroundcalculate(size(parameters.Flatfield{i}));
+        end        
+        corr_img = parameters.Flatfield{i};
+        pStar = (X'*X)\(X')*corr_img(:);
+        % Apply correction
+        corr_img = reshape(X*pStar,size(corr_img));
+        parameters.Flatfield{i} = corr_img-min(corr_img(:));
+    end
+end
+
+
 
 % Get image bit depth
 i = xyPos;
@@ -41,9 +63,12 @@ mkdir([outputDirectory,'NuclearLabels'])
 mkdir([outputDirectory,'CellLabels'])
 mkdir([outputDirectory,'SegmentedImages'])
 
+% Make default shift (for tracking cells across image jumps)
+parameters.ImageOffset = repmat({[0 0]},1,parameters.StackSize);
+
 % Check to make sure time vector is long enough
 if length(parameters.TimeRange) < parameters.StackSize
-   error('Time vector is too short for stack size, aborting.')
+   error('Time vector is too short for specified stack size, aborting tracking.')
 end
 
 % Save tracking/memory checking text output
@@ -51,58 +76,112 @@ fid = fopen([outputDirectory,'decisions.txt'],'w','n','UTF-8');
 fwrite(fid, sprintf(['Tracking/checking decisions for xy pos ',num2str(xyPos),':\n']));
 fclose(fid);
 
+% Turn off combine structures warning
+warning('off','MATLAB:combstrct')
+
 
 % Loop all time points
-for cycle = 1:length(parameters.TimeRange)
+for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
     tic
     trackstring = '';
-    i = xyPos;
-    j =  parameters.TimeRange(cycle);
-    parameters.i = i; parameters.j = j;
     
-    % CELL MASKING on phase contrast/DIC image
-    tic
-    cellName1 = eval(parameters.CellExpr);
-    images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
-    maskfn = str2func([fnstem,'ID']);
-    data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
-    tocs.CellMasking = toc;
-    
-    % NUCLEAR IDENTIFICATION
-    tic
-    nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
-    present = nucleusID(images.nuc,parameters,data);
-    data = combinestructures(data,present);
-    tocs.NucMasking = toc;
-    
-    % NUCLEUS/CELL CHECKS (preliminary)
-    tic
-    checkfn = str2func([fnstem,'Check']);
-    present = checkfn(data,images.cell,parameters);
-    data = combinestructures(data,present);
-    tocs.CheckCells = toc;
-    
-    % Update stacks/structs with each iteration      
-    % After fill loops, empty bottom on update
-    if cycle>parameters.StackSize
+    % "FUTURE" handling.
+    if cycle<=length(parameters.TimeRange)
+        i = xyPos;
+        j =  parameters.TimeRange(cycle);
+        parameters.i = i; parameters.j = j;
+
+        % Load in images
+        tic
+        nucName1 = eval(parameters.NucleusExpr);
+        images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug);
+        if ~strcmpi(parameters.ImageType,'none')
+            cellName1 = eval(parameters.CellExpr);
+            images.cell = checkread([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug);
+        else
+            images.cell = images.nuc;
+        end
+        tocs.ImageLoading = toc;
+
+        
+        % Calculate image jump, if parameters require it.
+        if ismember(parameters.TimeRange(cycle), parameters.ImageJumps)
+            j =  parameters.TimeRange(cycle-1);
+            if strcmpi(parameters.ImageType,'none')
+                prev_name = eval(parameters.NucleusExpr);
+            else
+                prev_name = eval(parameters.CellExpr);
+            end
+            prev_img = checkread([locations.scope,parameters.ImagePath,prev_name],bit_depth,1,parameters.debug);
+            new_offset = parameters.ImageOffset{end}+calculatejump(prev_img,images.cell);
+            disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(new_offset),']'])       
+        else
+            new_offset = parameters.ImageOffset{end};
+        end
+        parameters.ImageOffset = [parameters.ImageOffset(2:end),{new_offset}];
+            
+        
+        % CELL MASKING on phase contrast/DIC image
+        tic
+        maskfn = str2func([fnstem,'ID']);
+        if strcmpi(parameters.ImageType,'fluorescence')
+            X = images.nuc;
+        end
+        data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
+        tocs.CellMasking = toc;
+
+        % NUCLEAR IDENTIFICATION
+        tic
+        present = nucleusID(images.nuc,parameters,data);
+        data = combinestructures(present,data);
+        tocs.NucMasking = toc;
+
+        % NUCLEUS/CELL CHECKS (preliminary)
+        tic
+        present = doubleCheck(data,images.cell,parameters);
+        data = combinestructures(present,data);
+        tocs.CheckCells = toc;
+
+        % Update stacks/structs with each iteration      
+        % After fill loops, empty bottom on update
+        if cycle>parameters.StackSize
+            future(1) = [];
+        end
+        % Concatenate new information into 'future' queue
+        if cycle==1
+            future = data;
+        else
+            future = cat(1,future,data);
+        end
+    else % For final frames (i.e. those with incomplete stack), fill in "future" with dummy data
         future(1) = [];
-    end
-    % Concatenate new information into 'future' queue
-    if cycle==1
-        future = data;
-    else
-        future = cat(1,future,data);
+        tmpnames = fieldnames(future(end));
+        data = struct;
+        for z = 1:length(tmpnames)
+            if islogical(future(end).(tmpnames{z}))
+                data.(tmpnames{z}) = false(size(future(end).(tmpnames{z})));
+            else
+                data.(tmpnames{z}) = zeros(size(future(end).(tmpnames{z})));
+            end
+        end
+        future = cat(1,future,data);   
+        tocs.ImageLoading = 0; tocs.CellMasking = 0; tocs.NucMasking = 0; tocs.CheckCells = 0; % zero out unused tics   
     end
    
+    
    if cycle >= parameters.StackSize
        % Bookkeeping (indicies), initialization for tracking 
         saveCycle = cycle-parameters.StackSize+1; % Value assigned to CellData and tracked label matricies
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Re-read image corresponding to bottom of the stack (for segmentation and saving)
-        images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
-            ,bit_depth,1,parameters.debug);       
-        
+        if strcmpi(parameters.ImageType,'none')
+            images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]...
+                ,bit_depth,1,parameters.debug);
+        else
+            images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
+            ,bit_depth,1,parameters.debug);
+        end
+                
         % TRACKING: Initialize CellData (blocks and CellData) when queue is full, then track nuclei
         tic
         if cycle == parameters.StackSize
@@ -117,9 +196,10 @@ for cycle = 1:length(parameters.TimeRange)
         % SEGMENT CELLS (bottom of "future" queue)
         tic
         segmentfn = str2func([fnstem,'Segment']);
-        present = segmentfn(future(1), images.bottom, parameters); % either phaseSegment or dicSegment (5 args)
+        present = segmentfn(future(1), images.bottom, parameters);
         tocs.Segmentation = toc;
-
+        present.ImageOffset = parameters.ImageOffset{1};
+       
         % MEMORY CHECKING ("past" queue)
         tic
         if ~exist('past','var')
@@ -151,9 +231,31 @@ for cycle = 1:length(parameters.TimeRange)
         % Save cell labels
         CellLabel = uint16(past(1).cells);
         save([outputDirectory,'CellLabels',filesep,'CellLabel-',numseq(saveCycle,4),'.mat'], 'CellLabel')   
+        
         % Save composite 'Segmentation' image
-        alpha = 0.30;
-        saveFig(images.bottom,CellLabel,NuclearLabel, X,bit_depth,[outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  alpha)
+        output_res = [1024 1024];
+        if strcmpi(parameters.ImageType,'phase')|| strcmpi(parameters.ImageType,'dic') % BRIGHTFIELD MODALITIES
+            saturation_val = [-2 4];
+            alpha = 0.30;
+        else % FLUORESCENCE MODALITIES - SNR varies between conditions, so guess a display range from an early img
+            if ~exist('saturation_val','var')
+                tmp1 = images.cell;
+                tmp1(tmp1==min(tmp1(:))) = [];
+                tmp1(tmp1==max(tmp1(:))) = [];
+                tmp1 = modebalance(tmp1,0, bit_depth,'display');               
+                % Non-confluent case - set low saturation @ 3xS.D. below bg level
+                if parameters.Confluence ~= 1
+                    saturation_val = [-3 prctile(tmp1(:),95)];
+                    alpha = 0.4;
+                else % Confluent case: unimodal distribution is foreground - use a different lower limit.
+                    saturation_val = [-4 prctile(tmp1(:),90)];
+                    alpha = 0.55;
+                end
+            end
+        end
+        saveFig(images.bottom,CellLabel,NuclearLabel, [],bit_depth,...
+            [outputDirectory,'SegmentedImages',filesep,'Segmentation-',numseq(saveCycle,4),'.jpg'],  ...
+            alpha, output_res, saturation_val)
         tocs.Saving = toc;
         % Save decisions.txt
         fid = fopen([outputDirectory,'decisions.txt'],'a','n','UTF-8');
@@ -165,7 +267,7 @@ for cycle = 1:length(parameters.TimeRange)
     
     % - - - - Display progress/times taken for mask/track/segment - - - -
     name1 = parameters.SaveDirectory;
-    if strcmp(name1(end),filesep)
+    if ~isempty(name1) && strcmp(name1(end),filesep)
         name1 = name1(1:end-1);
     end
     seps = strfind(name1,filesep);
@@ -174,7 +276,8 @@ for cycle = 1:length(parameters.TimeRange)
         name1 = name1(seps+1:end);
     end
     str = '\n- - - - - - - - - - - - - - -';
-    if cycle < parameters.StackSize 
+    name1(strfind(name1,'\')) = '/';
+    if cycle < parameters.StackSize
         str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Fill Cycle ', num2str(cycle)]);
     else
         str = sprintf([str, '\n', name1, ' - XY ', num2str(xyPos),', Save Cycle ', num2str(saveCycle)]);
@@ -187,6 +290,9 @@ for cycle = 1:length(parameters.TimeRange)
     fprintf([str, '\n'])
 
 end
+
+
+
 
 
 % Save CellData
