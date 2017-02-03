@@ -111,7 +111,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
     end
     
     % Save CellMeasurements
-    save([parameters.XYDir,'CellMeasurements.mat'], 'CellMeasurements')
+    save([parameters.XYDir,'CellMeasurements.mat'], 'CellMeasurements','-v7.3')
 else
     disp(['Skipping XY ',num2str(xy)])
 end
