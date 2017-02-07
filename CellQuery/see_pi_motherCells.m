@@ -43,7 +43,7 @@ info.graph_limits = [200 400];
 droprows = [];
 %include everything!
 droprows=zeros(size(measure.MeanIntensityNuc2,1),1);
-%droprows = [droprows, sum(isnan(measure.MeanIntensityNuc2(:,1:4)),2)>2]; % Cells existing @ expt start
+droprows = [droprows, sum(isnan(measure.MeanIntensityNuc2(:,1:4)),2)>2]; % Cells existing @ expt start
 %droprows = [droprows, sum(isnan(measure.MeanIntensityNuc2(:,1:120)),2)>3]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
