@@ -28,14 +28,20 @@ for idx = 1:length(layout_dir)
     mkdir(save_subdir)
     mkdir([save_subdir,filesep,'SegmentedImages'])
     mkdir([save_subdir,filesep,'NuclearLabels'])
+    if ~strcmpi(parameters.ImageType,'none')
+            mkdir([save_subdir,filesep,'CellLabels'])
+    end
     AllData = struct;
     [conditions, wells] = parseLayout(layout_dir{idx});
     % Get image list, and associated bit depth of full resolution (i.e. not thumbnail) images
-    image_names = struct2cell(dir(image_dir{idx}));
-    image_names = image_names(1,:)';
+    image_names = quickdir(image_dir{idx});
+    try
     tmp_name = image_names{find(cellfun(@isempty,strfind(image_names,'thumb'))...
         &~cellfun(@isempty,strfind(image_names,['_',wells{1}{1},'_'])),1,'first')};
-    
+    catch me
+        error(['No images found that correspond to well ',wells{1}{1},'. Double-check "layout.xlsx" file'])
+    end
+        
     % Make parameter additions: 1) bit depth and 2) flatfield image fits.
     imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
     parameters.BitDepth = imfo.BitDepth;

@@ -14,7 +14,7 @@ end
 
 % Windows-specific
 if ispc
-    [~, filenames] = system(['dir /b "',directory,'"']);
+    [~, filenames] = system(['dir /b "',directory,'" /O:N']);
 else % OSX/Linux
     [~, filenames] = system(['ls -1 "', directory,'"']);
 end

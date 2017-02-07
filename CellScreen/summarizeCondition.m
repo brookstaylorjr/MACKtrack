@@ -6,7 +6,7 @@ function [] = summarizeCondition(struct1,figtitle)
 % (screenLoop's output, e.g. AllData.DMI)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-num_images = length(unique(struct1.Images));
+num_images = size(struct1.Images,1);
 
 
 % Get list of all measurements (of maximum size)
@@ -15,7 +15,7 @@ m_names = fieldnames(struct1.Measurements);
 for i = 1:length(m_names)
     m_lengths = cat(1,m_lengths, size(struct1.Measurements.(m_names{i}),1));
 end
-use_m = find( m_lengths==max(m_lengths));
+use_m = find(m_lengths==max(m_lengths));
 
 if nargin > 1
     figtitle = ['Diagnostic info for ',figtitle];

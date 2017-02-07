@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 13-Jan-2017 16:52:28
+% Last Modified by GUIDE v2.5 06-Feb-2017 17:45:47
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -337,10 +337,10 @@ try
         if ~isempty(id)
             id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
             if length(id)>1
-                id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
-                id = id(randperm(length(id),1));
-                sampleFile = [handles.file_names{id}];
                 partial_match = 1;
+                id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
+                id = id(1);
+                sampleFile = [handles.file_names{id}];
             end
             handles.parameters.NucleusMatch = filestring;
             filestring = ['''',sampleFile,''''];
@@ -385,8 +385,12 @@ if ~strcmpi(handles.parameters.ImageType,'none')
         if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
             if ~isempty(id)
                 id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
-                id = id(randperm(length(id),1));
-                sampleFile = handles.file_names{id};
+                if length(id)>1
+                    id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
+                    id = id(1);
+                    sampleFile = [handles.file_names{id}];
+                    partial_match = 1;
+                end
                 handles.parameters.CellMatch = filestring;
                 filestring = ['''',sampleFile,''''];
             else
@@ -394,12 +398,19 @@ if ~strcmpi(handles.parameters.ImageType,'none')
             end
         end
     
-        allowedLength = 75-length(sampleFile);
+        if ~partial_match
+            allowedLength = 75-length(sampleFile);
+        else
+            allowedLength = 64-length(sampleFile);
+        end
         if length(sampleDirec)>allowedLength
             sampleDirec = [sampleDirec(1:floor(allowedLength/2 - 5)),'. . .',sampleDirec(end-ceil(allowedLength/2 - 5):end)];
         end
         if pass
             set(handles.text2I,'String',[sampleDirec,sampleFile],'ForegroundColor',handles.blue);
+            if partial_match
+                set(handles.text2I,'String', [get(handles.text2I,'String'),' [EXAMP.]'])
+            end 
             handles.parameters.CellExpr = filestring;        
         else
             set(handles.text2I,'String',['"',sampleFile,'" not found in current directory' ],'ForegroundColor','r');
@@ -424,12 +435,6 @@ end
 handles.Locked;
 guidata(handles.figure1,handles)
 % ========================================================================================
-
-
-function partialmatch(string,handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PARTIALMATCH if specified, then just matches first instance of string in a file list
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
 function pushbutton2A_Callback(hObject, eventdata, handles)
@@ -596,41 +601,49 @@ function pushbutton4D_Callback(~, ~, handles)
 % PUSHBUTTON4D: run full analysis
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if ~handles.Locked2
-    try
-        set(handles.pushbutton4C,'ForegroundColor',handles.gray)
-        set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Running...')
-        drawnow;
-        parameters = handles.parameters;    
-        % 1) Track loop (put in parfor if 'parallel' option is selected'
-        if get(handles.checkbox4B,'Value')
-            parfor i = 1:length(parameters.XYRange)
-                xyPos = parameters.XYRange(i);
-                trackLoop(parameters,xyPos) % DIC or phase
-            end        
-            % 3) Measure loop (AllMeasurements.mat output)
-            disp('Measuring...')
-            MACKmeasure(parameters,1);
+    set(handles.pushbutton4C,'ForegroundColor',handles.gray)
+    set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Running...')
+    drawnow;
+    parameters = handles.parameters;    
+    
+    if ~parameters.isScreen
+        disp('Starting tracking: ')
+        try
+            % 1) Track loop (put in parfor if 'parallel' option is selected'
+            if get(handles.checkbox4B,'Value')
+                parfor i = 1:length(parameters.XYRange)
+                    xyPos = parameters.XYRange(i);
+                    trackLoop(parameters,xyPos) % DIC or phase
+                end        
+                % 3) Measure loop (AllMeasurements.mat output)
+                disp('Measuring...')
+                MACKmeasure(parameters,1);
+
+                set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+                set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
+
+            else
+                for i = 1:length(parameters.XYRange)
+                    xyPos = parameters.XYRange(i);
+                    trackLoop(parameters,xyPos) % DIC or phase
+                end        
+                % 3) Measure loop (AllMeasurements.mat output)
+                disp('Measuring...')
+                MACKmeasure(parameters,0);
+            end
 
             set(handles.pushbutton4C,'ForegroundColor',handles.blue)
-            set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
-
-        else
-            for i = 1:length(parameters.XYRange)
-                xyPos = parameters.XYRange(i);
-                trackLoop(parameters,xyPos) % DIC or phase
-            end        
-            % 3) Measure loop (AllMeasurements.mat output)
-            disp('Measuring...')
-            MACKmeasure(parameters,0);
+        set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
+        catch ME
+            set(handles.pushbutton4C,'ForegroundColor',handles.blue)
+            set(handles.pushbutton4D,'ForegroundColor',handles.orange,'String','Run')
+            rethrow(ME)
         end
-
-        set(handles.pushbutton4C,'ForegroundColor',handles.blue)
-    set(handles.pushbutton4D,'ForegroundColor',handles.blue,'String','Run')
-    catch ME
-        set(handles.pushbutton4C,'ForegroundColor',handles.blue)
-        set(handles.pushbutton4D,'ForegroundColor',handles.orange,'String','Run')
-        rethrow(ME)
+    else
+        disp('Starting segmentation: ')
+        screenLoop(parameters); 
     end
+            
 end
 % ========================================================================================
 
@@ -688,7 +701,20 @@ setVisibility(handles)
 guidata(handles.figure1,handles)
 % ========================================================================================
 
-
+function popupmenu0B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% POPUPMENU0B: Set analysis mode: track or screen
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+val1 = get(hObject,'value'); list1 = get(hObject,'string');
+handles.parameters.isScreen = strcmp(list1{val1},'screen');
+if handles.parameters.isScreen
+    set(handles.edit2C,'ForegroundColor',handles.gray)
+    set(handles.edit2D,'ForegroundColor',handles.gray)
+else
+    set(handles.edit2C,'ForegroundColor',[0.01 0.01 0.01])
+    set(handles.edit2D,'ForegroundColor',[0.01 0.01 0.01])
+end
+guidata(handles.figure1,handles)
 
 
 
@@ -1753,4 +1779,5 @@ if handles.parameters.NucleusFF > length(flatfields)
 end
 set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
 guidata(handles.figure1,handles)
+
 

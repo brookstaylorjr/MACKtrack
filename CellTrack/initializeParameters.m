@@ -36,6 +36,15 @@ else
     set(handles.edit2B,'String',handles.parameters.CellMatch)
 end
 
+set(handles.popupmenu0B,'value',1+handles.parameters.isScreen);
+if handles.parameters.isScreen
+    set(handles.edit2C,'ForegroundColor',handles.gray)
+    set(handles.edit2D,'ForegroundColor',handles.gray)
+else
+    set(handles.edit2C,'ForegroundColor',[0 0 0])
+    set(handles.edit2D,'ForegroundColor',[0 0 0])
+end
+
 %% - - - - - - - - - Nuclear parameters - - - - - - - - - - - - 
 nuc_edge = handles.parameters.NucleusEdgeThreshold;
 set(handles.edit5A,'String',num2str(nuc_edge))

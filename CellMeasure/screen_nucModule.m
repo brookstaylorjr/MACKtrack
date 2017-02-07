@@ -1,9 +1,10 @@
 function [CellMeasurements, ModuleData] = screen_nucModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [CellMeasurements, ModuleData] = screen_nuc_Module(CellMeasurements, parameters, labels, AuxImages, ModuleData)
+% [CellMeasurements, ModuleData] = screen_nucModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SCREEN1MODULE is closely related to tracking-based nuclear measurement modules, but is tweaked slightly to account
-% for screening (e.g. applies universal correction to image background)
+% SCREEN_NUCMODULE is a fixed-cell measurement module. It will perform flatfield/background correction for each
+% specified image (Measure img 1 corresponds to Flatfield{1}, measure image 2 with Flatfield{2}, etc.), then will
+% calculate nuclear expression levels for each individual cell.
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %
@@ -13,62 +14,32 @@ function [CellMeasurements, ModuleData] = screen_nucModule(CellMeasurements, par
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
 
-% Normalization 1: flatfield correction -> estimate range for scaling
-[corr_img, mult] = flatfieldcorrect(double(AuxImages{1}),double(ModuleData.Flatfield{1}));
-% Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
-%corr_img = corr_img - min(corr_img(:));
-tmp = corr_img;
-tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
-%[~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
-%corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
-subtr = prctile(tmp(:),2);
-AuxImages{1} = corr_img-subtr;
 
-% Intensity-based measurement initialization
-CellMeasurements.Mult1 = mult;
-CellMeasurements.Subtr1 = subtr;
-CellMeasurements.MeanNuc1 =  nan(parameters.TotalCells,parameters.TotalImages);
-CellMeasurements.IntegratedNuc1 =  nan(parameters.TotalCells,parameters.TotalImages);
-CellMeasurements.MedianNuc1 = nan(parameters.TotalCells,parameters.TotalImages);
+for i = 1:length(AuxImages)
+    if ~isempty(AuxImages{i})
+        % STEP 1: image normalization
+        % Normalization 1: flatfield correction -> estimate range for scaling
+        corr_img = flatfieldcorrect(double(AuxImages{i}),double(parameters.Flatfield{i}));
+        % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
+        corr_img = corr_img - min(corr_img(:));
+        tmp = corr_img;
+        tmp(imdilate(labels.Nucleus>0,diskstrel(round(parameters.MinNucleusRadius*2)))) = []; % Drop foreground objects for correction calculation
+        [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure');
+        corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
+        AuxImages{i} = corr_img;
+        
+        % STEP 2: initialize data
+        CellMeasurements.(['MeanNuc',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['IntegratedNuc',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['MedianNuc',num2str(i)]) = nan(parameters.TotalCells,parameters.TotalImages,1);
 
-
-% Cycle through each cell and assign measurements
-for n = 1:measure_cc.NumObjects
-    CellMeasurements.MeanNuc1(n,iteration) = nanmean(AuxImages{1}(measure_cc.PixelIdxList{n}));
-    CellMeasurements.IntegratedNuc1(n,iteration) = nansum(AuxImages{1}(measure_cc.PixelIdxList{n}));
-    CellMeasurements.MedianNuc1(n,iteration) = nanmedian(AuxImages{1}(measure_cc.PixelIdxList{n}));
-end
-
-
-% Measure nuclei in 2nd auxiliary, if it is specified
-if ~isempty(AuxImages{2})
-    % Normalization 1: flatfield correction -> estimate range for scaling
-    [corr_img, mult] = flatfieldcorrect(double(AuxImages{2}),double(ModuleData.Flatfield{2}));
-    % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
-    %corr_img = corr_img - min(corr_img(:));
-    tmp = corr_img;
-    tmp(imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*4))) = []; % Drop foreground objects for correction calculation
-    %[~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure'); 
-    %corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
-    subtr = prctile(tmp(:),2);
-    AuxImages{2} = corr_img - subtr;
-
-
-    % Intensity-based measurement initialization
-    CellMeasurements.Mult2 = mult;
-    CellMeasurements.Subtr2 = subtr;
-    CellMeasurements.MeanNuc2 =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntegratedNuc2 =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MedianNuc2 = nan(parameters.TotalCells,parameters.TotalImages);
-
-    % Cycle through each cell and assign measurements
-    for n = 1:measure_cc.NumObjects
-        CellMeasurements.MeanNuc2(n,iteration) = nanmean(AuxImages{2}(measure_cc.PixelIdxList{n}));
-        CellMeasurements.IntegratedNuc2(n,iteration) = nansum(AuxImages{2}(measure_cc.PixelIdxList{n}));
-        CellMeasurements.MedianNuc2(n,iteration) = nanmedian(AuxImages{2}(measure_cc.PixelIdxList{n}));
+        % Step 3: measure data
+        for n = 1:measure_cc.NumObjects
+            CellMeasurements.(['MeanNuc',num2str(i)])(n) = nanmean(AuxImages{i}(measure_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedNuc',num2str(i)])(n) = nansum(AuxImages{i}(measure_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianNuc',num2str(i)])(n) = nanmedian(AuxImages{i}(measure_cc.PixelIdxList{n}));
+        end
     end
-
 end

@@ -45,10 +45,16 @@ figure('Position',positionfig(1150,n_rows*200),'Name', ['''',measure_x,''' vs. '
 ha = tight_subplot(n_rows,n_cols,[0.01 0.01]);
 
 colormaps=  loadcolormaps;
-for i = 1:length(ha)
-    dscatter2(all_x{i},all_y{i},'parent',ha(i))
+for i = 1:length(all_cond)
+    drops = isnan(all_x{i}) | isnan(all_y{i});
+    dscatter2(all_x{i}(~drops),all_y{i}(~drops),'parent',ha(i))
+    r = corr(all_x{i}(~drops),all_y{i}(~drops));
     set(ha(i),'XLim',x_rng,'YLim',y_rng,'XTickLabel',{},'YTickLabel',{},'XGrid','on','Ygrid','on')
     text(mean(x_rng),max(y_rng),[num2str(i),') ', all_cond{i},' ( n=',num2str(length(all_x{i})),' )'],...
-        'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(i),'BackgroundColor','w')
+        'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(i),'BackgroundColor','w',...
+        'Interpreter','none')
+        text(max(x_rng),min(y_rng),['r = ',num2str(r)],...
+        'HorizontalAlignment','right','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w',...
+        'Interpreter','none')
 end
 colormap(colormaps.viridis)

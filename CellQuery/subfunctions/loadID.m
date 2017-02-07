@@ -13,28 +13,32 @@ function [measure, info] = loadID(id)
 % info        general information about experiment and tracking
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-% Set default smoothing/unit conversion options: 
-
-% Load locations (for images and output data)
-home_folder = mfilename('fullpath');
+tic
+home_folder = mfilename('fullpath'); % Load locations (for images and output data)
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-2)), 'locations.mat'],'-mat')
 
-% Find/load AllMeasurements.mat - a full file path can be specfied, or an
-% ID corresponding to an entry on the ScopeRuns spreadsheet.
-tic
-if ~exist(num2str(id), 'file') && isnumeric(id)
-    data = readScopeRuns(locations.spreadsheet, id);
-    info.name = [data.save_folder{1}];
-    load([locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'])
-    info.savename = [locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'];
+if ischar(id) || isnumeric(id) % Load file if a location or row index of a spreadsheet entry 
+    % Find/load AllMeasurements.mat - a full file path can be specfied, or an
+    % ID corresponding to an entry on the ScopeRuns spreadsheet.
+    if ~exist(num2str(id), 'file') && isnumeric(id)
+        data = readScopeRuns(locations.spreadsheet, id);
+        info.name = [data.save_folder{1}];
+        load([locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'])
+        info.savename = [locations.data,filesep,data.save_dir{1},filesep,info.name,filesep,'AllMeasurements.mat'];
 
-elseif exist(num2str(id), 'file')
-    id = namecheck(id);
-    load(id)
-    info.savename = id;
+    elseif exist(num2str(id), 'file')
+        id = namecheck(id);
+        load(id)
+        info.savename = id;
+    else
+        error(['Specified file/index (''id'') is invalid'])
+    end
+elseif isstruct(id)
+    AllMeasurements = id;
+    info.savename = [locations.data,AllMeasurements.parameters.SaveDirectory,filesep,'AllMeasurements.mat'];
 else
-    error(['Specified file/index (''id'') is invalid'])
+    error(['loadID accepts an "AllMeasurements" structure, or a file location/spreadsheet row index.'])
 end
 
 % Parse AllMeasurements

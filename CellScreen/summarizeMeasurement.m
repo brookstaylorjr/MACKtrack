@@ -34,7 +34,7 @@ figure('Position',positionfig(1200,n_rows*150),'Name', ['Distributions of ''',me
 ha = tight_subplot(n_rows,n_cols,[0.005 0.005]);
 clr = linspecer(100);
 all_y = zeros(size(ha));
-for i = 1:length(ha)
+for i = 1:length(by_condition)
     histogram(by_condition{i},bins,'FaceColor',clr(3,:),'Parent',ha(i),'EdgeColor','none')
     set(ha(i),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_lim,'YGrid','on')
     if mod(i-1,n_cols) == 0
@@ -44,7 +44,7 @@ for i = 1:length(ha)
     all_y(i) = tmp(2);    
 end
 
-for i = 1:length(ha)
+for i = 1:length(by_condition)
     set(ha(i),'YLim',[0 max(all_y)])
     text(mean(bin_lim),max(all_y),[num2str(i),') ', all_cond{i},' ( n=',num2str(length(by_condition{i})),' )'],...
         'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(i),'Interpreter','none')
