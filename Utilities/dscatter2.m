@@ -1,6 +1,9 @@
-function hAxes = dscatter2(X,Y, varargin)
+function [hAxes, h] = dscatter2(X,Y, varargin)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% function hAxes = dscatter2(X,Y, varargin)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % DSCATTER2 creates a scatter plot coloured by density.
-%
+% 
 %   DSCATTER2(X,Y) creates a scatterplot of X and Y at the locations
 %   specified by the vectors X and Y (which must be the same size), colored
 %   by the density of the points.
@@ -27,10 +30,12 @@ function hAxes = dscatter2(X,Y, varargin)
 %   used by the density estimator. The default value is 20 which roughly
 %   means that the smoothing is over 20 bins around a given point.
 %
+%   DSCATTER2(...,'DENSITYLIM',[density_min density_max]) allows an absolute density scale
+% to be applied to the image, such that 
+%
 %   DSCATTER2(...,'LOGY',true) uses a log scale for the yaxis.
 %
 %   Examples:
-%
 %       [data, params] = fcsread('SampleFACS');
 %       dscatter(data(:,1),10.^(data(:,2)/256),'log',1)
 %       % Add contours
@@ -40,14 +45,15 @@ function hAxes = dscatter2(X,Y, varargin)
 %       xlabel(params(1).LongName); ylabel(params(2).LongName);
 %       
 %   See also FCSREAD, SCATTER.
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-% Copyright 2003-2004 The MathWorks, Inc.
-% $Revision:  $   $Date:  $
 
 % Reference:
 % Paul H. C. Eilers and Jelle J. Goeman
 % Enhancing scatterplots with smoothed densities
 % Bioinformatics, Mar 2004; 20: 623 - 628.
+% updated by Brooks Taylor, brookstaylorjr@gmail.com
+
 
 lambda = [];
 nbins = [];
@@ -57,12 +63,13 @@ msize = 10;
 marker = 's';
 logy = false;
 filled = true;
+density_lim = [];
 if nargin > 2
     if rem(nargin,2) == 1
         error('Bioinfo:IncorrectNumberOfArguments',...
             'Incorrect number of arguments to %s.',mfilename);
     end
-    okargs = {'smoothing','bins','plottype','logy','marker','msize','filled','parent'};
+    okargs = {'smoothing','bins','plottype','logy','marker','msize','filled','parent','densitylim'};
     for j=1:2:nargin-2
         pname = varargin{j};
         pval = varargin{j+1};
@@ -100,6 +107,8 @@ if nargin > 2
                     filled = pval;
                 case 8
                     parent_ax = pval;
+                case 9
+                    density_lim = pval;
             end
         end
     end
@@ -150,7 +159,6 @@ elseif length(k)>1
         'Ambiguous plot type: %s.',plottype);
 else
     switch(k)
-
         case 1 %'surf'
             h = surf(ctrs1,ctrs2,F,'edgealpha',0);
         case 2 % 'mesh'
@@ -163,13 +171,18 @@ else
             colormap(repmat(linspace(1,0,nc)',1,3));
             h =image(ctrs1,ctrs2,floor(nc.*F) + 1);
         case 5 %'scatter'
-            F = F./max(F(:));
+            if isempty(density_lim)
+                F = F./max(F(:));
+            else
+                F = (F-min(density_lim))./(max(density_lim)-min(density_lim));
+                F(F>1) = 1; F(F<0) = 0;
+            end
             ind = sub2ind(size(F),bin(:,1),bin(:,2));
             col = F(ind);
             if filled
-                h = scatter(X,Y,msize,col,marker,'filled');
+                h = scatter([X;0;0],[Y;0;0],msize,[col;1;0],marker,'filled');
             else
-                h = scatter(X,Y,msize,col,marker);
+                h = scatter([X;0;0],[Y;0;0],msize,[col;1;0],marker);
             end
     end
 
