@@ -18,6 +18,7 @@ if nargin<1
     else userdir= getenv('HOME');
     end
     handles.dir = uigetdir(userdir,'Choose Image Folder');
+    disp(['Reading images from ''',handles.dir,''''])
 else
     handles.dir = start_dir;
 end

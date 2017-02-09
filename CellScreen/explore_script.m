@@ -2,7 +2,7 @@
 
 
 % First, load in the data
-load('/Volumes/labdata/devon/Imaging experiments/20170104_OP9TRE_doxcheck/Tracked/AllData.mat')
+load('/Volumes/labdata/devon/Imaging experiments/20170201_TRELAP_adipogenesis2/AllData.mat')
 
 % Load some other stuff, too
 colors = setcolors; % define some pretty colors
@@ -11,32 +11,29 @@ colormaps = loadcolormaps; % define some pretty colormaps
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
 summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 
-summarizeCondition(AllData.SD1LAP1dox) % Summary 2: can look at all measurements within a single condition -> make sure all images are ok (also shows all measurements made during analysis)
+conditions = getfields(AllData);
+summarizeCondition(AllData.(conditions{end})) % Summary 2: can look at all measurements within a single condition -> make sure all images are ok (also shows all measurements made during analysis)
 
-summarizeMeasurement2D(AllData,'Area','MeanNuc1') % Summary 3: scatter plots of 2 variables of interest 
-
-
-
+summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots of 2 variables of interest 
 
 
 %% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 
 
 
-[cebp_by_condition, cebp_by_well] = restructuredata(AllData,'MeanNuc1'); % 1st measurment we want to compare
-[area_by_condition, area_by_well] = restructuredata(AllData,'Area'); % A 2nd measurement we like to compare
+[xdata_by_condition, xdata_by_well] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare
+[ydata_by_condition, ydata_by_well] = restructuredata(AllData,'MeanNuc1'); % A 2nd measurement we like to compare
 condition_names = fieldnames(AllData); % Get names of experiments
 
 
-subset = 5:8; % Let's look at conditions #5-8,the dose response curve for SD1LAP0
+subset = 9:16;
 color_theme = colors.theme1(end:-1:1); % This is 4 colors: dark gray, dark blue, light blue, then red.
 color_theme = repmat(color_theme,[1 ceil(length(subset)/length(color_theme))]); % Repeat colors if there are >4 subsets
 
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %  EXAMPLE 2A: violin plots for selected experiments
-
 % ~~~~~Modify this~~~~~~
-x_data = cebp_by_condition;
+x_data = xdata_by_condition;
 % ~~~~~~~~~~~~~~~~~~~~~~~
 
 % (Type 'help spaceviolin' to see the options you can set)
@@ -62,35 +59,55 @@ legend(condition_names(subset2),'Location','northeast','Interpreter','none')
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % EXAMPLE 2B: stacked/semi-transparent kernel density estimates (smoothed histograms)
-ax1 = kdeoverlay(cebp_by_condition(subset),'Color',color_theme,'Alpha',0.25  ,'XLim',[-200, 3500],'LineWidth',2); 
-xlabel('CEBP Expression'); ylabel('Relative Frequency')
+ax1 = kdeoverlay(ydata_by_condition(subset),'Color',color_theme,'Alpha',0.25  ,'XLim',[-200, 3500],'LineWidth',2); 
+xlabel('PPARG Expression'); ylabel('Relative Frequency')
 legend(condition_names(subset),'Location','northeast','FontSize',10,'Interpreter','none')
 
 % Variation: do log transform on data 1st
 log_filter = @(vect) real(log(vect)); % (Make sure negative vals don't mess us up)
-x_data = cellfun(log_filter,cebp_by_condition,'UniformOutput',0);
+x_data = cellfun(log_filter,xdata_by_condition,'UniformOutput',0);
 [ax1, bw] = kdeoverlay(x_data(subset),'Color',color_theme,'Alpha',0.25, 'Xlim',[5 10.5],'LineWidth',2,'Bandwidth',0.12); 
-xlabel('CEBP Expression (log)'); ylabel('Relative Frequency')
+xlabel('PPARG Expression (log)'); ylabel('Relative Frequency')
 
 
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % EXAMPLE 2C: scatter plot of all conditions in subset (1 row of graphs)
 % _____Modify these______
-x_data = cebp_by_condition;
-x_title = 'CEPB expression';
-y_data = area_by_condition;
-y_title = 'Nuclear Area';
+x_data = xdata_by_condition;
+x_title = 'CEBPA expression';
+y_data = ydata_by_condition;
+y_title = 'PPARG expression';
 % ________________________
 
 
-figure('Position',positionfig(800,200))
+figure('Position',positionfig(225*length(subset),235))
 % Enforce consistent x- and y-scaling (using percentiles of the whole dataset)
-xlim = prctile(cell2mat(x_data(:)),[.1 99]);
-ylim = prctile(cell2mat(y_data(:)),[.1 99]);
+
+
+% Automatically set graph limits
+x_tmp = x_data{subset}; 
+y_tmp = y_data{subset};
+xlim = prctile(x_tmp(:),[0.01 99.999]);
+ylim = prctile(y_tmp(:),[0.01 99.999]);
+density_lim = [];
+
+% Overrride with manually set graph and density limits
+ xlim =[0 2000];
+% ylim = [0 2000];
+%density_lim = [0 5e-4]; % Sets the minimum/maximum density (i.e. color range) across all graphs
+
+
 ha = tight_subplot(1,length(subset),[0.03 0.03],[0.2 0.1],[0.06 0.04],1);
 for i = 1:length(subset)
-    dscatter2(x_data{subset(i)}, y_data{subset(i)},'Parent',ha(i))
+    % Remove high outlier data
+    x_tmp = x_data{subset(i)};
+    y_tmp = y_data{subset(i)};
+    outliers = (x_tmp>prctile(x_tmp,99.9)) | (y_tmp>prctile(y_tmp,99.9));
+    
+    
+    [~,h] = dscatter2(x_data{subset(i)}(~outliers), y_data{subset(i)}(~outliers),'Parent',ha(i),'DensityLim',density_lim);
+    alpha(h,0.05)
     set(ha(i),'XLim',xlim,'YLim',ylim,'XGrid','on','YGrid','on')
     text(mean(xlim),max(ylim),[num2str(subset(i)),') ', condition_names{subset(i)}],...
     'HorizontalAlignment','center','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w',...
@@ -102,18 +119,18 @@ for i = 1:length(subset)
         ylabel(ha(i),y_title)
     end
 end
-colormap(colormaps.byr)
+colormap(colormaps.viridis(end:-1:1,:))
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % EXAMPLE 2D: Bar chart of (1) mean expression and (2) "differentiated cells" - percentage above some threshold.
 % (Calculate these on a per well basis, including standard error)
 
 % _____Modify these______
-x_data = cebp_by_well;
-threshold = 620;
-name1 = 'Mean CEBP Expression';
+well_data = ydata_by_well;
+threshold = 590;
+name1 = 'Mean PPARG Expression';
 name2 = 'Expressing cells';
-xlabels = {'0 dox', '0.5 dox', '1.0 dox', '1.5 dox'};
+xlabels = {'mCit 0dox', 'mCit D1dox', 'mCit D2dox', 'mCit D3dox', 'LAP 0dox', 'LAP D1dox', 'LAP D2dox', 'LAP D3dox'};
 % ________________________
 
 
@@ -126,10 +143,10 @@ pct_err = zeros(1,length(subset));
 % Fill in data
 thresh_func = @(vect) sum(vect>threshold)/numel(vect);
 for i = 1:length(subset)
-    m = cellfun(@nanmean,x_data{subset(i)});
+    m = cellfun(@nanmean,well_data{subset(i)});
     all_means(i) = mean(m);
     all_err(i) = std(m)/sqrt(length(m));
-    m = cellfun(thresh_func,x_data{subset(i)});
+    m = cellfun(thresh_func,well_data{subset(i)});
     pct_means(i) = mean(m);
     pct_err(i) = std(m)/sqrt(length(m));
 end
