@@ -22,13 +22,12 @@ for i = 1:length(oldfields)
 end
 
 % Loading/saving expressions and directories
-set(handles.edit1A,'String',handles.parameters.ImagePath)
-
+set(handles.edit1A,'String',ffp(handles.parameters.ImagePath))
 set(handles.edit2C,'String',handles.parameters.XYExpr)
 set(handles.edit2D,'String',handles.parameters.TimeExpr)
 set(handles.edit3A,'String',handles.parameters.SaveDirectory)
 
-if ~isfield(handles.parameters,'IsScreen') || handles.parameters.IsScreen == 0
+if ~isfield(handles.parameters,'isScreen') || handles.parameters.isScreen == 0
     set(handles.edit2A,'String',handles.parameters.NucleusExpr)
     set(handles.edit2B,'String',handles.parameters.CellExpr)
 else
@@ -205,7 +204,7 @@ set(handles.checkbox7A, 'Value', handles.parameters.(contents(1).name).Use);
 try
     i = min(handles.parameters.XYRange);
     j = min(handles.parameters.TimeRange);
-    filePath = [handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr)];
+    filePath = ffp([handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr)]);
     if exist(filePath,'file')
         set(handles.text7K_2,'ForegroundColor',handles.blue)    
     else

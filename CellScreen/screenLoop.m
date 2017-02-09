@@ -14,7 +14,7 @@ home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 
-start_dir = [locations.scope, filesep,parameters.ImagePath];
+start_dir = ffp([locations.scope, filesep,parameters.ImagePath]);
 
 % Crawl down from starting directory - find all plate layouts (and corresponding image folders)
 [layout_dir, image_dir, all_dir] = getImageDirectories(start_dir);

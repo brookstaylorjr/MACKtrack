@@ -167,7 +167,7 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
-    newfolder = ffp([get(handles.edit1A,'String'),filename]);
+    newfolder = [get(handles.edit1A,'String'),filename];
     % Remove leading slash, add trailing slash
     if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
         newfolder = [newfolder,filesep];
@@ -186,13 +186,13 @@ function pushbutton1A_Callback(hObject, eventdata, handles)
 % PUSHBUTTON1A: go up one directory level
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 handles  = guidata(handles.figure1);
-newfolder = ffp(get(handles.edit1A,'String'));
+newfolder = get(handles.edit1A,'String');
 
 if ~isempty(newfolder) && strcmp(newfolder(end),filesep)
     newfolder =newfolder(1:end-1);
 end
 tmp1 = newfolder;
-newfolder = newfolder(1:max(strfind(tmp1,filesep)));
+newfolder = newfolder(1:max(strfind(tmp1,'/')));
 
 % Remove leading slash, add trailing slash
 if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
@@ -276,6 +276,22 @@ set(handles.edit1A,'String',dir_path)
 handles.parameters.ImagePath= ffp(dir_path);
 check_expr(handles);
 % ========================================================================================
+
+function ffp(name)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% FFP (format file path) converts a file path slashes to either windows or *nix
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+if ispc
+    name(name=='/') = '\';
+else
+    name(name=='\') = '/';
+end
+idx = strfind(name,[filesep filesep]);
+while ~isempty(idx)
+    name(idx) = '';
+    idx = strfind(name,[filesep filesep]);
+end
+
 
 function edit2A_Callback(~, ~, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -565,8 +581,8 @@ function pushbutton4B_Callback(hObject, eventdata, handles)
 parameters = handles.parameters;
 if ispc
     % Replace file separator in SaveDirectory and in ImagePath
-    parameters.SaveDirectory = ffp(parameters.SaveDirectory);
-    parameters.ImagePath = ffp(parameters.ImagePath);
+    parameters.SaveDirectory(strfind(parameters.SaveDirectory,filesep)) = '/';
+    parameters.ImagePath(strfind(parameters.ImagePath,filesep)) = '/';
 end
 
 FileName = '';
