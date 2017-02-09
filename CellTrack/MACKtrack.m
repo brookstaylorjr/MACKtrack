@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 06-Feb-2017 17:45:47
+% Last Modified by GUIDE v2.5 08-Feb-2017 18:22:41
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1779,5 +1779,3 @@ if handles.parameters.NucleusFF > length(flatfields)
 end
 set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
 guidata(handles.figure1,handles)
-
-
