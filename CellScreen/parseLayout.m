@@ -17,7 +17,11 @@ ltr = 'ABCDEFGH';
 for j = 1:length(ltr)
     for k = 1:12
         if ~isnan(raw{j,k})
-            test_name = genvarname(raw{j,k});
+            tmp_val = raw{j,k};
+            if isnumeric(tmp_val)
+                tmp_val = num2str(tmp_val);
+            end
+            test_name = genvarname(tmp_val);
             % Check if condition exists (add to list if it doesn't)
             if ~ismember(test_name,cond_names)
                 cond_names = cat(1,cond_names,test_name);
