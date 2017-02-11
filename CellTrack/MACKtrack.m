@@ -745,7 +745,7 @@ function edit5A_Callback(hObject, ~, handles)
 
 % Get value/ update GUI elements
 try
-    newVal = round(eval(get(hObject,'String')));
+    newVal = eval(get(hObject,'String'));
     if newVal > get(handles.slider5A,'Max')
         newVal = get(handles.slider5A,'Max');
     end
@@ -781,7 +781,7 @@ function edit5C_Callback(hObject, ~, handles)
 % EDIT5C: set nuclear size limit (MinNucleusRadius- displays on axes5B)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
-    newVal = round(eval(get(hObject,'String')));
+    newVal = eval(get(hObject,'String'));
     set(hObject,'String',num2str(newVal))
     handles.parameters.MinNucleusRadius = newVal;
     nucCircle1 = getnhood(diskstrel(handles.parameters.MinNucleusRadius));

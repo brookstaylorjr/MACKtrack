@@ -37,21 +37,23 @@ for i = 1:length(AuxImages)
         % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
         corr_img = corr_img - min(corr_img(:));
         tmp = corr_img;
-        tmp(imdilate(labels.Nucleus>0,diskstrel(round(parameters.MinNucleusRadius*2)))) = []; % Drop foreground objects for correction calculation
-        [~, dist1] = modebalance(tmp,2,ModuleData.BitDepth,'measure');
+        tmp(labels.Cell>0) = []; % Drop foreground objects for correction calculation
+        if ~isempty(tmp)
+            [~, dist1] = modebalance(tmp,0,ModuleData.BitDepth,'measure'); % Get mode of existing background
+        else
+            dist1 = prctile(corr_img(:),2); % If there is no background (100% confluence), just subtract 2nd percentile
+        end
         corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
         AuxImages{i} = corr_img;
-        
-        % STEP 2: initialize data
-        CellMeasurements.(['MeanCell',num2str(i)]) =  nan(parameters.TotalCells,1);
-        CellMeasurements.(['IntegratedCell',num2str(i)]) =  nan(parameters.TotalCells,1);
-        CellMeasurements.(['MedianCell',num2str(i)]) = nan(parameters.TotalCells,1);
-        CellMeasurements.(['MeanCyto',num2str(i)]) =  nan(parameters.TotalCells,1);
-        CellMeasurements.(['IntegratedCyto',num2str(i)]) =  nan(parameters.TotalCells,1);
-        CellMeasurements.(['MedianCyto',num2str(i)]) = nan(parameters.TotalCells,1);
-        
-        
-        % Step 3: measure data
+         % STEP 2: initialize data
+        CellMeasurements.(['MeanCell',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['IntegratedCell',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['MedianCell',num2str(i)]) = nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['MeanCyto',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['IntegratedCyto',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);
+        CellMeasurements.(['MedianCyto',num2str(i)]) = nan(parameters.TotalCells,parameters.TotalImages,1);
+
+        % STEP 3: measure data
         for n = 1:cell_cc.NumObjects
             CellMeasurements.(['MeanCell',num2str(i)])(n) = nanmean(AuxImages{i}(cell_cc.PixelIdxList{n}));
             CellMeasurements.(['IntegratedCell',num2str(i)])(n) = nansum(AuxImages{i}(cell_cc.PixelIdxList{n}));
@@ -60,5 +62,6 @@ for i = 1:length(AuxImages)
             CellMeasurements.(['IntegratedCyto',num2str(i)])(n) = nansum(AuxImages{i}(cyto_cc.PixelIdxList{n}));
             CellMeasurements.(['MedianCyto',num2str(i)])(n) = nanmedian(AuxImages{i}(cyto_cc.PixelIdxList{n}));
         end
+        
     end
 end

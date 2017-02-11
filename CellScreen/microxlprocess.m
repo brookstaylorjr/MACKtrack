@@ -82,9 +82,9 @@ for i = 1:length(wells)
         tmp_img = tmp_img*255;
         % Overlay nuclear borders as orange
         border1 = (imdilate(NuclearLabel,ones(3))-NuclearLabel)>0;
-        R = tmp_img; R(border1) = R(border1)*0.25 + 0.75*248;
-        G = tmp_img; G(border1) = G(border1)*0.25 + 0.75*152;
-        B = tmp_img; B(border1) = B(border1)*0.25 + 0.75*29;
+        R = tmp_img; R(border1) = R(border1)*0.25 + 0.75*0;
+        G = tmp_img; G(border1) = G(border1)*0.25 + 0.75*195;
+        B = tmp_img; B(border1) = B(border1)*0.25 + 0.75*169;
         if ~strcmpi(parameters.ImageType,'none')
             %  Overlay cell borders as light blue
             border1 = (imdilate(CellLabel,ones(3))-CellLabel)>0;
