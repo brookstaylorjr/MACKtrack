@@ -49,6 +49,7 @@ while ~ok_go
     try
         tic
         handles.dir_contents = quickdir(handles.dir);
+        handles.dir_contents(~cellfun(@isempty, strfind(handles.dir_contents,'thumb'))) = [];
         loadtoc = toc;
         ok_go = 1;
     catch ME
