@@ -11,8 +11,8 @@ colormaps = loadcolormaps; % define some pretty colormaps
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
 summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 
-conditions = getfields(AllData);
-summarizeCondition(AllData.(conditions{end})) % Summary 2: can look at all measurements within a single condition -> make sure all images are ok (also shows all measurements made during analysis)
+conditions = fieldnames(AllData);
+summarizeCondition(AllData.(conditions{1})) % Summary 2: can look at all measurements within a single condition -> make sure all images are ok (also shows all measurements made during analysis)
 
 summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots of 2 variables of interest 
 

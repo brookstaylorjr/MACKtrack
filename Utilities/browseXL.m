@@ -87,13 +87,21 @@ for i=1:length(handles.dir_contents)
         
         % Site (s)
         [~,s1] = regexp(handles.img,'_s[0-9]');
-        s2 = regexp(handles.img(s1(end):end),'[^0-9]','once');
-        pos_s = s1(end):s1(end)+s2-2;
-        end2 = min(pos_s)-1; 
-        start3 = max(pos_s)+1;
-        handles.string{2} = handles.img(start2:end2);
-        handles.min_s = eval(handles.img(pos_s));
-        handles.max_s = handles.min_s;      
+        if ~isempty(s1)
+            s2 = regexp(handles.img(s1(end):end),'[^0-9]','once');
+            pos_s = s1(end):s1(end)+s2-2;
+            end2 = min(pos_s)-1; 
+            start3 = max(pos_s)+1;
+            handles.string{2} = handles.img(start2:end2);
+            handles.min_s = eval(handles.img(pos_s));
+            handles.max_s = handles.min_s;
+        else
+            pos_s = [];
+            handles.string{2} = '';
+            handles.min_s = 1;
+            handles.max_s = 1.01;
+            start3 = start2;
+        end
        
         
         % Channel (w)
@@ -118,7 +126,7 @@ if draw
         ext_idx = find(strcmpi(tmp_name(max([1,end-3]):end), ext_matches),1);
         if ~isempty(ext_idx)
             img = tmp_name;
-            [test_vals] = extract_vals(img(1+length(handles.string{1}):end)); 
+            [test_vals] = extract_vals(img(1+length(handles.string{1}):end),handles.lengths(2)); 
             if test_vals{2} > handles.max_s;
                 handles.max_s = test_vals{2};
             end
@@ -140,7 +148,7 @@ if draw
     handles.vals = {handles.wells{1},handles.min_s, handles.min_w};
     name_part = form_img(handles.string, handles.vals, handles.lengths);
     handles.img = handles.dir_contents{~cellfun(@isempty,strfind(handles.dir_contents,name_part))};
-        
+    
     % Load image, get bit depth
     imfo = imfinfo([handles.dir,filesep,handles.img]);
     handles.bit_depth = imfo.BitDepth;
@@ -242,7 +250,8 @@ end
 % Set image name, slider and status texts
 name_part = form_img(handles.string, handles.vals, handles.lengths);
 handles.img = handles.dir_contents{~cellfun(@isempty,strfind(handles.dir_contents,name_part))};
-set(handles.slider1,'Max',max1,'Min',min1, 'Value',newval, 'SliderStep',[1/(max1-min1) 10/(max1-min1)])
+ss = [1/(max1-min1) 10/(max1-min1)]; ss(ss<0) = 0; ss(ss>1) = 1;
+set(handles.slider1,'Max',max1,'Min',min1, 'Value',newval, 'SliderStep',ss)
 set(handles.text1,'String', ['Well: ',handles.vals{1},' | site:', num2str(handles.vals{2})...
     ' | channel:', num2str(handles.vals{3})])
 set(handles.text2,'String',[numseq(newval,handles.lengths(idx1)),'/',numseq(max1,handles.lengths(idx1))])
@@ -288,7 +297,8 @@ end
 % Set image name, slider and status texts
 name_part = form_img(handles.string, handles.vals, handles.lengths);
 handles.img = handles.dir_contents{~cellfun(@isempty,strfind(handles.dir_contents,name_part))};
-set(handles.slider1,'Max',max1,'Min',min1, 'Value',newval, 'SliderStep',[1/(max1-min1) 10/(max1-min1)])
+ss = [1/(max1-min1) 10/(max1-min1)]; ss(ss<0) = 0; ss(ss>1) = 1;
+set(handles.slider1,'Max',max1,'Min',min1, 'Value',newval, 'SliderStep',ss)
 set(handles.text1,'String', ['Well: ',handles.vals{1},' | site:', num2str(handles.vals{2})...
     ' | channel:', num2str(handles.vals{3})])
 set(handles.text2,'String',[numseq(newval,handles.lengths(idx1)),'/',numseq(max1,handles.lengths(idx1))])
@@ -461,12 +471,16 @@ function string_out = form_img(string_group, vals, lengths)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Form image name (to load)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-string_out = [string_group{1}, vals{1}, string_group{2}, numseq(vals{2},lengths(2))....
-string_group{3}, num2str(vals{3})];
+if lengths(2)>0
+    string_out = [string_group{1}, vals{1}, string_group{2}, numseq(vals{2},lengths(2))....
+    string_group{3}, num2str(vals{3})];
+else
+    string_out = [string_group{1}, vals{1}, string_group{3}, num2str(vals{3})];
+end
 
 
 
-function [vals] = extract_vals(string_in)
+function [vals] = extract_vals(string_in, site_length)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Extract values from an image name
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -474,6 +488,11 @@ vals{1} = string_in(1:3); % 1st 3 characters: well
 string_in = string_in(4:end);
 % Grab site
 all_numidx = regexp(string_in,'[0-9]');
-a = find(diff(all_numidx)>1,1,'first');
-vals{2} = eval(string_in(all_numidx(1:a))); % site (may be multi-digit)
-vals{3} = eval(string_in(all_numidx(a+1))); % channel (single-digit only)
+if site_length>0
+    a = find(diff(all_numidx)>1,1,'first');
+    vals{2} = eval(string_in(all_numidx(1:a))); % site (may be multi-digit)
+    vals{3} = eval(string_in(all_numidx(a+1))); % channel (single-digit only)
+else
+    vals{2} = 1;
+    vals{3} = eval(string_in(all_numidx(1))); % channel (single-digit only)
+end
