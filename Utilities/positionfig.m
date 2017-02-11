@@ -29,7 +29,7 @@ while min(monitor_pos(3:4)) < 512
         idx = idx+1;
         monitor_pos = all_monitors(idx,:);
     catch me
-        error('All your screens are too small for figure display(< 512x512px)')
+        error('All your screens are too small for figure display (< 512x512px)')
     end
 end
 
@@ -94,4 +94,14 @@ if (fig_origin(2)+y_height) > (monitor_pos(4)-margin)
 end
 
 pos = [fig_origin,x_width,y_height];
+
+% Make sure figure doesn't go off top/side of screen
+if (pos(1) + pos(3)) > monitor_pos(3)
+    pos(1) = monitor_pos(3)-pos(3)-10;
+end
+if (pos(2) + pos(4)) > monitor_pos(4)
+    pos(2) = monitor_pos(4)-pos(4)-10;
+end
+
+
 
