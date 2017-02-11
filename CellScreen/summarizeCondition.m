@@ -46,7 +46,7 @@ for i = 1:length(use_m)
             'EdgeColor','none')
         set(ha(g_idx),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_range,'YGrid','on')
         if j == 1
-            ylabel(ha(g_idx),m_names{use_m(i)},'FontSize',11,'FontWeight','normal','interpreter','none')
+            ylabel(ha(g_idx),m_names{use_m(i)},'FontSize',8,'FontWeight','normal','interpreter','none')
         end
 
         if i ==1

@@ -2,7 +2,7 @@
 
 
 % First, load in the data
-load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
+load('Z:\devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
 
 % Load some other stuff, too
 colors = setcolors; % define some pretty colors

@@ -96,11 +96,13 @@ end
 pos = [fig_origin,x_width,y_height];
 
 % Make sure figure doesn't go off top/side of screen
-if (pos(1) + pos(3)) > monitor_pos(3)
-    pos(1) = monitor_pos(3)-pos(3)-10;
+padx = 5; % Window border width
+pady = 80; % toolbar height
+if (pos(1) + pos(3)) > (monitor_pos(3)-padx)
+    pos(1) = monitor_pos(3)-pos(3)-padx;
 end
-if (pos(2) + pos(4)) > monitor_pos(4)
-    pos(2) = monitor_pos(4)-pos(4)-10;
+if (pos(2) + pos(4)) > (monitor_pos(4)-pady)
+    pos(2) = monitor_pos(4)-pos(4)-pady;
 end
 
 
