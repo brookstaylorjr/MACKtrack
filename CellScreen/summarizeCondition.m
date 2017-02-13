@@ -24,14 +24,14 @@ else
 end
 
 clr = linspecer(100);
-clr = clr(round(linspace(1,100,length(use_m))),:);
-
+clr(25:70,:) = []; % Drop super-light colors
+clr = clr(round(linspace(1,size(clr,1),length(use_m))),:);
 
 figure('Name',figtitle,'Position',positionfig(150*num_images,100*length(use_m))) 
 ha = tight_subplot(length(use_m),num_images,[0.005 0.005]);
 
 for i = 1:length(use_m)
-    bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.1 97]);
+    bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.01 97]);
     if sum(isnan(bin_range))==0
         bins = linspace(bin_range(1),bin_range(2),60);
     else
@@ -42,8 +42,9 @@ for i = 1:length(use_m)
     for j= 1:num_images
         g_idx = j+(i-1)*num_images;
         cell_subset = struct1.CellData(:,2)==j;
-        histogram(struct1.Measurements.(m_names{use_m(i)})(cell_subset),bins,'FaceColor',clr(i,:),'Parent',ha(g_idx),...
-            'EdgeColor','none')
+        h1 = histogram(struct1.Measurements.(m_names{use_m(i)})(cell_subset),bins,'FaceColor',clr(i,:),'Parent',ha(g_idx),...
+            'EdgeColor','none');
+        alpha(h1, 1)
         set(ha(g_idx),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_range,'YGrid','on')
         if j == 1
             ylabel(ha(g_idx),m_names{use_m(i)},'FontSize',8,'FontWeight','normal','interpreter','none')
