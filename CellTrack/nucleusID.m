@@ -43,7 +43,7 @@ diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
 %%
 tmp1 = diagnos.edge_mag(cell_mask);
-edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),97),21);
+edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),98),21);
 cc_list = {};
 
 for i = 1:length(edge_cutoffs)
@@ -56,7 +56,7 @@ for i = 1:length(edge_cutoffs)
     % b) Skeletonize/ fill holes
     mask0 = bwmorph(mask0,'skel',2);
     mask0 = bwareaopen(mask0,p.NoiseSize,8);
-    fill_size = cutoff.Area(2)*2;
+    fill_size = cutoff.Area(2)*4;
     if i >= (length(edge_cutoffs)-1)
         fill_size = round(0.75*cutoff.Area(2));
     end
@@ -161,7 +161,7 @@ if p.WeakObjectCutoff>0
     diagnos.label2a(diagnos.weak_ranked2<=2) = 0; % Only look at brightest 25% of area
     diagnos.label2a = imclose(diagnos.label2a,diskstrel(2));
     diagnos.label2a(~imopen(diagnos.label2a>0,diskstrel(floor(p.MinNucleusRadius*2/3)))) = 0;
-
+    
     % Fix bug where some edge pixels belong to another object
     diagnos.label2a= imerode(imdilate(diagnos.label2a,ones(3)),ones(3));
     diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
