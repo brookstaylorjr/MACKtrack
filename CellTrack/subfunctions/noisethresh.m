@@ -1,23 +1,28 @@
-function [thresh, noiseCount, val] =noisethresh(image_in,dropPixels,searchRange,noiseSize)
+function [thresh, noiseCount, val] =noisethresh(image_in,dropPixels,searchRange,noiseSize, vect_size)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % [thresh, noiseCount, val] =noisethresh(image_in,dropPixels,searchRange,noiseSize)
-%
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % NOISETHRESH computes an image threshold based on the assumption that optimal placement
 % is at the LOWEST value that still minimizes extra background noise.
 %
+% INPUTS:
 % image_in      input image (intensity or edge magnitudes)
 % dropPixels    background area of images; normalizes over cell densities
 % searchRange   min and max values that set threshold search range 
 % noiseSize     maximum size of "noisy" pixel groups
-%
+% vect_size     number of points to evaluate (i.e. resolution of threshold) -> defaults to 100
+% 
+% OUTPUTS
 % thresh        output threshold
 % noiseCount    number of noise-sized object pixels at each value tested
 % val           edge values tested
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
+if nargin<5
+    vect_size = 100;
+end
 
 % Take input image and scan over values, constructing noiseCount vector
-val = min(searchRange): (max(searchRange)-min(searchRange))/100:max(searchRange);
+val = linspace(min(searchRange), max(searchRange), vect_size);
 image_in(dropPixels) = 0;
 noiseCount = zeros(size(val));
 

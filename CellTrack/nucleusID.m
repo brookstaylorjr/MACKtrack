@@ -41,9 +41,11 @@ horizontalEdge = imfilter(nucleus1,fspecial('sobel') /8,'symmetric');
 verticalEdge = imfilter(nucleus1,fspecial('sobel')'/8,'symmetric');
 diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
+%%
 tmp1 = diagnos.edge_mag(cell_mask);
 edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),97),21);
 cc_list = {};
+
 for i = 1:length(edge_cutoffs)
     % a) Threshold, drop already-found objects
     mask0  = cell_mask & diagnos.edge_mag>=edge_cutoffs(end-i+1);
@@ -54,10 +56,14 @@ for i = 1:length(edge_cutoffs)
     % b) Skeletonize/ fill holes
     mask0 = bwmorph(mask0,'skel',2);
     mask0 = bwareaopen(mask0,p.NoiseSize,8);
-    mask0 = ~bwareaopen(~mask0,cutoff.Area(2)*4,4);  
+    fill_size = cutoff.Area(2)*2;
+    if i >= (length(edge_cutoffs)-1)
+        fill_size = round(0.75*cutoff.Area(2));
+    end
+    mask0 = ~bwareaopen(~mask0,fill_size);  
     if ~isempty(tmp_drop)
         mask0(tmp_drop) = 0;
-    end 
+    end
     % c) Filter objects that aren't round/sufficently large (alternate btw strict/lenient criteria)
     mask0 = imopen(mask0,diskstrel(round(p.NuclearSmooth)));
     if (mod(i-1,3) == 1) || (i==length(edge_cutoffs))
@@ -69,6 +75,7 @@ for i = 1:length(edge_cutoffs)
     cc_new = bwconncomp(mask0,8);
     cc_list = cat(2,cc_list,cc_new.PixelIdxList);
 end
+%%
 cc_all.PixelIdxList = cc_list';
 cc_all.ImageSize = size(diagnos.edge_mag);
 cc_all.NumObjects = length(cc_list);

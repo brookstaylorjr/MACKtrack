@@ -466,7 +466,7 @@ function pushbutton3A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3A: Browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-tmp = [handles.locations.data,filesep,handles.parameters.SaveDirectory];
+tmp = ffp([handles.locations.data,filesep,handles.parameters.SaveDirectory]);
 if ~exist(tmp,'dir')
     tmp = handles.locations.data;
 end
@@ -519,6 +519,7 @@ end
 if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
     newfolder = newfolder(2:end);
 end
+newfolder = ffp(newfolder);
 handles.parameters.SaveDirectory = newfolder;
 set(handles.edit3A,'String',newfolder)
 check_expr(handles)
