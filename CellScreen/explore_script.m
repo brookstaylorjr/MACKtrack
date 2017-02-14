@@ -1,5 +1,6 @@
-% Sample script to examine HCS experimental results:
-
+% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
+% required, and save it with your data).
+% Brooks Taylor, 2/13/2017
 
 % First, load in some data - chenage this file path to use a different "AllData" file.
 load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
@@ -24,7 +25,6 @@ summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots
 
 
 %% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 
-
 
 % Peel off/restructure 2 data fields of interest (e.g. PPARg and CEBPb intensity)
 [xdata_by_condition, xdata_by_well] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare
