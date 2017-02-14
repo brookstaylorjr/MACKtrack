@@ -94,10 +94,10 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         % Load in images
         tic
         nucName1 = eval(parameters.NucleusExpr);
-        images.nuc = checkread(ffp([locations.scope,parameters.ImagePath,nucName1],bit_depth,1,parameters.debug));
+        images.nuc = checkread(ffp([locations.scope,parameters.ImagePath,nucName1]),bit_depth,1,parameters.debug);
         if ~strcmpi(parameters.ImageType,'none')
             cellName1 = eval(parameters.CellExpr);
-            images.cell = checkread(ffp([locations.scope,parameters.ImagePath,cellName1],bit_depth,1,parameters.debug));
+            images.cell = checkread(ffp([locations.scope,parameters.ImagePath,cellName1]),bit_depth,1,parameters.debug);
         else
             images.cell = images.nuc;
         end

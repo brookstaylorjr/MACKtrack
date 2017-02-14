@@ -12,6 +12,11 @@ function SE = diskstrel(radius)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+radius = round(radius);
+if radius<=0
+	error('diskstrel radius must be positive')
+end
+
 % Small radii (<=6)
 switch radius
     case 1
