@@ -3,7 +3,7 @@
 % Brooks Taylor, 2/13/2017
 
 % First, load in some data - chenage this file path to use a different "AllData" file.
-load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
+%load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
 
 % Load some other stuff, too
 colors = setcolors; % define some pretty colors

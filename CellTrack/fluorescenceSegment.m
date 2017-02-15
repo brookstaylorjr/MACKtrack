@@ -85,9 +85,10 @@ diagnos.modifier_mask = false(size(cell_mask));
 diagnos.modifier_mask(keep_edges) = 1;
 
 % Turn off pixels from modifier mask, do initial segmentation
+
 cell_mask(diagnos.modifier_mask) = 0;
 cell_mask = imopen(cell_mask,diskstrel(2));
-image_log = log(image_in);
+image_log = log(image_in+1);
 output.img_straight = abs((image_log-prctile(image_log(:),0.02))/diff(prctile(image_log(:),[0.02 98])));
 output.img_straight(output.img_straight<0) = 0; output.img_straight(output.img_straight>1) = 1;
 output.img_straight(imdilate(diagnos.edge_straight,ones(3))) = 1;
@@ -95,9 +96,6 @@ output.img_straight(diagnos.edge_straight) = 0;
 
 output.cells = propagatesegment(data.nuclei, cell_mask, image_log,...
     round(p.MinCellWidth/2),data.nuclei,0.02);
-
-
-
 
 
 
@@ -111,7 +109,7 @@ for i = 1:hole_cc.NumObjects
         output.cells(hole_cc.PixelIdxList{i}) = hole_vals;
     end
 end
-
+ 
 
 % Save all information under diagnostic struct
 diagnos = combinestructures(diagnos,output);
