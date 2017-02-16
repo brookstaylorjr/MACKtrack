@@ -130,6 +130,7 @@ for i = 1:size(blocks_pre,1)
             y_place(y_place<1) = 1; y_place(y_place>size(queue_in(end).nuclei,1)) = size(queue_in(end).nuclei,1);
             rad1 = floor(sqrt(CellData.labeldata(1).area(frm0obj) + (labeldata(frmX).area(frmXobj)...
                 - CellData.labeldata(1).area(frm0obj))/frmX)/pi);
+            rad1(rad1<1) =1;
             tmp_mask(y_place,x_place) = 1;
             tmp_mask = imdilate(tmp_mask,diskstrel(rad1));
             queue_in(1).nuclei(tmp_mask) = frm1obj;

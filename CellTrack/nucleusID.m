@@ -212,14 +212,7 @@ function ranked_image = rankpixels(input_objects, source_image)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if ~isstruct(input_objects)
-    labelmat = input_objects;
-    all_obj = unique(labelmat);
-    input_objects = struct;
-    input_objects.NumObjects = length(all_obj)-1;
-    input_objects.PixelIdxList = cell(1,length(all_obj)-1);
-    for i = 1:(length(all_obj)-1)
-        input_objects.PixelIdxList{i} = find(labelmat==all_obj(i+1));
-    end
+    input_objects = label2cc(input_objects);
 end
 
 ranked_image = zeros(size(source_image));

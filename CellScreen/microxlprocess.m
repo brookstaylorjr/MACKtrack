@@ -111,10 +111,10 @@ for i = 1:length(wells)
         
         for m = 1:length(parameters.ModuleNames)
             ModuleData.name = parameters.ModuleNames{m};
-            AuxImages = cell(1,2);
+            AuxImages = cell(1,3);
             if  parameters.(ModuleData.name).Use == 1;                
                 % Check/load/correct auxiliary images
-                for aux = 1:2
+                for aux = 1:3
                     % Check name
                     if aux==1; curr_expr = parameters.(ModuleData.name).ImageExpr;
                     else curr_expr = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]); end
