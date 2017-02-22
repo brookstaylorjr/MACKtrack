@@ -3,7 +3,7 @@
 % Brooks Taylor, 2/13/2017
 
 % First, load in some data - chenage this file path to use a different "AllData" file.
-load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
+%load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
 
 % Load some other stuff, too
 colors = setcolors; % define some pretty colors
@@ -21,7 +21,7 @@ disp('- - - - - - - - ')
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
 summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 summarizeCondition(AllData.(condition_names{1})) % Summary 2: look at all measurements within a SINGLE condition (divided by image)
-summarizeMeasurement2D(AllData,'MeanNuc1','MeanCell2') % Summary 3: scatter plots of 2 variables of interest 
+summarizeMeasurement2D(AllData,'MeanCell1','MeanCell2') % Summary 3: scatter plots of 2 variables of interest 
 
 
 %% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 

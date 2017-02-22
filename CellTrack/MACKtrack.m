@@ -1538,41 +1538,37 @@ index_selected = get(handles.listbox7,'Value');
 module_list = get(handles.listbox7,'String');
 module = module_list{index_selected};
 
+% Set module-specific parameters accordingly
 set(handles.edit7K,'String',handles.parameters.(module).ImageExpr);
-
-
-try
-    set(handles.edit7L,'String',handles.parameters.(module).ImageExpr2);
-catch ME
-    handles.parameters.(module).ImageExpr2 = '--';
-    guidata(handles.figure1,handles)
-    set(handles.edit7L,'String',handles.parameters.(module).ImageExpr2);
-end
-
+set(handles.edit7L,'String',handles.parameters.(module).ImageExpr2);
+set(handles.edit7M,'String',handles.parameters.(module).ImageExpr3);
 set(handles.checkbox7A, 'Value', handles.parameters.(module).Use);
 
 % Set color of 'ok' based on string validity
+i = min(handles.parameters.XYRange);
+j = min(handles.parameters.TimeRange);
+filePath = [handles.locations.scope,handles.parameters.ImagePath];
+
+set(handles.text7K_2,'ForegroundColor',handles.gray)
 try
-    i = min(handles.parameters.XYRange);
-    j = min(handles.parameters.TimeRange);
-    filePath = [handles.locations.scope,handles.parameters.ImagePath,eval(handles.parameters.(module).ImageExpr)];
-    if exist(filePath,'file')
-        set(handles.text7K_2,'ForegroundColor',handles.blue)    
-    else
-        set(handles.text7K_2,'ForegroundColor',handles.gray)
-    end
-catch ME
-    set(handles.text7K_2,'ForegroundColor',handles.gray)
+    if exist([filePath,filesep,eval(handles.parameters.(module).ImageExpr)],'file')  
+        set(handles.text7K_2,'ForegroundColor',handles.blue)
+    end  
 end
+
+
+set(handles.text7L_2,'ForegroundColor',handles.gray)
 try
-    filePath = [handles.locations.scope,handles.parameters.ImagePath,eval(handles.parameters.(module).ImageExpr2)];
-    if exist(filePath,'file')
-        set(handles.text7L_2,'ForegroundColor',handles.blue)    
-    else
-        set(handles.text7L_2,'ForegroundColor',handles.gray)
+    if exist([filePath,eval(handles.parameters.(module).ImageExpr2)],'file')
+        set(handles.text7L_2,'ForegroundColor',handles.blue)
+    end 
+end
+
+set(handles.text7M_2,'ForegroundColor',handles.gray)
+try
+    if exist([filePath,eval(handles.parameters.(module).ImageExpr3)],'file')
+        set(handles.text7M_2,'ForegroundColor',handles.blue)
     end
-catch ME
-    set(handles.text7L_2,'ForegroundColor',handles.gray)
 end
 % ========================================================================================
 

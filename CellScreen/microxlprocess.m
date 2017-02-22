@@ -123,12 +123,10 @@ for i = 1:length(wells)
                         measure_id = measure_id & ~cellfun(@isempty,strfind(image_names,eval(curr_expr)));
                         measure_id = measure_id & cellfun(@isempty,strfind(image_names,'thumb')); % Drop thumbs
                         measure_id = find(measure_id);
-                        if length(measure_id)~=length(nuc_id)
-                            disp('ERROR: nucleus image list: ')
-                            disp(image_names(nuc_id))
-                            disp('does not match up with measurement image list:')
-                            disp(image_names(measure_id))
-                            error(['Stopping screening in folder ', image_dir])
+                        if ~isempty(measure_id) && (length(measure_id)~=length(nuc_id))
+                            disp(['NOTE: number of nuclear images for well ', wells{i}, '(',num2str(length(nuc_id)),...
+                                ' sites found) does not match up with # of measurement images (',...
+                                num2str(length(measure_id)),' sites) - may cause measurement error!'])
                         end
                         curr_name = [image_dir,filesep,image_names{measure_id(j)}];
                     catch

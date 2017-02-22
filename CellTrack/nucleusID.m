@@ -115,10 +115,8 @@ if length(unique(diagnos.label1b(:)))>1
 else % No objects were found- skip all these steps.
     diagnos.label1= diagnos.label1b;
 end
-%%
-
-%%- - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
-% "Weak" objects missed by standard methods
+%% - - - - - - - - - - - - - - - - - - - Label2 - - - - - - - - - - - - - - - - - - - - - - -
+% ("Weak" objects missed by standard methods)
 if p.WeakObjectCutoff>0
     % Drop mask1 "marked" watershed areas from watershed of Gaussian-smoothed image 
     label_dropped = imdilate(diagnos.watershed1,ones(3));
