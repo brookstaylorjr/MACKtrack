@@ -52,7 +52,7 @@ alpha = p.Results.Alpha;
 
 % Create figure (if axes wasn't provided)
 if ~ishandle(p.Results.Axes)
-    kdefig = figure('Position', [500, 1031, 800, 300], 'PaperPositionMode','auto');
+    kdefig = figure('Position', positionfig(800, 300), 'PaperPositionMode','auto');
     h_ax = axes('Parent',kdefig);
 else
     h_ax = p.Results.Axes;
