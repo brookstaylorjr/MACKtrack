@@ -1,6 +1,6 @@
 % Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
 % required, and save it with your data).
-% Brooks Taylor, 2/13/2017
+% Brooks Taylor, 2/23/2017
 
 % First, load in some data - chenage this file path to use a different "AllData" file.
 %load('/Volumes/labdata/devon/Imaging experiments/20170206_OP9shCebpb_doxcheck/10h/AllData.mat')
@@ -81,8 +81,8 @@ legend(condition_names(subset2),'Location','northeast','Interpreter','none')
 % EXAMPLE 2B: overlaid semi-transparent kernel density estimates (smoothed histograms)
 
 % ~~~~~~~~~~~~~~  Parameters for KDE overlay 1    ~~~~~~~~~~~~~
-subsets = 1:3;
-disp_data = ydata_by_condition(subsets);
+subset = 1:3;
+disp_data = ydata_by_condition(subset);
 alpha1 = 0.25; % Transparancy of each histogram
 xlim = prctile(cell2mat(disp_data),[0.1 99.5]);
 x_label1 = 'CEBPb expression';
@@ -94,18 +94,20 @@ legend(condition_names(subset),'Location','northeast','FontSize',10,'Interpreter
 
 
 % ~~~~~~~~~~~~   Parameters for KDE overlay 2 (log-transformed) ~~~~~~~~~~~~~~~~~~
-subsets = 1:3;
-disp_data = ydata_by_condition(subsets);
+subset = 1:3;
+disp_data = ydata_by_condition(subset);
 alpha1 = 0.25; % Transparancy of each histogram
 xlim2 = log(prctile(cell2mat(disp_data),[0.5 99.9]));
 x_label1 = 'CEBPb expression';
 bandwidth = 0.08; % Smoothing of KDE - can check MATLAB's guess by setting this to NaN and checking val of "bw", below
+
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 log_filter = @(vect) real(log(vect)); % (Make sure negative vals don't mess us up)
 disp_data = cellfun(log_filter,disp_data,'UniformOutput',0);
 [ax1, bw] = kdeoverlay(disp_data(subset),'Color',color_theme,'Alpha',0.25, 'Xlim',xlim2,'LineWidth',2); 
 xlabel('PPARG Expression (log)'); ylabel('Relative Frequency')
+legend(condition_names(subset),'Location','northeast','FontSize',10,'Interpreter','none')
 
 
 
@@ -163,11 +165,11 @@ colormap(colormaps.viridis(end:-1:1,:))
 
 % _____Modify these______
 subset = 1:3;
-well_data = ydata_by_well;
+well_data = ydata_by_well(subset);
 threshold = 200;
 name1 = 'Mean CEBPb Expression';
 name2 = 'Expressing cells';
-xlabels = {'mCit 0dox', 'mCit D1dox', 'mCit D2dox', 'mCit D3dox', 'LAP 0dox', 'LAP D1dox', 'LAP D2dox', 'LAP D3dox'};
+xlabels = condition_names(subset);
 % ________________________
 
 
