@@ -10,6 +10,7 @@ function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbos
 %
 % blocks      array showing linked objects across frames
 % links       potentially-linked objects -> [obj1 obj1frame obj2 obj2frame dist delta_area/perim].
+% ranking     ranking of links -> aggregate of positional/shape changes
 % labeldata  structure with centroid,perimeter, and area information
 % p           parameters structure
 %
@@ -81,7 +82,18 @@ if merge_flag % Link accepted- update links and blocks
     links(isnan(links(:,1)),:) = [];
     % Re-find links
     new_links = linkblock(new_block, blocks, 1, labeldata, p);
-    links = cat(1,links,new_links);
+
+    if ~isempty(new_links)
+        links = cat(1,links, new_links);
+        % Rank links on distance travelled and similarity (average of perimeter/area changes)
+        [~, idx] = sort(links(:,5),'ascend');
+        rnk1(idx) = 1:numel(idx);
+        [~, idx] = sort(links(:,6),'ascend');
+        rnk2(idx) = 1:numel(idx);
+        [~,resolve_order] = sort((rnk1*2)+rnk2,'ascend');
+        links = links(resolve_order,:);
+    end
+    
 else % Link was rejected, so just delete top link (and its duplicates)
     links((links(:,1)==link(1)) & (links(:,2)==link(2)) & (links(:,3)==link(3)) & (links(:,4)==link(4)),:) = [];
     links((links(:,1)==link(3)) & (links(:,2)==link(4)) & (links(:,3)==link(1)) & (links(:,4)==link(2)),:) = [];

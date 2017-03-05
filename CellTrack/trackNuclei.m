@@ -63,16 +63,16 @@ for i = 1:(size(blocks,1)-1)
     newlinks = linkblock(blocks(i,:), blocks, i+1, labeldata, p);
     links = cat(1,links,newlinks);
 end
-all_links = links;
 
-% Rank/resolve links on distance travelled and similarity (average of perimeter/area changes)
-while ~isempty(links)
-    [~,tmp] = sort(links(:,5),'ascend');
-    [~,rnk1] = sort(tmp);
-    [~,tmp] = sort(links(:,6),'ascend');
-    [~,rnk2] = sort(tmp);
+% Sort links on distance travelled and similiarity (avg of perim/area change)
+if ~isempty(links)
+    [~,~,rnk1] = unique(links(:,5));
+    [~,~,rnk2] = unique(links(:,6));
     [~,resolve_order] = sort((rnk1*2)+rnk2,'ascend');
     links = links(resolve_order,:);
+end
+% Rank/resolve links on distance travelled and similarity (average of perimeter/area changes)
+while ~isempty(links)
     % Resolve link (unless it tries to link together two old blocks)
     if (~ismember(links(1,1),old_blocks(:,links(1,2)))) || (~ismember(links(1,3),old_blocks(:,links(1,4))))
         [links,blocks] = resolvelink(blocks,links,labeldata,p);
