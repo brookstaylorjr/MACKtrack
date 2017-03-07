@@ -1,5 +1,4 @@
-function [cond_names, cond_wells] = parseLayout(layout_dir)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+function [cond_names, cond_wells, cond_well_num] = parseLayout(layout_dir)
 % [cond_names, cond_wells] = parseLayout(layout_dir)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % PARSELAYOUT looks in a specified directory for a layout.xlsx file, specifying experimental conditions in a 96-well 
@@ -33,7 +32,7 @@ for j = 1:length(ltr)
         end
     end
 end  
-disp(['- - - - - - Measuring, under ''',layout_dir,'''- - - - - '])
+disp(['- - - - - - Found ''layout.xls'', under ''',layout_dir,'''. Conditions/wells: - - - - - '])
 for i = 1:length(cond_names)
     if ~iscell(cond_wells{i})
         cond_wells{i} = {cond_wells{i}};
@@ -41,3 +40,14 @@ for i = 1:length(cond_names)
     disp(['''',cond_names{i},''': from wells ' strjoin(cond_wells{i},', ')])
 end    
 disp('- - - - - - - - - - - - - - ')
+
+% Optional output: specify wells as numerical array instead (i.e. 'A01' -> 101)
+cond_well_num = cell(size(cond_wells));
+for i = 1:length(cond_wells)
+    cond_well_num{i} = [];
+    for j = 1:length(cond_wells{i})
+        num1 = double(cond_wells{i}{j}(1)-64);
+        val1 = eval([num2str(num1),cond_wells{i}{j}(2:end)]);
+        cond_well_num{i} = cat(2,cond_well_num{i},val1);
+    end
+end

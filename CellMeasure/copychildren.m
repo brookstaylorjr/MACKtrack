@@ -1,4 +1,12 @@
 function [measure_out, divisions,divide_pts] = copychildren(measure_in, celldata_in)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% [measure_out, divisions,divide_pts] = copychildren(measure_in, celldata_in)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% COPYCHILDREN uses lineage information to copy mother trajectories (i.e. prior to division) to any daughter cells
+%
+%
+%
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 find_parent = @(row) find((celldata_in(:,1) == row(1)) & (celldata_in(:,2)== row(5)));
 divisions = [];

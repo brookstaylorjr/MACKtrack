@@ -1,5 +1,4 @@
 function [output, diagnos] = fluorescenceSegment(data, image_in, p)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % [output, diagnos] = fluorescenceSegment(data, original, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % FLUORESECNCESEGMENT 
