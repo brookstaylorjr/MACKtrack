@@ -1696,7 +1696,7 @@ function pushbutton7A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON7A: add a new flatfield image (stored by name and image)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image');
+[file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',handles.locations.scope);
 if file1
     set(handles.listbox7B,'Value',1);
     % Add file/filename to parameters
@@ -1738,7 +1738,7 @@ index_selected = get(handles.listbox7B,'Value');
 
 if index_selected <= length(handles.parameters.Flatfield)
     [file1, dir1] = uigetfile({'*.tif;*.tiff;*.png;*.jpg','Image Files';'*.*', 'All Files'},'Load a flatfield image',...
-        [handles.locations.scope,handles.parameters.ImagePath]);
+       handles.locations.scope);
     if file1
         % Add file/filename to parameters
         new_img = double(imread([dir1,filesep,file1]));
