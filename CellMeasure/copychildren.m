@@ -2,9 +2,9 @@ function [measure_out, divisions,divide_pts] = copychildren(measure_in, celldata
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % [measure_out, divisions,divide_pts] = copychildren(measure_in, celldata_in)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% COPYCHILDREN uses lineage information to copy mother trajectories (i.e. prior to division) to any daughter cells
-%
-%
+% COPYCHILDREN uses lineage information to copy mother trajectories (i.e. prior to division) to any daughter cells.
+% Requires a raw matrix of measurements (one row per cell), and "CellData" information matrix from MACKtrack.
+% CellData info:  [ xy position | cell idx | frame in | frame out | parent | is_edge ]
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
