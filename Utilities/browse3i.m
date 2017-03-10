@@ -147,9 +147,7 @@ if draw
     imfo = imfinfo([handles.dir,filesep,handles.img]);
     handles.bit_depth = imfo.BitDepth;
     
-    
-
-
+   
 
     img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0,0);
     handles.CLim = double([min(img(:)), max(img(:))]);
