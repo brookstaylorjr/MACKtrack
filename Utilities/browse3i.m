@@ -60,8 +60,18 @@ while ~ok_go
         end
     end
 end
-
 disp(['Loaded directory contents in ',num2str(round(loadtoc*100)/100),' sec'])
+
+
+% Need some kind of way to gracefully handle "extra" data points -> for now, filter them out.
+filter_str = @(str) (length(str)>10) && strcmp(str(end-10),'.');
+drop_names  = cellfun(filter_str,handles.dir_contents);
+if sum(drop_names)>0
+    disp('Warning: found "intermediate" timepoint images in this folder (e.g. ''t001.02_C0.tiff'') - dropping these.')
+    handles.dir_contents(drop_names) = [];
+end
+
+
 ext_matches = {'.jpg', '.tif', 'tiff', '.png'};
 draw = 0;
 % Cycle through to get 1st image - parse its name, then break the loop
