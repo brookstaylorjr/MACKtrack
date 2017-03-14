@@ -8,7 +8,7 @@ function [] = measureLoop(xy, parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Form xy path, initialize structures for measurements and module information              
-parameters.XYDir = [parameters.locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(xy),filesep];   
+parameters.XYDir = namecheck([parameters.locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(xy),filesep],'');   
 CellMeasurements = struct;      
 ModuleData = struct;
 
@@ -94,7 +94,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                         curr_expr = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]);
                     end
                     try
-                        curr_name = [parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)]; 
+                        curr_name = namecheck([parameters.locations.scope, filesep,parameters.ImagePath, filesep, eval(curr_expr)],''); 
                     catch
                         curr_name = '--';
                     end
@@ -129,7 +129,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
     end
     
     % Save CellMeasurements
-    save([parameters.XYDir,'CellMeasurements.mat'], 'CellMeasurements','-v7.3')
+    save(namecheck([parameters.XYDir,'CellMeasurements.mat'],''), 'CellMeasurements','-v7.3')
 else
     disp(['Skipping XY ',num2str(xy)])
 end

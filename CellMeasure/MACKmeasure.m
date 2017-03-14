@@ -39,7 +39,7 @@ end
 
 % Cycle through XY directories and combine their measurements
 for i = parameters.XYRange
-    parameters.XYDir = [locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(i),filesep];
+    parameters.XYDir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(i),filesep],'');
     if exist([parameters.XYDir,'CellMeasurements.mat'],'file')
         load([parameters.XYDir,'CellMeasurements.mat'])
         measureFields = fieldnames(CellMeasurements);
@@ -65,5 +65,5 @@ AllMeasurements.parameters.locations = locations;
 
 % Save AllMeasurements in condition directory
 
-save([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat'],'AllMeasurements','-v7.3')
+save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat'],''),'AllMeasurements','-v7.3')
 end
