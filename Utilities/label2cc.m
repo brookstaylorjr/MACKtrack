@@ -29,6 +29,10 @@ if compressed
         cc_out.PixelIdxList = cc_out.PixelIdxList(idx);
     end
 end
+if ~iscell(cc_out.PixelIdxList)
+    cc_out.PixelIdxList = {cc_out.PixelIdxList};
+end
+
 cc_out.NumObjects = length(cc_out.PixelIdxList);
 cc_out.ImageSize = size(label_in);
 cc_out.Connectivity = 4;

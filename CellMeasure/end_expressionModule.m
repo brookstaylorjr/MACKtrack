@@ -14,19 +14,22 @@ function [CellMeasurements, ModuleData] = end_expressionModule(CellMeasurements,
 % AuxImages           images to measure
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+
+
+% Engage on last frame only
 if ModuleData.iter == parameters.TotalImages
     
-    %% Load the corresponding (final) nuclear image - calculate the "jump" to the endpoint images
+    
+    
+    
+    
+    
+    %% Load the corresponding (final) cell image - calculate the "jump" to the endpoint images
     home_folder = mfilename('fullpath');
     slash_idx = strfind(home_folder,filesep);
     load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
     i = ModuleData.i; j = ModuleData.j;
-    nucName1 = eval(parameters.NucleusExpr);
-    images.nuc = checkread([locations.scope,parameters.ImagePath,nucName1],ModuleData.BitDepth,1,parameters.debug);
-    jump1 = calculatejump(images.nuc,AuxImages{1});
     
-    % Translate corresponding nuclear label matrix
-	nuc_label = imtranslate(labels.Nucleus,[jump1(2),jump1(1)]);
     
     % Flatfield-correct aux image #2 and make cell mask
     cell_img = flatfieldcorrect(double(AuxImages{2}),double(parameters.Flatfield{1}));

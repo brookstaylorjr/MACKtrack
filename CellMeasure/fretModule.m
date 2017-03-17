@@ -2,7 +2,8 @@ function [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameter
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% FRETMODULE 
+% FRETMODULE performs ratiometric FRET measurement in cell nuclei/cytoplasmic regions.
+% (FRET image just be in slot #1, CFP image should be in slot #2)
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %
@@ -12,35 +13,71 @@ function [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameter
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+% Get indicies and bwconncomp structures for measurement
 iteration  = ModuleData.iter;
-tmp_label = labels.Cell;
-tmp_label(labels.Nucleus>0) = 0; % cytoplasm only
-measure_cc = label2cc(tmp_label,0);
+nuc_cc = label2cc(labels.Nucleus,0);
+
+if isfield(labels,'Cell')
+	cyto_label = labels.Cell;
+	cyto_label(labels.Nucleus>0) = 0; % cytoplasm only
+	cyto_cc = label2cc(cyto_label,0);
+	cell_cc = label2cc(labels.Cell,0);
+
+else
+	cyto_cc = [];
+end
 
 
-% Get ratiometric measurement for FRET
+% Correct and get ratiometric measurement for the FRET/CFP image pair
 fret = AuxImages{1}; 
 fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
-fret = fret-prctile(fret(:),2);
-fret(fret<20) = 20;
+fret = fret-prctile(fret(:),2); % Background subtract
+fret(fret<16) = 16; % add floor to image 
+
 cfp = AuxImages{2};
 cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
 cfp = cfp -prctile(cfp(:),2);
-cfp(cfp<20) = 20;
+cfp(cfp<16) = 16; % add floor to image 
 fret_image = (fret)./(cfp);
 
 
-% On first call, initialize all new CellMeasurements fields 
-if ~isfield(CellMeasurements,'MeanFRET')
-    % Intensity-based measurement initialization
-    CellMeasurements.MeanFRET =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntegratedFRET =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MedianFRET = nan(parameters.TotalCells,parameters.TotalImages);
+% - - - - NUCLEAR measurements - - - -
+% A) Initialize fields
+if ~isfield(CellMeasurements,'MeanFRET_nuc')
+    CellMeasurements.MeanFRET_nuc =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.IntegratedFRET_nuc =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.MedianFRET_nuc = nan(parameters.TotalCells,parameters.TotalImages);
+
+end
+% B) Assign measurements
+for n = 1:nuc_cc.NumObjects
+    CellMeasurements.MeanFRET_nuc(n,iteration) = nanmean(fret_image(nuc_cc.PixelIdxList{n}));
+    CellMeasurements.IntegratedFRET_nuc(n,iteration) = nansum(fret_image(nuc_cc.PixelIdxList{n}));
+    CellMeasurements.MedianFRET_nuc(n,iteration) = nanmedian(fret_image(nuc_cc.PixelIdxList{n}));
 end
 
-% Cycle through each cell and assign measurements
-for n = 1:measure_cc.NumObjects
-    CellMeasurements.MeanFRET(n,iteration) = nanmean(fret_image(measure_cc.PixelIdxList{n}));
-    CellMeasurements.IntegratedFRET(n,iteration) = nansum(fret_image(measure_cc.PixelIdxList{n}));
-    CellMeasurements.MedianFRET(n,iteration) = nanmedian(fret_image(measure_cc.PixelIdxList{n}));
+% - - - - CYTOPLASMIC/WHOLE-CELL measurements - - - -
+if isfield(labels,'Cell')
+	% A) Initialize fields
+	if ~isfield(CellMeasurements,'MeanFRET_cyto')
+	    CellMeasurements.MeanFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
+	    CellMeasurements.IntegratedFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
+	    CellMeasurements.MedianFRET_cyto = nan(parameters.TotalCells,parameters.TotalImages);
+
+	    CellMeasurements.MeanFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+	    CellMeasurements.IntegratedFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+	    CellMeasurements.MedianFRET_cell = nan(parameters.TotalCells,parameters.TotalImages);
+
+	end
+
+	% B) Assign measurements
+	for n = 1:cyto_cc.NumObjects
+	    CellMeasurements.MeanFRET_cyto(n,iteration) = nanmean(fret_image(cyto_cc.PixelIdxList{n}));
+	    CellMeasurements.IntegratedFRET_cyto(n,iteration) = nansum(fret_image(cyto_cc.PixelIdxList{n}));
+	    CellMeasurements.MedianFRET_cyto(n,iteration) = nanmedian(fret_image(cyto_cc.PixelIdxList{n}));
+
+	    CellMeasurements.MeanFRET_cell(n,iteration) = nanmean(fret_image(cell_cc.PixelIdxList{n}));
+	    CellMeasurements.IntegratedFRET_cell(n,iteration) = nansum(fret_image(cell_cc.PixelIdxList{n}));
+	    CellMeasurements.MedianFRET_cell(n,iteration) = nanmedian(fret_image(cell_cc.PixelIdxList{n}));
+	end
 end

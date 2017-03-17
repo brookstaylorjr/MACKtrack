@@ -34,16 +34,16 @@ for i = 1:length(AuxImages)
         % STEP 1: image normalization
         % Normalization 1: flatfield correction -> estimate range for scaling
         corr_img = flatfieldcorrect(double(AuxImages{i}),double(parameters.Flatfield{i}));
-        % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
-        corr_img = corr_img - min(corr_img(:));
-        tmp = corr_img;
-        tmp(labels.Cell>0) = []; % Drop foreground objects for correction calculation
-        if ~isempty(tmp)
-            [~, dist1] = modebalance(tmp,0,ModuleData.BitDepth,'measure'); % Get mode of existing background
-        else
-            dist1 = prctile(corr_img(:),2); % If there is no background (100% confluence), just subtract 2nd percentile
-        end
-        corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
+        % Normalization 2: mode-balance - unimodal distribution assumed after dropping cells (b.g. only)
+        corr_img = corr_img - prctile(corr_img(:),1); % Need to have some kind of confluent "switch" here?
+%         tmp = corr_img;
+%         tmp(labels.Cell>0) = []; % Drop foreground objects for correction calculation
+%         if ~isempty(tmp)
+%             [~, dist1] = modebalance(tmp,0,ModuleData.BitDepth,'measure'); % Get mode of existing background
+%         else
+%             dist1 = prctile(corr_img(:),2); % If there is no background (100% confluence), just subtract 2nd percentile
+%         end
+%         corr_img = (corr_img - dist1(1)); % Background subtract (DON'T divide)
         AuxImages{i} = corr_img;
          % STEP 2: initialize data
         CellMeasurements.(['MeanCell',num2str(i)]) =  nan(parameters.TotalCells,parameters.TotalImages,1);

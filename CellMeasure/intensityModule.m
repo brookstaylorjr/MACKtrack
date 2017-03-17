@@ -10,28 +10,88 @@ function [CellMeasurements, ModuleData] = intensityModule(CellMeasurements,param
 % ModuleData          extra information (current iteration, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-if isempty(AuxImages{1})
-    error('No measurement image loaded. Are you sure a correct name was specified for this module?')
-end
-
+% Get indicies and bwconncomp structures for measurement
 iteration  = ModuleData.iter;
+nuc_cc = label2cc(labels.Nucleus,0);
 
-% Mode-balance 1st auxililiary image - bimodal distribution assumed
-if ~isfield(ModuleData,'distr')
-    [AuxImages{1}, ModuleData.distr] = modebalance(AuxImages{1},2,ModuleData.BitDepth,'measure'); 
-else
-    AuxImages{1} = modebalance(AuxImages{1},2,ModuleData.BitDepth,'correct',ModuleData.distr);
+if isfield(labels,'Cell')
+    cyto_label = labels.Cell;
+    cyto_label(labels.Nucleus>0) = 0; % cytoplasm only
+    cyto_cc = label2cc(cyto_label,0);
+    cell_cc = label2cc(labels.Cell,0);
+end
+
+% Main cycle: correct image, initialize data (if not present), make measurments
+for img = 1:length(AuxImages)
+    if ~isempty(AuxImages{img})
+        % 1) Background correct image (try to do flatfield, if available)
+        if (length(parameters.Flatfield)>=img) && isequal(size(AuxImages{img}),size(parameters.Flatfield{img}))
+            img0 = flatfieldcorrect(AuxImages{img},double(parameters.Flatfield{img}));
+            img0 = img0-prctile(img0(:),2); % Background subtract
+        else
+            if ~isfield(ModuleData,'distr')
+                [img0, ModuleData.distr] = modebalance(AuxImages{img},2,ModuleData.BitDepth,'measure'); 
+            else
+                img0 = modebalance(AuxImages{img},2,ModuleData.BitDepth,'correct',ModuleData.distr);
+            end
+        end
+
+
+    % - - - - NUCLEAR measurements - - - -
+    % A) Initialize fields
+    if ~isfield(CellMeasurements,['MeanIntensity_nuc',num2str(img)])
+        % 
+        CellMeasurements.(['MeanIntensity_nuc',num2str(img)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.(['MedianIntensity_nuc',num2str(img)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.(['IntegratedIntensity_nuc',num2str(img)]) = nan(parameters.TotalCells,parameters.TotalImages);
+    end
+
+    % B) Assign measurements
+    for n = 1:nuc_cc.NumObjects
+        CellMeasurements.(['MeanIntensity_nuc',num2str(img)])(n,iteration) = nanmean(img0(cyto_cc.PixelIdxList{n}));
+        CellMeasurements.(['MedianIntensity_nuc',num2str(img)])(n,iteration) = nanmedian(img0(cyto_cc.PixelIdxList{n}));
+        CellMeasurements.(['IntegratedIntensity_nuc',num2str(img)])(n,iteration) = nansum(img0(cyto_cc.PixelIdxList{n}));
+    end
+
+
+
+    % - - - - CYTOPLASMIC/WHOLE-CELL measurements - - - -
+    if isfield(labels,'Cell')
+        % A) Initialize fields
+        if ~isfield(CellMeasurements,(['MeanIntensity_cyto',num2str(img)]))
+            CellMeasurements.(['MedianIntensity_cyto',num2str(img)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['IntegratedIntensity_cyto',num2str(img)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+
+            CellMeasurements.MeanFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.IntegratedFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.MedianFRET_cell = nan(parameters.TotalCells,parameters.TotalImages);
+
+        end
+
+        % B) Assign measurements
+        for n = 1:cyto_cc.NumObjects
+            CellMeasurements.(['MeanIntensity_cyto',num2str(img)])(n,iteration) = nanmean(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianIntensity_cyto',num2str(img)])(n,iteration) = nansum(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedIntensity_cyto',num2str(img)])(n,iteration) = nanmedian(img0(cyto_cc.PixelIdxList{n}));
+
+            CellMeasurements.(['MeanIntensity_cell',num2str(img)])(n,iteration) = nanmean(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianIntensity_cell',num2str(img)])(n,iteration) = nansum(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedIntensity_cell',num2str(img)])(n,iteration) = nanmedian(img0(cell_cc.PixelIdxList{n}));
+        end
+    end
+
+
+
+
+
+
+
+
 end
 
 
-% Initialize all new CellMeasurements fields 
-if ~isfield(CellMeasurements,'MeanIntensity')
-    % Intensity-based measurement initialization
-    CellMeasurements.MeanIntensity =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntegratedIntensity =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MedianIntensity = nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntensityPercentiles = nan(parameters.TotalCells,parameters.TotalImages,100);
-end
+
+
 
 % Cycle through each cell and assign measurements
 cells = unique(labels.Cell(labels.Cell>0));

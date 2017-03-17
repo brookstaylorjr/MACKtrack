@@ -73,7 +73,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                     ' (xy ',num2str(i),' frame ',num2str(iter),')'])
             end
         end
-        
+       
         j = parameters.TimeRange(iter);
         
         % Cycle through module names- construct name, load aux image, and call
