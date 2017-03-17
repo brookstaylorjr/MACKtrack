@@ -76,10 +76,10 @@ handles.home_folder = handles.home_folder(1:slash_idx(end-1));
 % Set locations
 load([handles.home_folder, 'locations.mat'],'-mat')
 
-try
-    locations.scope = namecheck(locations.scope,'');
-    locations.data = namecheck(locations.data,'');
-catch me
+
+locations.scope = namecheck(locations.scope,'');
+locations.data = namecheck(locations.data,'');
+if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
     h = setLocations;
     uiwait(h);
     load([handles.home_folder, 'locations.mat'],'-mat')
