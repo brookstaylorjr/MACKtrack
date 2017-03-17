@@ -65,6 +65,7 @@ mkdir([outputDirectory,'SegmentedImages'])
 
 % Make default shift (for tracking cells across image jumps)
 parameters.ImageOffset = repmat({[0 0]},1,parameters.StackSize);
+parameters.ImageJumps(parameters.ImageJumps==1) = []; % (Error check: can't do a jump w/o a reference)
 
 % Check to make sure time vector is long enough
 if length(parameters.TimeRange) < parameters.StackSize

@@ -43,7 +43,7 @@ for i = parameters.XYRange
     if exist([parameters.XYDir,'CellMeasurements.mat'],'file')
         load([parameters.XYDir,'CellMeasurements.mat'])
         measureFields = fieldnames(CellMeasurements);
-        for p= 1:length(measureFields)
+        for p = 1:length(measureFields)
             if (isfield(AllMeasurements,measureFields{p}))
                 AllMeasurements.(measureFields{p}) = cat(1, AllMeasurements.(measureFields{p}), CellMeasurements.(measureFields{p}));
             else

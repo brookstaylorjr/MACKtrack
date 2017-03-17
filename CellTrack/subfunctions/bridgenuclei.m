@@ -145,7 +145,6 @@ end
 
 % If there's nothing to merge, break out of fcn
 if tmp_cc.NumObjects==0
-    cc_out = cc_in;
     subobj_out = [];
     return
 end
