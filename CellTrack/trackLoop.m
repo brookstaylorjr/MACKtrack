@@ -126,7 +126,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         tic
         maskfn = str2func([fnstem,'ID']);
         if strcmpi(parameters.ImageType,'fluorescence')
-            X = images.nuc;
+            X = []; % Don't use (optional) nuclear image to mask
         end
         data = maskfn(images.cell,parameters,X); % either phaseID or dicID (3 args)
         tocs.CellMasking = toc;

@@ -15,7 +15,7 @@ function [CellMeasurements, ModuleData] = screen_cytoModule(CellMeasurements, pa
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % If cells were not segmented; do annulus to estimate cytoplasmic area.
-if isequal(labels.Cell,labels.Nucleus)
+if strcmpi(parameters.ImageType,'none')
     tmp_mask = imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*2));
     labels.Cell = IdentifySecPropagateSubfunction(double(labels.Nucleus),zeros(size(labels.Nucleus)),tmp_mask,100);
 end
@@ -25,7 +25,9 @@ nuc_cc = label2cc(labels.Nucleus,0);
 cell_cc = label2cc(labels.Cell,0);
 cyto_cc = cell_cc;
 for i = 1:cyto_cc.NumObjects
-    cyto_cc.PixelIdxList{i}(ismember(cyto_cc.PixelIdxList{i},nuc_cc.PixelIdxList{i})) = [];
+    if ~isempty(cyto_cc.PixelIdxList{i})
+        cyto_cc.PixelIdxList{i}(ismember(cyto_cc.PixelIdxList{i},nuc_cc.PixelIdxList{i})) = [];
+    end
 end
 
 

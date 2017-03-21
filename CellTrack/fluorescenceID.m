@@ -24,13 +24,16 @@ if p.CellFF>0
 else
     diagnos.img_cell = image_cell;
 end
-if p.NucleusFF>0    
-    diagnos.img_nuc = flatfieldcorrect(image_nuc,double(p.Flatfield{p.NucleusFF}));
-    if min(diagnos.img_nuc(:))<0
-        diagnos.img_nuc = diagnos.img_nuc-min(diagnos.img_nuc(:));
+
+if (nargin>2) && ~isempty(image_nuc)
+    if p.NucleusFF>0    
+        diagnos.img_nuc = flatfieldcorrect(image_nuc,double(p.Flatfield{p.NucleusFF}));
+        if min(diagnos.img_nuc(:))<0
+            diagnos.img_nuc = diagnos.img_nuc-min(diagnos.img_nuc(:));
+        end
+    else
+        diagnos.img_nuc = image_nuc;
     end
-else
-    diagnos.img_nuc = image_nuc;
 end
 
 % Smooth and log-compress cell fluorescence image
