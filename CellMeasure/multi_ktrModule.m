@@ -47,7 +47,7 @@ CellMeasurements.MultiKTR_t = cat(2, CellMeasurements.MultiKTR_t, new_ts(1:end-1
 tmp_measurements = struct;
 tmp_params = parameters; 
 tmp_data = ModuleData; tmp_data.iter  = 1; 
-tmp_params.TotalImages = 3; 
+tmp_params.TotalImages = size(AuxImages,1); 
 for n = 1:size(AuxImages,1)
     tmp_measurements = ktrModule(tmp_measurements,tmp_params, labels, AuxImages(n,:), tmp_data);
     tmp_data.iter = tmp_data.iter+1;

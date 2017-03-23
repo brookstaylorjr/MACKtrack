@@ -21,7 +21,7 @@ disp('- - - - - - - - ')
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
 summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 summarizeCondition(AllData.(condition_names{1})) % Summary 2: look at all measurements within a SINGLE condition (divided by image)
-summarizeMeasurement2D(AllData,'MeanCell1','MeanCell2') % Summary 3: scatter plots of 2 variables of interest 
+summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots of 2 variables of interest 
 
 
 %% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 
@@ -164,10 +164,10 @@ colormap(colormaps.viridis(end:-1:1,:))
 % (Calculate these on a per well basis, including standard error)
 
 % _____Modify these______
-subset = 1:3;
+subset = 1:length(ydata_by_condition);
 well_data = ydata_by_well(subset);
-threshold = 200;
-name1 = 'Mean CEBPb Expression';
+threshold = 2700;
+name1 = 'Mean PPARg Expression';
 name2 = 'Expressing cells';
 xlabels = condition_names(subset);
 % ________________________
