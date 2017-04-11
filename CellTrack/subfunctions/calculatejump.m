@@ -32,3 +32,4 @@ for i = 1:8
     end
 end
 image_jump = round(nanmedian(all_diffs));
+image_jump(isnan(image_jump)) = 0;
