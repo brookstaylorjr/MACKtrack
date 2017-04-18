@@ -15,13 +15,14 @@ function [output, diagnos] =  primaryID(image0,p, ~)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 %- - - - - - - - - - - - - - - - - - - MAKE "CELL" MASK - - - - - - - - - - - - - - - - - - - - - - -
-horizontalEdge = imfilter(image0,fspecial('sobel') /8,'symmetric');
-verticalEdge = imfilter(image0,fspecial('sobel')'/8,'symmetric');
-nuc_edge = sqrt(horizontalEdge.^2 + verticalEdge.^2);
-output.mask1 = nuc_edge>tsaithresh(nuc_edge,false(size(nuc_edge)),2^10);
-output.mask1 = bwareaopen(output.mask1,p.NoiseSize);
-output.mask_cell =  imdilate(output.mask1,ones(64));
+%%
+
+nuc_smooth = imfilter(image0,gauss2D(p.MinNucleusRadius/2),'replicate');
+stdev_in = p.MinNucleusRadius;
+h = fspecial('log',8*ceil(stdev_in)+1, stdev_in);
+nuc_edge = abs(imfilter(nuc_smooth, h,'symmetric'));
+
+output.mask1 = nuc_edge>exp(trithreshold(log(nuc_edge)));
+output.mask_cell =  imdilate(output.mask1,ones(ceil(p.MinNucleusRadius)));
 
 diagnos = output;
-
-

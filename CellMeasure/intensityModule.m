@@ -12,7 +12,7 @@ function [CellMeasurements, ModuleData] = intensityModule(CellMeasurements,param
 
 % If cells were not segmented; do annulus to estimate cytoplasmic area.
 if strcmpi(parameters.ImageType,'none')
-    tmp_mask = imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*2));
+    tmp_mask = imdilate(labels.Nucleus>0,diskstrel(parameters.MinNucleusRadius*1.5)); % (Expand by 1.5 radii)
     labels.Cell = IdentifySecPropagateSubfunction(double(labels.Nucleus),zeros(size(labels.Nucleus)),tmp_mask,100);
 end
 

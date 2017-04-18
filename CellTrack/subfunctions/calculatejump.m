@@ -32,4 +32,4 @@ for i = 1:8
     end
 end
 image_jump = round(nanmedian(all_diffs));
-image_jump(isnan(image_jump)) = 0;
+image_jump(isnan(image_jump)) = 0; % If we couldn't get an accurate fix, just assume no jump at all.

@@ -1,6 +1,6 @@
 function varargout = checkDynamics(varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [] = checkDynamics(id)
+% [] = checkDynamics(varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % CHECKDYNAMICS creates a figure showing tracked/outlined cells that corrrespond to a 
 % dynamic measurement, graphed below. Measurements are first processed by specific 

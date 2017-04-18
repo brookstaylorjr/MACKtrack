@@ -1,4 +1,4 @@
-function [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,numBins)
+function [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,bins)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,numBins)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -7,7 +7,7 @@ function [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,numBins)
 % INPUTS
 % image1         image to be thresholded
 % dropPixels     binary mask showing pixels to be pulled out of the image
-% numBins        number of bins in the histogram function (defaults to 4096)
+% numBins        bin centers, or number of bins in the histogram function (defaults to 4096)
 %
 % OUTPUTS
 % thresh calculated image threshold, above mode of image
@@ -23,8 +23,12 @@ function [thresh,K,H,bins,testFn] = tsaithresh(image1,dropPixels,numBins)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if nargin<3
-    numBins = 4096;  % Default; good for 12/14-bit images
+    bins = round(numel(image1)/1024);  % Apportion roughly 1000 pixels to a given bin
 end
+if nargin<2
+    dropPixels = false(size(image1));
+end
+
 
 % Get image histogram
 image1(dropPixels) = [];
@@ -36,7 +40,7 @@ fsize = 3; % Gaussian filter size
 R =2; % Radius of curvature, Tsai says <= 3
 lowCutoff = 0.02; % sets cutoff for very low peaks
 
-[histFunc, bins] = hist(image1,numBins);
+[histFunc, bins] = histcounts(image1,bins);
 histFunc = [zeros(size(bins)),histFunc,zeros(size(bins))];
 
 

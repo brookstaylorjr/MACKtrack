@@ -39,7 +39,7 @@ end
 % Construct smoothed images + watershed image
 nucleus1 = medfilt2(nuc_orig,[p.MedianFilterSize, p.MedianFilterSize]); % Median-filtered
 
-diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/4),'replicate'); % Gaussian filtered
+diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/4),'symmetric'); % Gaussian filtered
 diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
 %- - - - - - - - - - - - - - - - - - - LABEL1: strong edges  - - - - - - - - - - - - - - - - - - - - - - -
 % 1) Iterate down to p.NucleusEdgeThreshold to find strong-edge nuclei
