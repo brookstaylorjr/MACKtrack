@@ -46,8 +46,13 @@ if isnumeric(varargin{1})
     % Cycle/measure sets
     for idx = 1:run_tot
 
-        % PARAMETERS
-        load([home_folder,'Parameters',filesep,data.parameter_files{idx}])
+        % 1) PARAMETERS - assume it's an absolute path, or can be found on MATLAB search path 
+        if exist(data.parameter_files{idx},'file')
+            disp(['Loading parameters file: ', which(data.parameter_files{idx})])
+            load(data.parameter_files{idx})
+        else
+            error(['Specified parameters file (',data.parameter_files{idx} ,') not found - stopping.'])
+        end
         parameters.ImagePath = data.image_paths{idx};
         parameters.TimeRange = eval(data.time_ranges{idx});
         parameters.XYRange = eval(data.xy_ranges{idx});

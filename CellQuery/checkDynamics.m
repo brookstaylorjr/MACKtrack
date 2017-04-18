@@ -26,11 +26,6 @@ function varargout = checkDynamics(varargin)
 %      instance to run (singleton)".
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-%
-% See also: GUIDE, GUIDATA, GUIHANDLES
-
-% Edit the above text to modify the response to help checkDynamics
-
 % Last Modified by GUIDE v2.5 17-Feb-2015 11:57:00
 
 % Begin initialization code - DO NOT EDIT
