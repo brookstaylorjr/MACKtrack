@@ -12,7 +12,6 @@ function [thresh, all_thresh] = trithreshold(img,bins,mode_level)
 % bins          bins to divide image into (used for MoG modeling)
 % mode_level   mode of image (1st guess is that this represents background in a GMM)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
 v = img(:);
 v(v==max(v(:))) = [];
 v(v==min(v(:))) = [];
