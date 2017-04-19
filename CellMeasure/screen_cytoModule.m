@@ -2,7 +2,7 @@ function [CellMeasurements, ModuleData] = screen_cytoModule(CellMeasurements, pa
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [CellMeasurements, ModuleData] = screen_cytoModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SCREEN_NUCMODULE is a fixed-cell measurement module. It will perform flatfield/background correction for each
+% SCREEN_CYTOMODULE is a fixed-cell measurement module. It will perform flatfield/background correction for each
 % specified image (Measure img 1 corresponds to Flatfield{1}, measure image 2 with Flatfield{2}, etc.), then will
 % calculate cytoplasmic and whole-cell expression levels for each individual cell.
 %

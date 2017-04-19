@@ -1,7 +1,8 @@
-function [CellMeasurements, ModuleData] = intensity_456_Module(CellMeasurements,parameters, labels, AuxImages, ModuleData)
+function [CellMeasurements, ModuleData] = intensity456Module(CellMeasurements,parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% INTENSITY_456_MODULE measures cellular intensity (nuclear, cell, and cytoplasmic) in specified AuxImages channels
-% (
+% INTENSITY456MODULE measures cellular intensity (nuclear, cell, and cytoplasmic) in specified AuxImages channels
+% (Allows extra-channel measurements, e.g. MeanCell4, MeanCell5, and MeanCell6) -> normalization will use Flatfield4
+% Flatfield5, and Flatfield6, accordingly
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %
@@ -32,12 +33,11 @@ for i = 1:cyto_cc.NumObjects
 end
 
 
-
 % Main cycle: correct image, initialize data (if not present), make measurments
 for img = 1:length(AuxImages)
     if ~isempty(AuxImages{img})
         % 1) Background correct image (try to do flatfield, if available)
-        if (length(parameters.Flatfield)>=img) && isequal(size(AuxImages{img}),size(parameters.Flatfield{img}))
+        if (length(parameters.Flatfield)>=(img+3)) && isequal(size(AuxImages{img}),size(parameters.Flatfield{img+3}))
             img0 = flatfieldcorrect(AuxImages{img},double(parameters.Flatfield{img+3}));
             img0 = img0-prctile(img0(:),2); % Background subtract
         else
