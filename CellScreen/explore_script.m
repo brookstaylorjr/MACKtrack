@@ -19,7 +19,11 @@ disp(measurement_names)
 disp('- - - - - - - - ')
 
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
-summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
+summarizeMeasurement(AllData,'MeanIntensity_cell2') % Summary 1: look at distributions of a particular measurement across all conditions
+
+
+%%
+
 summarizeCondition(AllData.(condition_names{1})) % Summary 2: look at all measurements within a SINGLE condition (divided by image)
 summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots of 2 variables of interest 
 

@@ -30,24 +30,18 @@ end
 
 % Load data; set parameters
 [measure, info] = loadID(id);
-info.parameters.FramesPerHour = 17.14; % 3.5 min btw frames(?)
-info.Module = 'nfkbModule';
-t_max = (size(measure.NFkBFraction,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+info.Module = 'ktrModule';
+graph.t = (measure.MultiKTR_t(1,:)-1)/info.parameters.FramesPerHour; % Number of hours to display in graphs
 
 
-all_ktr = measure.NFkBFraction;
+all_ktr = measure.KTR_ratio1;
 all_ktr(all_ktr==0) = nan;
 
 
 %all_ktr = 1./all_ktr;
 
 % Add parent trajectories to children
-find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));
-for i = 1:size(all_ktr,1)
-    if info.CellData(i,5)>0
-        all_ktr(i,1:info.CellData(i,3)) = all_ktr(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
-    end
-end
+all_ktr = copychildren(all_ktr,info.CellData, measure.MultiKTR_t(1,:));
 
 
 
@@ -65,9 +59,8 @@ all_ktr = all_ktr(info.keep,:);
 %all_ktr = all_ktr - repmat(nanmean(all_ktr(:,1:4),2),[1,size(all_ktr,2)]);
 info.graph_limits = prctile(all_ktr(~isnan(all_ktr)),[10 90]);
 
-graph.var = 1./all_ktr;
+graph.var = all_ktr;
 
-graph.t = (0:(60/info.parameters.FramesPerHour):t_max)/60;
 
 graph.celldata = info.CellData(info.keep,:);
 graph.shift = zeros(length(unique(info.CellData(:,1))),1);
