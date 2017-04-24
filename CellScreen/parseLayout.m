@@ -10,7 +10,7 @@ function [cond_names, cond_wells, cond_well_num] = parseLayout(layout_dir)
 [~,~,raw] = xlsread([layout_dir,filesep,'layout.xlsx']);
 raw(1,:) = []; raw(:,1) = [];
 % Check remainder of spreadsheet - ensure dimensions are correct.
-if (size(raw,1) ~=8) || (size(raw,2)~=12)
+if (size(raw,1) < 8) || (size(raw,2)<12)
     error('96 well layout file is incorrect size: should have rows A-H, and columns 1-12')
 end
 
