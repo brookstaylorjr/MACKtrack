@@ -51,42 +51,42 @@ for img = 1:length(AuxImages)
 
         % - - - - NUCLEAR measurements - - - -
         % A) Initialize fields
-        if ~isfield(CellMeasurements,['MeanIntensity4_nuc',num2str(img+3)])
-            CellMeasurements.(['MeanIntensity_nuc',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
-            CellMeasurements.(['MedianIntensity_nuc',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
-            CellMeasurements.(['IntegratedIntensity_nuc',num2str(img+3)]) = nan(parameters.TotalCells,parameters.TotalImages);
+        if ~isfield(CellMeasurements,['MeanNuc',num2str(img+3)])
+            CellMeasurements.(['MeanNuc',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['MedianNuc',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['IntegratedNuc',num2str(img+3)]) = nan(parameters.TotalCells,parameters.TotalImages);
         end
 
         % B) Assign measurements
         for n = 1:nuc_cc.NumObjects
-            CellMeasurements.(['MeanIntensity_nuc',num2str(img+3)])(n,iteration) = nanmean(img0(nuc_cc.PixelIdxList{n}));
-            CellMeasurements.(['MedianIntensity_nuc',num2str(img+3)])(n,iteration) = nanmedian(img0(nuc_cc.PixelIdxList{n}));
-            CellMeasurements.(['IntegratedIntensity_nuc',num2str(img+3)])(n,iteration) = nansum(img0(nuc_cc.PixelIdxList{n}));
+            CellMeasurements.(['MeanNuc',num2str(img+3)])(n,iteration) = nanmean(img0(nuc_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianNuc',num2str(img+3)])(n,iteration) = nanmedian(img0(nuc_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedNuc',num2str(img+3)])(n,iteration) = nansum(img0(nuc_cc.PixelIdxList{n}));
         end
 
 
 
         % - - - - CYTOPLASMIC/WHOLE-CELL measurements - - - -
         % A) Initialize fields
-        if ~isfield(CellMeasurements,(['MeanIntensity_cyto',num2str(img+3)]))
-            CellMeasurements.(['MeanIntensity_cyto',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
-            CellMeasurements.(['MedianIntensity_cyto',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
-            CellMeasurements.(['IntegratedIntensity_cyto',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+        if ~isfield(CellMeasurements,(['MeanCyto',num2str(img+3)]))
+            CellMeasurements.(['MeanCyto',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['MedianCyto',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['IntegratedCyto',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
 
-            CellMeasurements.(['MeanIntensity_cell',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
-            CellMeasurements.(['MedianIntensity_cell',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
-            CellMeasurements.(['IntegratedIntensity_cell',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['MeanCell',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['MedianCell',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
+            CellMeasurements.(['IntegratedCell',num2str(img+3)]) =  nan(parameters.TotalCells,parameters.TotalImages);
         end
 
         % B) Assign measurements
         for n = 1:cyto_cc.NumObjects
-            CellMeasurements.(['MeanIntensity_cyto',num2str(img+3)])(n,iteration) = nanmean(img0(cyto_cc.PixelIdxList{n}));
-            CellMeasurements.(['MedianIntensity_cyto',num2str(img+3)])(n,iteration) = nansum(img0(cyto_cc.PixelIdxList{n}));
-            CellMeasurements.(['IntegratedIntensity_cyto',num2str(img+3)])(n,iteration) = nanmedian(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['MeanCyto',num2str(img+3)])(n,iteration) = nanmean(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianCyto',num2str(img+3)])(n,iteration) = nanmedian(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedCyto',num2str(img+3)])(n,iteration) = nansum(img0(cyto_cc.PixelIdxList{n}));
 
-            CellMeasurements.(['MeanIntensity_cell',num2str(img+3)])(n,iteration) = nanmean(img0(cell_cc.PixelIdxList{n}));
-            CellMeasurements.(['MedianIntensity_cell',num2str(img+3)])(n,iteration) = nansum(img0(cell_cc.PixelIdxList{n}));
-            CellMeasurements.(['IntegratedIntensity_cell',num2str(img+3)])(n,iteration) = nanmedian(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['MeanCell',num2str(img+3)])(n,iteration) = nanmean(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianCell',num2str(img+3)])(n,iteration) = nanmedian(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedCell',num2str(img+3)])(n,iteration) = nansum(img0(cell_cc.PixelIdxList{n}));
         end
         
     end
