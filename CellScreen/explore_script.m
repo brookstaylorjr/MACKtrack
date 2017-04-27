@@ -19,13 +19,14 @@ disp(measurement_names)
 disp('- - - - - - - - ')
 
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
-summarizeMeasurement(AllData,'IntegratedCell1') % Summary 1: look at distributions of a particular measurement across all conditions
+summarizeMeasurement(AllData,'MeanAnnulus_cyto1') % Summary 1: look at distributions of a particular measurement across all conditions
+%%
+summarizeMeasurement2D(AllData,'MeanCell1','MeanCell2') % Summary 3: scatter plots of 2 variables of interest 
 
 
 %%
 
 summarizeCondition(AllData.(condition_names{1})) % Summary 2: look at all measurements within a SINGLE condition (divided by image)
-summarizeMeasurement2D(AllData,'IntegratedCell1','IntegratedCell2') % Summary 3: scatter plots of 2 variables of interest 
 
 
 %% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 

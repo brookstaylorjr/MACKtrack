@@ -63,7 +63,8 @@ function checkDynamics_OpeningFcn(hObject, eventdata, handles, varargin)
 % Choose default command line output for checkDynamics
 handles.output = hObject;
 
-% Initialize dropdown menu with visualization scripts; chose translocation by default
+
+% 1) Get list of visualization functions (named "see_...")
 home_folder = mfilename('fullpath');
 home_folder = home_folder(1:max(strfind(home_folder,filesep)));
 fcnlist = dir(home_folder);
@@ -76,8 +77,7 @@ end
 set(handles.popupmenu2,'String',viz_fcns,'Value',1)
 handles.DataFcn = viz_fcns(1);
 
-
-% Get directory locations - locations.mat is one directory up.
+% 2) Get system-specific locations
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
@@ -87,11 +87,31 @@ if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
 end
 handles.locations = locations;
 
-% Load visualization data into handles
-handles.id = varargin{1};
-handles = load_vizdata(handles);
-guidata(handles.figure1, handles)
+% 3) Load specified measurements file - get source image directory and output label matricies
+[~, info, handles.AllMeasurements] = loadID(varargin{1});
+handles.ImageDir = namecheck(info.ImageDirectory);
+if ~exist(handles.ImageDir,'dir')
+    error(['Could not find specified image directory, ', handles.ImageDir])
+end
+handles.OutputDir = 'notadir';
+if ischar(varargin{1})
+    fullname = varargin{1};
+    slash_idx = strfind(fullname,filesep);
+    if exist(fullname(1:slash_idx(end)),'NuclearLabels','dir')
+        handles.OutputDir = fullname(1:slash_idx(end));
+    end
+end
+if ~exist(handles.OutputDir,'dir')
+    handles.OutputDir = namecheck([locations.data,filesep,handles.AllMeasurements.parameters.SaveDirectory]);
+    if ~exist(handles.OutputDir,'dir')
+        error(['Could not find specified output directory, ', handles.OutputDir])
+    end
+end
 
+
+% Load visualization data into handles
+guidata(handles.figure1, handles)
+handles = load_vizdata(handles);
 
 hZoom = zoom(gcf);
 set(hZoom,'ActionPostCallback',{@customZoom,handles});
@@ -107,22 +127,19 @@ function handles_out = load_vizdata(handles)
 fcn_names = get(handles.popupmenu2,'String');
 start_val = get(handles.popupmenu2,'Value');
 max_val = length(fcn_names);
-id = handles.id;
 % Read in function from dropdown menu, and process data appropriately
 disp('loading data...')
 flag = 0;
 while flag == 0
     try
         fcn_name = fcn_names{start_val};
-        [graph, info] = eval([fcn_name,'(id)']);
+        [graph, info] = eval([fcn_name,'(handles.AllMeasurements)']);
         set(handles.popupmenu2,'Value',start_val);
         flag = 1;
     catch ME
         start_val = start_val + 1;
-        disp(['Skipped function "' fcn_name,'"'])
-        disp('- - - - - - (begin error trace) - - - - - - - - - - - - -')
-        disp(getReport(ME,'extended'));
-        disp('- - - - - - (end error trace) - - - - - - - - - - - - - -')
+        disp(['Skipped function "' fcn_name,'" - hit error:'])
+        disp(getReport(ME,'basic'));
         if start_val>max_val
             error('No valid measurement funtions found.')
         end
@@ -142,9 +159,9 @@ handles.ylim = info.graph_limits;
 handles.parameters = info.parameters;
 handles.module = info.Module;
 if ~isempty(strfind(info.savename,filesep))
-    handles.mask_dir = info.savename(1:max(strfind(info.savename,filesep)));
+    handles.OutputDir = info.savename(1:max(strfind(info.savename,filesep)));
 else
-    handles.mask_dir = [pwd,filesep];
+    handles.OutputDir = [pwd,filesep];
 end
 
 % Initialize slider + popup values
@@ -157,9 +174,7 @@ handles.time = v1;
 % Initialize image+graph, update handles
 handles = newXY(handles);
 handles_out = handles;
-
-
-
+guidata(handles.figure1, handles)
 
 
 % GUI callbacks: update values, call functions
@@ -248,9 +263,9 @@ if size(measure_img,1)>size(measure_img,2)
     flip_flag = 1;
 end
 % Load masks, rotate if necessary
-load([handles.mask_dir,filesep,'xy',num2str(i),filesep,...
+load([handles.OutputDir,filesep,'xy',num2str(i),filesep,...
     'NuclearLabels',filesep,'NuclearLabel-',numseq(j,4),'.mat'])
-load([handles.mask_dir,'xy',num2str(i),filesep,...
+load([handles.OutputDir,'xy',num2str(i),filesep,...
     'CellLabels',filesep,'CellLabel-',numseq(j,4),'.mat'])
 if exist('flip_flag','var')
     handles.nuc_label = imrotate(NuclearLabel,90);

@@ -610,7 +610,7 @@ if ~handles.Locked2
         disp('Starting tracking: ')
         try
             % 1) Track loop (put in parfor if 'parallel' option is selected'
-            if get(handles.checkbox4B,'Value')
+            if parameters.Parallel
                 parfor i = 1:length(parameters.XYRange)
                     xyPos = parameters.XYRange(i);
                     trackLoop(parameters,xyPos) % DIC or phase
@@ -716,7 +716,13 @@ else
 end
 guidata(handles.figure1,handles)
 
+function checkbox4B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX4B: set parallel mode
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+handles.parameters.Parallel = get(hObject,'Value');
+guidata(handles.figure1,handles)
 
 %  %%%%%%%%%%%%%%%%%%%     UIPANEL 5 : NUCLEUS PARAMETERS     %%%%%%%%%%%%%%%%%%%%%%
 

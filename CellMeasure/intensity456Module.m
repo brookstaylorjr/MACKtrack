@@ -87,8 +87,7 @@ for img = 1:length(AuxImages)
             CellMeasurements.(['MeanCell',num2str(img+3)])(n,iteration) = nanmean(img0(cell_cc.PixelIdxList{n}));
             CellMeasurements.(['MedianCell',num2str(img+3)])(n,iteration) = nanmedian(img0(cell_cc.PixelIdxList{n}));
             CellMeasurements.(['IntegratedCell',num2str(img+3)])(n,iteration) = nansum(img0(cell_cc.PixelIdxList{n}));
-        end
-        
+        end 
     end
 end
 

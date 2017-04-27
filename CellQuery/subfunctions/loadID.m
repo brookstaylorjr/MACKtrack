@@ -1,16 +1,17 @@
-function [measure, info] = loadID(id)
+function [measure, info, AllMeasurements] = loadID(id)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [measure, info] = loadID(id, options)
+% [measure, info, AllMeasurements] = loadID(id, options)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % LOADID pulls results from an experimental set using a "Scope Runs" Google Doc -
 % choose a set by its ID number
 %
 % INPUTS
-% id          ID# of sets get data from
+% id          ID# of sets get data from (or AllMeasurements.mat file location, or AllMeasurements object)
 %
 % OUTPUTS:
-% measure     full measurement information struct
-% info        general information about experiment and tracking
+% measure          full measurement information struct
+% info             general information about experiment and tracking
+% AllMeasurements  originally-saved output file, augmented w/ measurement-specific information
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 tic
@@ -54,13 +55,13 @@ end
 info.fields = fieldnames(measure);
 
 % Add measurement-specific information and add to AllParameters:
-% - for see_nfkb calculate base image distributions and threshold for positiev NFkB expression
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% - for see_nfkb calculate base image distributions and threshold for positive NFkB expression
 % - for see_nfkb_native, calculate (adjusted) nfkb & nuclear image distributions
-
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+%
 % Read in 1st image from each XY position, calculate background mean/std (resave AllParameters)
-
 p = AllMeasurements.parameters;
-
 try
     if isfield(AllMeasurements,'NFkBNuclear')
         if ~isfield(p, 'nfkb_thresh')
@@ -87,7 +88,7 @@ try
             AllMeasurements.parameters = p;
             save(info.savename,'AllMeasurements')
         end
-    % Load NFkB measurement (unimodal background) for endogenous NFkB    
+    % Load NFkB measurement (unimodal background) for endogenous NFkB images
     elseif isfield(AllMeasurements, 'NFkBdimNuclear')
         if ~isfield(p, 'adj_distr')
             disp('Measuring and saving initial (flatfield-corrected) image distributions')
@@ -97,38 +98,6 @@ try
                 i = p.XYRange(ind);
                 j = min(p.TimeRange);
                 expr = p.nfkbModule.ImageExpr;
-                if ~exist('bit_depth','var')
-                    if isfield(p,'BitDepth')
-                        bit_depth = p.BitDepth;
-                    else
-                        imfo = imfinfo([locations.scope, p.ImagePath, eval(expr)]);
-                        bit_depth = imfo.BitDepth;
-                    end
-                end
-                img = checkread([locations.scope, p.ImagePath, eval(expr)],bit_depth,1,1);
-                if ind==1
-                    X = backgroundcalculate(size(img));
-                end
-                warning off MATLAB:nearlySingularMatrix
-                pStar = (X'*X)\(X')*double(img(:));
-                warning on MATLAB:nearlySingularMatrix
-                % Apply background correction
-                img = reshape((double(img(:) - X*pStar)),size(img));
-                img = img-min(img(:)); % Set minimum to zero
-                [~,p.adj_distr(:,ind)] = modebalance(img,1,bit_depth,'measure');
-            end
-                AllMeasurements.parameters = p;
-                save(info.savename,'AllMeasurements')
-        end
-        % Load nuclear image for nucIntenstiy Module (dim assumed - unimodal model)
-    elseif isfield(AllMeasurements, 'MeanIntensityNuc')
-        if ~isfield(p, 'adj_distr')
-            disp('Measuring and saving initial (flatfield-corrected) image distributions')
-            p.adj_distr = zeros(2,length(p.XYRange));
-            for ind = 1:length(p.XYRange)
-                i = p.XYRange(ind);
-                j = min(p.TimeRange);
-                expr = p.nucintensityModule.ImageExpr;
                 if ~exist('bit_depth','var')
                     if isfield(p,'BitDepth')
                         bit_depth = p.BitDepth;

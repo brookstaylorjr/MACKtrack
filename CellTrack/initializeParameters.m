@@ -44,6 +44,11 @@ else
     set(handles.edit2D,'ForegroundColor',[0 0 0])
 end
 
+
+% Parallel/verbose params
+set(handles.checkbox4A, 'Value', handles.parameters.debug);
+set(handles.checkbox4B, 'Value', handles.parameters.Parallel);
+
 %% - - - - - - - - - Nuclear parameters - - - - - - - - - - - - 
 nuc_edge = handles.parameters.NucleusEdgeThreshold;
 set(handles.edit5A,'String',num2str(nuc_edge))
@@ -265,16 +270,14 @@ set(handles.popupmenu6B,'Value',handles.parameters.CellFF+1)
 guidata(handles.figure1,handles)
 
 
-
-
-
 %% Resave parameters in place to reflect new updated values
 load(paramfile,'-mat') % Reload original parameters for comparison
-if ~isequal(handles.parameters,parameters)
-    disp('Saving automatically-updated parameters')
+if ~isequaln(handles.parameters,parameters)
+    disp('Re-saving parameters with updated fields')
     parameters = handles.parameters;
     save(paramfile,'parameters')
 end
 
 
 handlesOut = handles;
+
