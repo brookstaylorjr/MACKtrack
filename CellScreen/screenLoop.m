@@ -71,6 +71,8 @@ for idx = 1:length(layout_dir)
     
     % Save full measurments file
     save([save_subdir,filesep,'AllData.mat'],'AllData')
+    % Save tracking parameters file
+    save([save_subdir,filesep,'TrackingParameters.mat'],'parameters')
     % GODDAMMIT KYLE
     [AllData_mat, AllData_fields, AllData_conditions] = AllData_to_mat(AllData);
     save([save_subdir,filesep,'AllData_R.mat'],'AllData_mat','AllData_fields','AllData_conditions')

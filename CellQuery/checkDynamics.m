@@ -75,7 +75,6 @@ for i = 1:length(fcnlist)
     end
 end
 set(handles.popupmenu2,'String',viz_fcns,'Value',1)
-handles.DataFcn = viz_fcns(1);
 
 % 2) Get system-specific locations
 slash_idx = strfind(home_folder,filesep);
@@ -110,8 +109,10 @@ end
 
 
 % Load visualization data into handles
-guidata(handles.figure1, handles)
+set(handles.popupmenu2,'Value',1)
+handles.FcnVal = [];
 handles = load_vizdata(handles);
+guidata(handles.figure1, handles)
 
 hZoom = zoom(gcf);
 set(hZoom,'ActionPostCallback',{@customZoom,handles});
@@ -125,44 +126,72 @@ varargout{1} = handles.output;
 
 function handles_out = load_vizdata(handles)
 fcn_names = get(handles.popupmenu2,'String');
-start_val = get(handles.popupmenu2,'Value');
+newval = get(handles.popupmenu2,'Value');
 max_val = length(fcn_names);
 % Read in function from dropdown menu, and process data appropriately
-disp('loading data...')
-flag = 0;
-while flag == 0
-    try
-        fcn_name = fcn_names{start_val};
-        [graph, info] = eval([fcn_name,'(handles.AllMeasurements)']);
-        set(handles.popupmenu2,'Value',start_val);
-        flag = 1;
-    catch ME
-        start_val = start_val + 1;
-        disp(['Skipped function "' fcn_name,'" - hit error:'])
-        disp(getReport(ME,'basic'));
-        if start_val>max_val
-            error('No valid measurement funtions found.')
+    flag = 0;
+    while flag == 0
+        try
+            fcn_name = fcn_names{newval};
+            disp('- - - - ')
+            disp(['Trying to use display function ', upper(fcn_name)])
+            [graph, info] = eval([fcn_name,'(handles.AllMeasurements)']);
+            set(handles.popupmenu2,'Value',newval);
+            handles.FcnVal = newval;
+            flag = 1;
+        catch ME
+            if isempty(handles.FcnVal)
+                newval = newval + 1;
+                disp(['Skipping - hit error:'])
+                disp(getReport(ME));
+                if newval>max_val
+                    error('No valid measurement funtions found.')
+                end
+                flag = 0;
+            else
+                set(handles.popupmenu2,'Value', handles.FcnVal)
+                disp('Invalid - hit error:')
+                disp(getReport(ME,'basic'));
+                fcn_name = fcn_names{handles.FcnVal};
+                disp(['Resetting to ', upper(fcn_name)])
+                [graph, info] = eval([fcn_name,'(handles.AllMeasurements)']);
+                flag = 1;
+            end
         end
-        flag = 0;
     end
-end
 
+
+% Get primary fields- timepoints & data
 handles.times = info.parameters.TimeRange;
 handles.xys = unique(graph.celldata(:,1));
 handles.celldata = graph.celldata;
 handles.var = graph.var;
+handles.t = graph.t;
+handles.parameters = info.parameters;
+handles.ImageExpr = info.ImageExpr;
+
+% Add other fields - division matrix, 2nd measurement, etc. 
+if isfield(graph,'lineage'); 
+    handles.lineage = graph.lineage; 
+else
+    handles.lineage = handles.celldata(:,2);
+end
+if isfield(graph,'var2'); handles.var2 = graph.var2; end
+if isfield(graph,'shift'); 
+    handles.shift = graph.shift; 
+else
+    handles.shift = zeros(length(unique(handles.celldata(:,1))),1);
+end
+if isfield(info,'graph_limits'); 
+    handles.ylim = info.graph_limits; 
+else
+    handles.ylim = prctile(handles.var(:),[2 98]);
+end
+
+% Make calculated fields - average across all cells per timept
 handles.mu = nanmean(handles.var);
 handles.sigma = nanstd(handles.var);
-handles.t = graph.t;
-handles.shift = graph.shift;
-handles.ylim = info.graph_limits;
-handles.parameters = info.parameters;
-handles.module = info.Module;
-if ~isempty(strfind(info.savename,filesep))
-    handles.OutputDir = info.savename(1:max(strfind(info.savename,filesep)));
-else
-    handles.OutputDir = [pwd,filesep];
-end
+
 
 % Initialize slider + popup values
 set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
@@ -197,11 +226,11 @@ guidata(handles.figure1, handles);
 
 function popupmenu1_Callback(hObject, eventdata, handles)
 cellno = handles.cell_list(get(handles.popupmenu1,'Value'));
-if cellno ~= handles.cell
-    handles.cell = cellno;
+if cellno ~= handles.cell_idx
+    handles.cell_idx = cellno;
+    guidata(handles.figure1, handles);
     handles = newCell(handles);
 end
-guidata(handles.figure1, handles);
 
 
 function popupmenu2_Callback(hObject, eventdata, handles)
@@ -218,41 +247,57 @@ if strcmp(get(fig,'SelectionType'),'open')
     ylim(handles.axes1,[1 size(handles.nuc_label,1)])
 end
 
-% Update information in axes1 and axes2 as needed
+
+% - - - - - GUI UPDATE functions: - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 function handles = newXY(handles)
-% Make the list of cells in the current xy, update popup menu
-handles.cell_list = handles.celldata(handles.celldata(:,1)==handles.xy,2);
-set(handles.popupmenu1,'String',cellstr(num2str(handles.cell_list)),'Value',1)
-handles.cell = handles.cell_list(get(handles.popupmenu1,'Value'));
+% Get subset + list of cells in the current xy, update popup menu
+handles.xy_subset = find(handles.celldata(:,1)==handles.xy);
+handles.cell_list = cell(size(handles.xy_subset));
+for i = 1:length(handles.cell_list)
+    tmp_row = unique(handles.lineage(handles.xy_subset(i),:));
+    tmp_row(isnan(tmp_row)) = [];
+    tmp_row = num2str(tmp_row);
+    tmp_row(strfind(tmp_row,'  ')) = '-';
+    tmp_row(strfind(tmp_row,' ')) = '>';
+    handles.cell_list{i} = tmp_row;
+end
+set(handles.popupmenu1,'String',cellstr(handles.cell_list),'Value',1)
+handles.cell_idx = get(handles.popupmenu1,'Value');
+handles.cells_all = unique(handles.lineage(handles.xy_subset,:));
+handles.cells_all(isnan(handles.cells_all)) = [];
 
+% Create basic metrics for subset
+handles.mu_subset = nanmean(handles.var(handles.xy_subset,:));
+handles.sigma_subset = nanstd(handles.var(handles.xy_subset,:));
 
-% Update and draw image
+% New XY: load image/labelmats, mask/display cells, graph trajectory
 handles = loadImage(handles);
 drawImage(handles)
 drawGraph(handles)
 
+
 function handles = newTime(handles)
-% Update and draw image
+% New time: load image/labelmats, mask/display cells, graph trajectory
 handles = loadImage(handles);
 drawImage(handles);
 drawGraph(handles)
 
 
 function handles = newCell(handles)
-% Update image (mask only)
+% New time: mask/display cells, graph trajectory
 drawImage(handles);
-% Update graph
 drawGraph(handles)
 
 
 function handles = loadImage(handles)
-% Get new image/masks
+
+% 1) Get time/XY (i/j) indicies for new image + label matricies
 i = handles.xy;
 xy_idx = find(handles.xys==handles.xy,1,'first');
 j = handles.time-handles.shift(xy_idx);
 img_path = [handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
-    eval(handles.parameters.(handles.module).ImageExpr)];
-% Get bit depth of image, load, and rotate (if necessary)
+    eval(handles.ImageExpr)];
+% 2) Get bit depth of image, load, and rotate (if necessary)
 if ~isfield(handles.parameters,'BitDepth')
     imfo = imfinfo(img_path);
     handles.parameters.BitDepth = imfo.BitDepth;
@@ -262,12 +307,16 @@ if size(measure_img,1)>size(measure_img,2)
     measure_img = imrotate(measure_img,90);
     flip_flag = 1;
 end
-% Load masks, rotate if necessary
+% 3) Load label matricies (rotate if necessary)
 load([handles.OutputDir,filesep,'xy',num2str(i),filesep,...
     'NuclearLabels',filesep,'NuclearLabel-',numseq(j,4),'.mat'])
-load([handles.OutputDir,'xy',num2str(i),filesep,...
-    'CellLabels',filesep,'CellLabel-',numseq(j,4),'.mat'])
-if exist('flip_flag','var')
+try
+    load([handles.OutputDir,'xy',num2str(i),filesep,...
+        'CellLabels',filesep,'CellLabel-',numseq(j,4),'.mat'])
+catch me
+    CellLabel = NuclearLabel;
+end
+if exist('flip_flag','var') && (flip_flag ==1)
     handles.nuc_label = imrotate(NuclearLabel,90);
     handles.cell_label = imrotate(CellLabel,90);
 else
@@ -275,32 +324,41 @@ else
     handles.cell_label = CellLabel;
 end
 
-
-% Saturate image according to first image
+% 4) Alter base image for display: saturate according to an early + a late image
 if ~isfield(handles,'imgmax')
-    j = handles.parameters.TimeRange(round(end*0.75));
-    img_path = [handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
-                eval(handles.parameters.(handles.module).ImageExpr)];
+    j = handles.parameters.TimeRange(round(end/2));
+    img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
     scale_img = checkread(img_path,handles.parameters.BitDepth);
-    handles.imgmax = prctile(scale_img(:),99);
-    handles.imgmin = prctile(scale_img(:),3);
+    rng1 = prctile(scale_img(:),[3 99]);
+    j = handles.parameters.TimeRange(1);
+    img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
+    scale_img = checkread(img_path,handles.parameters.BitDepth);
+    rng2 = prctile(scale_img(:),[3 99]);
+    handles.imgmax = max([rng1 rng2]);
+    handles.imgmin = min([rng1 rng2]);  
 end
-measure_img(measure_img>handles.imgmax) = handles.imgmax;
-measure_img(measure_img<handles.imgmin) = handles.imgmin;
-handles.img = uint8((measure_img-handles.imgmin)/(handles.imgmax-handles.imgmin)*255);
-% Get centroids and labels
-props = regionprops(handles.nuc_label,'Centroid');
+measure_img = (measure_img-handles.imgmin)/(handles.imgmax-handles.imgmin);
+measure_img(measure_img>1) = 1; measure_img(measure_img<0) = 0;
+handles.img = uint8(measure_img*255);
+
+% 5) Get centroids and labels
+tmp_label = double(handles.nuc_label);
+tmp_label(~ismember(tmp_label,handles.cells_all)) = 0;
+props = regionprops(tmp_label,'Centroid');
 tmpcell = struct2cell(props);
 tmpmat = cell2mat(tmpcell(1,:));
 handles.centroids = [tmpmat(1:2:end)', tmpmat(2:2:end)'];
-handles.centroids(isnan(handles.centroids(:,1)),:) = [];
-handles.text_labels = unique(NuclearLabel(NuclearLabel>0));
-handles.centroids(~ismember(handles.text_labels,handles.cell_list),:)=[];
-handles.text_labels = cellstr(num2str(handles.text_labels(ismember(handles.text_labels,handles.cell_list))));
-
-
+handles.text_labels = cellstr(num2str(unique(tmp_label(tmp_label>0))));
 
 function drawImage(handles)
+% 1) Make overlays for cell/nuclear labels
+%%
+cell_all = ismember(handles.cell_label,handles.cells_all);
+nuc_all = ismember(handles.nuc_label,handles.cells_all);
+
+cell_selected = ismember(handles.cell_label,unique(handles.lineage(handles.xy_subset(handles.cell_idx))));
+nuc_selected = ismember(handles.nuc_label,unique(handles.lineage(handles.xy_subset(handles.cell_idx))));
+%%
 % Color masks
 if ~isempty(get(handles.axes1,'Children'))
     xlim = get(handles.axes1,'XLim');
@@ -311,7 +369,6 @@ else
 end
 a = 0.24;
 img_a = handles.img; img_b = handles.img; img_c = handles.img;
-mask1 = ismember(handles.cell_label,handles.cell_list);
 borders = handles.cell_label;
 borders(~mask1) = 0;
 borders = (imdilate(borders,true(5)) - borders)>0;

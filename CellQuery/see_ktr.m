@@ -30,7 +30,7 @@ end
 
 % Load data; set parameters
 [measure, info] = loadID(id);
-info.Module = 'ktrModule';
+info.ImageExpr = info.parameters.ktrModule.ImageExpr;
 graph.t = (measure.MultiKTR_t(1,:)-1)/info.parameters.FramesPerHour; % Number of hours to display in graphs
 
 

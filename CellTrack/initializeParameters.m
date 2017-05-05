@@ -7,9 +7,16 @@ function [handlesOut] = initializeParameters(paramfile, handles)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-load(paramfile,'-mat')
-handles.parameters = parameters;
-
+S = load(paramfile,'-mat');
+save_direct = 0;
+if isfield(S,'parameters')
+    handles.parameters = S.parameters;
+    save_direct = 1;
+elseif isfield(S,'AllMeasurements')
+    handles.parameters = S.AllMeasurements.parameters;
+else
+    error('Invalid parameters file specified - needs to be a (saved) parameters file, or an AllMeasurements file')
+end
 
 % Load default parameters and fill in any fields that are missing in loaded file
 load([handles.home_folder,'default_parameters.mat'],'-mat')
@@ -271,13 +278,14 @@ guidata(handles.figure1,handles)
 
 
 %% Resave parameters in place to reflect new updated values
-load(paramfile,'-mat') % Reload original parameters for comparison
-if ~isequaln(handles.parameters,parameters)
-    disp('Re-saving parameters with updated fields')
-    parameters = handles.parameters;
-    save(paramfile,'parameters')
+if save_direct
+    load(paramfile,'-mat') % Reload original parameters for comparison
+    if ~isequaln(handles.parameters,parameters)
+        disp('Re-saving parameters with updated fields')
+        parameters = handles.parameters;
+        save(paramfile,'parameters')
+    end
 end
-
 
 handlesOut = handles;
 

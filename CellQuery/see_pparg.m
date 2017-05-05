@@ -1,79 +1,91 @@
-function [graph, info, measure] = see_pparg(id,show_graphs, diagnos)
+function [graph, info, measure] = see_paprg(id,varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [graph, info, measure] = see_pparg(id,show_graphs, diagnos)
+% [graph, info, measure] = see_paprg(id,graph_flag, verbose_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SEE_PPARG is a visualization function to see measured nuclear PPARg levels in tagged cells
+% SEE_PPARG is a basic visualization function to plot single-cell expression levels of PPARg (or similar) over time
 %
+% INPUTS (required):
+% id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
 %
-% id             experiment ID (from Google Spreadsheet specigied in "loadID.m")
-% show_graphs    boolean flag; specifies whether standard behavioral graphs will be shown
-% diagnos        boolean flag; specifies whether optional diagnostic graphs will be shown
+% INPUT PARAMETERS (optional; specify with name-value pairs)
+% 'Display'         'on' or 'off' - show graphs (default: process data only; no graphs)
+% 'Verbose'         'on' or 'off' - show verbose output
 %
-% 
+% OUTPUTS:  
 % graph          primary output structure; must specify
 %                   1) filtered/processed data (graph.var) 
 %                   2) time vector for all images (graph.t) 
+%                   3) XY convection adjustment (graph.shift) 
 % info           secondary output structure; must specify
 %                   1) Y limits for graphing (info.graph_limits)
 %                   2) parameters from loadID.m (info.parameters) 
 % measure         full output structure from loadID
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+%% Create input parser object, add required params from function input
+p = inputParser;
+% Required: ID input
+valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||isstruct(x)||exist(x,'file'),...
+    'ID input must be spreadsheet ID or full file path');
+addRequired(p,'id',valid_id);
 
-%% Setup
-if nargin<3
-    diagnos=0;
-    if nargin<2
-        show_graphs = 0;
-    end
-end
+% Optional parameters
+expectedFlags = {'on','off'};
+addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
+addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
+addParameter(p,'MinLifetime',100, @isnumeric);
+
+% Parse parameters, assign to variables
+parse(p,id, varargin{:})
+if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
+if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
 
 % Load data; set parameters
 [measure, info] = loadID(id);
-info.parameters.FramesPerHour = 6; % 10 min between frames
-info.Module = 'ppargModule';
-t_max = (size(measure.MedianPPARg,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+t_max = (length(info.parameters.TimeRange)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+if isfield(measure,'MeanPPARg')
+    all_pparg = measure.MeanPPARg;
+    info.ImageExpr = info.parameters.ppargModule.ImageExpr;
+else
+    all_pparg = measure.MeanNuc1;
+    info.ImageExpr = info.parameters.intensityModule.ImageExpr;
+end
 
-
-all_pparg = measure.MeanPPARg;
 info.graph_limits = prctile(all_pparg(~isnan(all_pparg)),[3 97]);
-
 
 
 % Add parent trajectories to children - record time/index of divisions.
 graph.var_all = all_pparg;
-find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));
-graph.divisions = [];
-graph.divide_pts = false(size(graph.var_all));
-for i = 1:size(graph.var_all,1)
-    if info.CellData(i,5)>0      
-        graph.var_all(i,1:info.CellData(i,3)) = graph.var_all(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
-        graph.divide_pts(find_parent(info.CellData(i,:)),info.CellData(i,3)) = 1;
-        graph.divide_pts(i,1:info.CellData(i,3)) = graph.divide_pts(find_parent(info.CellData(i,:)),1:info.CellData(i,3));
-        graph.divisions = cat(1,graph.divisions,[i, info.CellData(i,3)]);
-    end
-end
-all_pparg = graph.var_all;
+[all_pparg, graph.lineage] = copychildren(all_pparg, info.CellData);
 
 %% Filtering
-droprows = zeros(size(all_pparg,1),1);
+droprows = [];
 droprows = [droprows, sum(isnan(all_pparg(:,end-3:end)),2)>2]; % Cells existing @ expt end
 droprows = [droprows, sum(isnan(all_pparg),2)>50]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
+% Show some filter information
 
+if verbose_flag
+    filter_str = {'didn''t exist @ experiment end', 'short-lived cells'};
+    disp(['INITIAL: ', num2str(size(droprows,1)),' cells'])
+    
+    for i = 1:size(droprows,2)
+        if i ==1
+            num_dropped = sum(droprows(:,i)==1);
+        else
+            num_dropped = sum( (max(droprows(:,1:i-1),[],2)==0) & (droprows(:,i)==1));
+        end
+        disp(['Filter #', num2str(i), ' (',filter_str{i},') - ',num2str(num_dropped), ' cells dropped']) 
+    end
+    disp(['FINAL: ', num2str(sum(max(droprows,[],2) == 0)),' cells'])
+end
 
-%% Outputs
-% Extract measurement and apply filtering
-all_pparg = all_pparg(info.keep,:);
-graph.divide_pts = graph.divide_pts(info.keep,:);
-
-graph.var = all_pparg;
-
+%% Outputs -> drop filtered cells 
+graph.var = all_pparg(info.keep,:);
+graph.lineage = graph.lineage(info.keep,:);
+graph.celldata = info.CellData(info.keep,:);
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
 
-graph.celldata = info.CellData(info.keep,:);
-graph.shift = zeros(length(unique(info.CellData(:,1))),1);
-
-if show_graphs
+if graph_flag
     figure,imagesc(graph.var,info.graph_limits)
 end

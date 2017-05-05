@@ -29,7 +29,7 @@ end
 
 % Load data
 [measure, info] = loadID(id);
-info.Module = 'nfkbModule';
+info.ImageExpr = info.parameters.nfkbModule.ImageExpr;
 
 % Set display parameters
 t_hrs = 12; % Number of hours to display in graphs

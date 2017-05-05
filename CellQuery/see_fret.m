@@ -31,8 +31,8 @@ end
 
 % Load data; set parameters
 [measure, info] = loadID(id);
-info.parameters.FramesPerHour = 6; % 10 min between frames
-info.Module = 'MedianFRET';
+info.ImageExpr = info.parameters.fretModule.ImageExpr;
+
 t_max = (size(measure.MedianFRET,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 info.graph_limits = [400 1000];
 

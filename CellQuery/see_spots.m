@@ -32,7 +32,7 @@ end
 
 % Load data; set parameters
 [measure, info] = loadID(id);
-info.Module = 'spotcountModule';
+info.ImageExpr = info.parameters.spotCountModule.ImageExpr;
 t_hrs = min([21,size(measure.NumSpots,2)/info.parameters.FramesPerHour]); % Number of hours to display in graphs
 info.graph_limits = [0 20];
 

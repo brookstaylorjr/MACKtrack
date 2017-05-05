@@ -33,8 +33,8 @@ end
 % Load data; set parameters
 [measure, info] = loadID(id);
 info.parameters.FramesPerHour = 40; % 1.5 min between frames
-info.Module = 'nucintensityModule';
-t_max = (size(measure.MeanIntensityNuc,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+info.ImageExpr = info.parameters.intensityModule.ImageExpr2;
+t_max = (size(measure.MeanNuc2,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 info.graph_limits = [300 500];
 
 

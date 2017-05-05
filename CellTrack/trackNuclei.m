@@ -232,7 +232,7 @@ end
 
 % Wrap-up: add in blocks and CellData fields
 CellDataOut.FrameIn = [CellData.FrameIn; curr_frame*ones(size(blockedge))];
-CellDataOut.FrameOut = [CellData.FrameOut; (max(p.TimeRange)-p.StackSize+1)*ones(size(blockedge))];
+CellDataOut.FrameOut = [CellData.FrameOut; (max(p.TimeRange))*ones(size(blockedge))];
 CellDataOut.Parent = [CellData.Parent; blockparent];
 CellDataOut.Edge = [CellData.Edge; blockedge];
 CellDataOut.labeldata = labeldata;

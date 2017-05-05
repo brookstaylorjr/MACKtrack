@@ -28,7 +28,7 @@ function [graph, info, measure] = see_nfkb_native(id,varargin)
 %% Create input parser object, add required params from function input
 p = inputParser;
 % Required: ID input
-valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
+valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||isstruct(x)||exist(x,'file'),...
     'ID input must be spreadsheet ID or full file path');
 addRequired(p,'id',valid_id);
 
@@ -50,7 +50,7 @@ max_shift = p.Results.ConvectionShift; % Max allowable frame shift in XY-specifi
 
 %% Load data
 [measure, info] = loadID(id);
-info.Module = 'nfkbdimModule';
+info.ImageExpr = info.parameters.nfkbdimModule.ImageExpr;
 
 % Set display/filtering parameters
 start_thresh = 2; % Maximal allowable start level above baseline
@@ -163,7 +163,6 @@ area_thresh = 90;
 
 droprows =  [droprows, prctile(nfkb(:,1:8),18.75,2) > start_thresh];
 droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thresh];
-
 droprows =  [droprows, nanmedian(measure.Area,2) < area_thresh];
 
 % Show some filter information

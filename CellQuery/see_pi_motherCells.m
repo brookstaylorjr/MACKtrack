@@ -33,8 +33,8 @@ end
 % Load data; set parameters
 [measure, info] = loadID(id);
 info.parameters.FramesPerHour = 40; % 1.5 min between frames
-info.Module = 'nucintensityModule';
-t_max = (size(measure.MeanIntensityNuc2,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+info.ImageExpr = info.parameters.intensityModule.ImageExpr2;
+t_max = (size(measure.MeanNuc2,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 info.graph_limits = [200 400];
 
 
@@ -42,14 +42,14 @@ info.graph_limits = [200 400];
 %% Filtering
 droprows = [];
 %include everything!
-droprows=zeros(size(measure.MeanIntensityNuc2,1),1);
-droprows = [droprows, sum(isnan(measure.MeanIntensityNuc2(:,1:4)),2)>2]; % Cells existing @ expt start
-%droprows = [droprows, sum(isnan(measure.MeanIntensityNuc2(:,1:120)),2)>3]; % Long-lived cells
+droprows=zeros(size(measure.MeanNuc2,1),1);
+droprows = [droprows, sum(isnan(measure.MeanNuc2(:,1:4)),2)>2]; % Cells existing @ expt start
+%droprows = [droprows, sum(isnan(measure.MeanNuc2(:,1:120)),2)>3]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
 %% Outputs
 % Extract measurement and apply filtering
-graph.var = measure.MeanIntensityNuc2(info.keep,:);
+graph.var = measure.MeanNuc2(info.keep,:);
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
 
 graph.celldata = info.CellData(info.keep,:);
