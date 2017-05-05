@@ -185,13 +185,17 @@ end
 if isfield(info,'graph_limits'); 
     handles.ylim = info.graph_limits; 
 else
-    handles.ylim = prctile(handles.var(:),[2 98]);
+    handles.ylim = prctile(handles.var(:),[1 99]);
 end
 
 % Make calculated fields - average across all cells per timept
 handles.mu = nanmean(handles.var);
 handles.sigma = nanstd(handles.var);
+handles.graph_lim = prctile(handles.var,[1 99.5]);
 
+
+c = loadcolormaps;
+handles.cmap = c.purple_hot;
 
 % Initialize slider + popup values
 set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
@@ -206,7 +210,8 @@ handles_out = handles;
 guidata(handles.figure1, handles)
 
 
-% GUI callbacks: update values, call functions
+
+% - - - - - - GUI functions: update values, call appropriate drawing functions - - - - - - - 
 function slider1_Callback(hObject, eventdata, handles)
 % Hints: get(hObject,'Value') returns position of slider
 %        get(hObject,'Min') and get(hObject,'Max') to determine range of slider
@@ -225,9 +230,11 @@ handles = newTime(handles);
 guidata(handles.figure1, handles);
 
 function popupmenu1_Callback(hObject, eventdata, handles)
-cellno = handles.cell_list(get(handles.popupmenu1,'Value'));
+cellno = get(handles.popupmenu1,'Value');
 if cellno ~= handles.cell_idx
     handles.cell_idx = cellno;
+    handles.cell = unique(handles.lineage(handles.xy_subset(handles.cell_idx),:));
+    handles.cell(isnan(handles.cell)) = [];
     guidata(handles.figure1, handles);
     handles = newCell(handles);
 end
@@ -248,7 +255,7 @@ if strcmp(get(fig,'SelectionType'),'open')
 end
 
 
-% - - - - - GUI UPDATE functions: - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% - - - - - IMAGE/GRAPH UPDATE functions: - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 function handles = newXY(handles)
 % Get subset + list of cells in the current xy, update popup menu
 handles.xy_subset = find(handles.celldata(:,1)==handles.xy);
@@ -263,8 +270,11 @@ for i = 1:length(handles.cell_list)
 end
 set(handles.popupmenu1,'String',cellstr(handles.cell_list),'Value',1)
 handles.cell_idx = get(handles.popupmenu1,'Value');
-handles.cells_all = unique(handles.lineage(handles.xy_subset,:));
-handles.cells_all(isnan(handles.cells_all)) = [];
+handles.cell_all = unique(handles.lineage(handles.xy_subset,:));
+handles.cell_all(isnan(handles.cell_all)) = [];
+handles.cell = unique(handles.lineage(handles.xy_subset(1),:));
+handles.cell(isnan(handles.cell)) = [];
+set(handles.popupmenu1,'Value',1);
 
 % Create basic metrics for subset
 handles.mu_subset = nanmean(handles.var(handles.xy_subset,:));
@@ -290,7 +300,6 @@ drawGraph(handles)
 
 
 function handles = loadImage(handles)
-
 % 1) Get time/XY (i/j) indicies for new image + label matricies
 i = handles.xy;
 xy_idx = find(handles.xys==handles.xy,1,'first');
@@ -307,6 +316,14 @@ if size(measure_img,1)>size(measure_img,2)
     measure_img = imrotate(measure_img,90);
     flip_flag = 1;
 end
+% Resize to a max size of ~1024 px width (our max plotting size)
+if size(measure_img,2)>1200
+    scale_factor = 1024/size(measure_img,2);
+    measure_img = imresize(measure_img,scale_factor);
+else
+    scale_factor = 1;
+end
+
 % 3) Load label matricies (rotate if necessary)
 load([handles.OutputDir,filesep,'xy',num2str(i),filesep,...
     'NuclearLabels',filesep,'NuclearLabel-',numseq(j,4),'.mat'])
@@ -314,14 +331,23 @@ try
     load([handles.OutputDir,'xy',num2str(i),filesep,...
         'CellLabels',filesep,'CellLabel-',numseq(j,4),'.mat'])
 catch me
-    CellLabel = NuclearLabel;
+    CellLabel = [];
 end
+
+
 if exist('flip_flag','var') && (flip_flag ==1)
     handles.nuc_label = imrotate(NuclearLabel,90);
     handles.cell_label = imrotate(CellLabel,90);
 else
     handles.nuc_label = NuclearLabel;
     handles.cell_label = CellLabel;
+end
+
+if scale_factor <1
+    handles.nuc_label = imresize(handles.nuc_label,scale_factor,'nearest');
+    if ~isempty(handles.cell_label)
+        handles.cell_label = imresize(handles.cell_label,scale_factor,'nearest');
+    end
 end
 
 % 4) Alter base image for display: saturate according to an early + a late image
@@ -343,23 +369,35 @@ handles.img = uint8(measure_img*255);
 
 % 5) Get centroids and labels
 tmp_label = double(handles.nuc_label);
-tmp_label(~ismember(tmp_label,handles.cells_all)) = 0;
+tmp_label(~ismember(tmp_label,handles.cell_all)) = 0;
 props = regionprops(tmp_label,'Centroid');
 tmpcell = struct2cell(props);
 tmpmat = cell2mat(tmpcell(1,:));
 handles.centroids = [tmpmat(1:2:end)', tmpmat(2:2:end)'];
+handles.centroids(isnan(handles.centroids(:,1)),:) = [];
 handles.text_labels = cellstr(num2str(unique(tmp_label(tmp_label>0))));
 
 function drawImage(handles)
-% 1) Make overlays for cell/nuclear labels
-%%
-cell_all = ismember(handles.cell_label,handles.cells_all);
-nuc_all = ismember(handles.nuc_label,handles.cells_all);
+% 1) Create masks for active cells/nuclei
+if ~isempty(handles.cell_label)
+    tmp1 = handles.cell_label;
+    tmp1(~ismember(tmp1,handles.cell_all)) = 0;
+    tmp1(ismember(tmp1,handles.cell)) = 0;
+    borders_cell = (imdilate(tmp1,ones(3))-tmp1)>0;
+end
 
-cell_selected = ismember(handles.cell_label,unique(handles.lineage(handles.xy_subset(handles.cell_idx))));
-nuc_selected = ismember(handles.nuc_label,unique(handles.lineage(handles.xy_subset(handles.cell_idx))));
-%%
-% Color masks
+tmp1 = handles.nuc_label;
+tmp1(~ismember(tmp1,handles.cell_all)) = 0;
+tmp1(ismember(tmp1,handles.cell)) = 0;
+borders_nuc = (imdilate(tmp1,ones(3))-tmp1)>0;
+nucmask =  ismember(handles.nuc_label,handles.cell);
+if isempty(handles.cell_label)
+    borders_individ = (imdilate(nucmask,ones(3))&~nucmask);  
+else
+    cellmask = ismember(handles.cell_label,handles.cell);
+    borders_individ = (imdilate(cellmask,ones(3))&~cellmask) | (imdilate(nucmask,ones(3))&~nucmask);    
+end
+
 if ~isempty(get(handles.axes1,'Children'))
     xlim = get(handles.axes1,'XLim');
     ylim = get(handles.axes1,'YLim');
@@ -367,59 +405,75 @@ if ~isempty(get(handles.axes1,'Children'))
 else
     setflag = 0;  
 end
-a = 0.24;
-img_a = handles.img; img_b = handles.img; img_c = handles.img;
-borders = handles.cell_label;
-borders(~mask1) = 0;
-borders = (imdilate(borders,true(5)) - borders)>0;
-mask1 = mask1&~ismember(handles.nuc_label,handles.cell_list);
-img_a(mask1) = handles.img(mask1)*(1-a) + 45*a;
-img_b(mask1) = handles.img(mask1)*(1-a) + 103*a;
-img_c(mask1) = handles.img(mask1)*(1-a) + 207*a;
 
-a2 = 0.6;
-img_a(borders) = handles.img(borders)*(1-a2) + 45*a2;
-img_b(borders) = handles.img(borders)*(1-a2) + 103*a2;
-img_c(borders) = handles.img(borders)*(1-a2) + 207*a2;
+% 2) Overlay borders + mask of selected cell
+% [ NEON theme: blue: [0 230 240] | yellow - [255 255 0] | green - [0 255 0] | orange - [255 104 0] ]
+neon1 = [0 230 240]; 
+neon2 = [255 255 0];
+neon3 = [255 255 255];
 
-% Color current cell
-mask2 = (handles.cell_label==handles.cell) &~(handles.nuc_label==handles.cell);
-img_a(mask2) = handles.img(mask2)*(1-a) + 232*a;
-img_b(mask2) = handles.img(mask2)*(1-a) + 119*a;
-img_c(mask2) = handles.img(mask2)*(1-a) + 44*a;
-borders2 = imdilate(mask2,true(5))&~mask2;
-img_a(borders2) = handles.img(borders2)*(1-a2) + 232*a2;
-img_b(borders2) = handles.img(borders2)*(1-a2) + 119*a2;
-img_c(borders2) = handles.img(borders2)*(1-a2) + 44*a2;
-imshow(cat(3,img_a,img_b,img_c),'Parent',handles.axes1)
+RGB = maskoverlay(handles.img, imdilate(borders_nuc,ones(3)), neon2,0.15);
+RGB = maskoverlay(RGB, borders_nuc, neon2, 0.4);
+% Overlay nuclear labels (idf distinct from cells)
+if ~isempty(handles.cell_label)
+
+    % Overlay borders for (filtered) cell boundaries
+    RGB = maskoverlay(RGB, imdilate(borders_cell,ones(3)), neon1, 0.15);
+    RGB = maskoverlay(RGB, borders_cell, neon1, 0.4);
+end
+% Make object region colormapped
+RGB2 = uint8(cat(3,reshape(handles.cmap(handles.img+1,1),size(handles.img)),...
+    reshape(handles.cmap(handles.img+1,2),size(handles.img)),...
+reshape(handles.cmap(handles.img+1,3),size(handles.img)))*255);
+RGB = RGB.*(repmat(uint8(~cellmask),[1 1 3])) +  RGB2.*(repmat(uint8(cellmask),[1 1 3]));
+RGB = maskoverlay(RGB,borders_individ,neon3, 0.6);
+
+% 3) Add text, draw image
+RGB = insertText(RGB, handles.centroids,handles.text_labels,'TextColor','w','BoxOpacity',0,'AnchorPoint','Center',...
+    'Font','Arial Narrow','FontSize',16);
+imshow(RGB,'Parent',handles.axes1)
 set(handles.axes1,'XTick',[],'YTick',[])
 if setflag
     set(handles.axes1,'xlim',xlim,'ylim',ylim,'XTick',[],'YTick',[])
 else
     axis image
 end
-text(handles.centroids(:,1),handles.centroids(:,2),handles.text_labels,'FontSize',14,...
-    'Color',[219 85 31]/255,'Parent',handles.axes1,'HorizontalAlignment','center')
-
+% text(handles.centroids(:,1),handles.centroids(:,2),handles.text_labels,'Color',[1 1 1],...
+%     'FontName','Arial Narrow','FontSize',14,'Parent',handles.axes1);
 
 function drawGraph(handles)
-mu_xy = nanmean(handles.var(handles.celldata(:,1)==handles.xy,:));
-sigma_xy = nanstd(handles.var(handles.celldata(:,1)==handles.xy,:));
+% 1) Plot field-of-view subpopulation as area plot
+clr = [0.6588 0.7059 0.8000];
+fill_clr = (clr+3*[0.9 0.9 0.9])/4;
 
-fill([handles.t,handles.t(end:-1:1)],[handles.mu+handles.sigma,handles.mu(end:-1:1)-handles.sigma(end:-1:1)],...
-    [.8 .8 .8],'Parent',handles.axes2,'FaceAlpha',0.5)
-idx = handles.celldata(:,1)==handles.xy&handles.celldata(:,2)==handles.cell;
+cla(handles.axes2)
+plot(handles.t,handles.mu_subset,'Color',clr,'LineWidth',2,'Parent',handles.axes2)
 hold(handles.axes2,'on')
-fill([handles.t,handles.t(end:-1:1)],[mu_xy+sigma_xy,mu_xy(end:-1:1)-sigma_xy(end:-1:1)],[68 129 227]/255,...
-    'FaceAlpha',0.25,'Parent',handles.axes2)
-plot(handles.axes2,handles.t, handles.var(idx,:),'Color',[68 129 227]/255,'LineWidth',3)
-hold(handles.axes2,'off')
-axis(handles.axes2,[min(handles.t),max(handles.t),handles.ylim])
+
+patch([handles.t,fliplr(handles.t)],...
+    [handles.mu_subset+handles.sigma_subset,fliplr(handles.mu_subset-handles.sigma_subset)],...
+    fill_clr,'LineStyle','none','Parent',handles.axes2)
+plot(handles.t,handles.mu_subset,'Color',clr,'LineWidth',2,'Parent',handles.axes2)
+
+% 2) Plot whole-population average as dashed/dotted lines
+plot(handles.t,handles.mu,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
+% plot(handles.t,handles.mu+handles.sigma,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
+% plot(handles.t,handles.mu-handles.sigma,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
+
+% 3) Plot single cell as solid line 
+plot(handles.axes2,handles.t, handles.var(handles.xy_subset(handles.cell_idx),:),'Color',[68 129 227]/255,'LineWidth',3)
+
+
+% Make a line for timept
+plot(handles.t(handles.time),handles.var(handles.xy_subset(handles.cell_idx),handles.time),'o',...
+    'MarkerSize',16,'Color','k','Parent',handles.axes2)
 handles.line1 = line([handles.t(handles.time) handles.t(handles.time)],handles.ylim,...
     'Color',[0 0 0],'Parent',handles.axes2);
-handles.line2 = line([min(handles.t) max(handles.t)],[handles.var(idx,handles.time) handles.var(idx,handles.time)],...
-    'Color',[0 0 0],'Parent',handles.axes2);
-set(handles.axes2,'Layer','Top')
-y_lim = get(handles.axes2,'YLim');
-text(max(handles.t)-range(handles.t)*0.12,max(y_lim)-range(y_lim)*0.07,...
-    ['nuclear NF\kappaB: ',num2str(.01*round(handles.var(idx,handles.time)*100))],'Parent',handles.axes2)
+hold(handles.axes2,'off')
+
+set(handles.axes2,'FontSize',12, 'YLim',handles.ylim,'XLim',[min(handles.t),max(handles.t)],'Box','on')
+
+text(max(handles.t),max(handles.ylim),...
+    ['x =  ',num2str(.01*round(handles.var(handles.xy_subset(handles.cell_idx),handles.time)*100)),' '],...
+    'VerticalAlignment','top','HorizontalAlignment','right','Parent',handles.axes2,'FontSize',16,'FontWeight','bold',...
+    'Color',[68 129 227]/255)
