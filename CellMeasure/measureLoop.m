@@ -104,7 +104,12 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                             imfo = imfinfo(curr_name);
                             ModuleData.BitDepth = imfo.BitDepth;
                         end
-                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth); 
+                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);
+                        if ~isequal(size(AuxImages{aux}), size(labels.Nucleus))
+                            AuxImages{aux} = zeros(size(labels.Nucleus));
+                            warning([curr_image, 'is invalid - replacing with blank image.'])
+                        end
+                        
                         ModuleData.AuxName{aux} = curr_name;
                     end
                 end

@@ -137,7 +137,12 @@ for i = 1:length(wells)
                         if ~isfield(ModuleData,'BitDepth')
                             ModuleData.BitDepth = imfo.BitDepth;
                         end
-                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth);
+                        
+                        AuxImages{aux} = checkread(curr_name,ModuleData.BitDepth,1,1);
+                        if ~isequal(size(AuxImages{aux}), size(labels.Nucleus))
+                            AuxImages{aux} = zeros(size(labels.Nucleus));
+                            warning([curr_name, 'is invalid - replacing with blank image'])
+                        end
                         tmp_idx = regexp(curr_name,'[0-9]_w[0-9]');
                         tmp_idx = tmp_idx(1);
                         measure_names = [measure_names, ' + ' curr_name(tmp_idx-6:tmp_idx+3)];

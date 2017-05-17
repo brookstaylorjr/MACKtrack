@@ -19,6 +19,7 @@ for i = 1:length(fixedcell_cond)
         measure_names = fieldnames(AllData.(fixedcell_cond{i}).Measurements);
         for j = 1:length(measure_names)
             var1 = AllData.(fixedcell_cond{i}).Measurements.(measure_names{j});
+            % Skip any multicolumn (or partial) measurements
             if (size(var1,1) == size(tmp_mat,1) ) && (size(var1,2)==1)
                 tmp_mat = [tmp_mat,var1];
                 if i==1
@@ -27,6 +28,7 @@ for i = 1:length(fixedcell_cond)
             end
         end
         fixedcell_mat = cat(1,fixedcell_mat,tmp_mat);
+
     end
 end
 

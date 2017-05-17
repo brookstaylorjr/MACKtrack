@@ -58,10 +58,16 @@ for idx = 1:length(layout_dir)
         end
     end
     
-    % Analyze all wells/images per conditon (in parallel)
+    % Analyze all wells/images per conditon (in parallel, if selected)
     Data = cell(size(conditions));
-    parfor k = 1:length(conditions)
-        Data{k} = microxlprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
+    if parameters.Parallel
+        parfor k = 1:length(conditions)
+            Data{k} = microxlprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
+        end
+    else
+        for k = 1:length(conditions)
+            Data{k} = microxlprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
+        end
     end
     % Combine data into a more "useful" structure
     for k = 1:length(conditions)

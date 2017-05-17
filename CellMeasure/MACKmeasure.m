@@ -64,6 +64,5 @@ AllMeasurements.parameters = parameters;
 AllMeasurements.parameters.locations = locations;
 
 % Save AllMeasurements in condition directory
-
 save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat'],''),'AllMeasurements','-v7.3')
 end

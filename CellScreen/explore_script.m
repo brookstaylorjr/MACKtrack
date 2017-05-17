@@ -19,9 +19,9 @@ disp(measurement_names)
 disp('- - - - - - - - ')
 
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
-summarizeMeasurement(AllData,'MeanAnnulus_cyto1') % Summary 1: look at distributions of a particular measurement across all conditions
+summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 %%
-summarizeMeasurement2D(AllData,'MeanCell1','MeanCell2') % Summary 3: scatter plots of 2 variables of interest 
+summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots of 2 variables of interest 
 
 
 %%
@@ -44,13 +44,13 @@ color_theme = repmat(color_theme,[1 ceil(length(condition_names)/length(color_th
 
 
 % ~~~~~~~~~~~   Parameters for violin plot 1 ~~~~~~~~~~~~~~~~~~
-subset = 1:3; % Subset of conditions we want to plot
+subset = 1:12; % Subset of conditions we want to plot
 disp_data = ydata_by_condition(subset);
 ylim = prctile(cell2mat(disp_data),[0.1 99.5]);
 y_label1 = 'CEBPb expression';
-area1 = 0.08; % Set width of each violin shape
-padding = 0.5; % Set empty space at either end of violin plots
-bin_scale = 0.6; % scale number of bins (DECREASE to make shape "smoother")
+area1 = 0.01; % Set width of each violin shape
+padding = 0.1; % Set empty space at either end of violin plots
+bin_scale = 0.2; % scale number of bins (DECREASE to make shape "smoother")
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 fig1 = figure('Position', positionfig(450, 390)); ax1 = axes('Parent',fig1);
@@ -59,7 +59,7 @@ spaceviolin(disp_data(subset),1:length(subset),'Color',color_theme,'XSpace', pad
 ylabel(y_label1); 
 set(gca,'XTick',1:length(subset),'XTickLabel',{})
 legend(condition_names(subset),'Location','northwest','Interpreter','none')
-
+%%
 
 % ~~~~~~~~~~~   Violin plot 2 (log transformed, larger/grouped subset of data) ~~~~~~~~~
 subset2 = [5:8, 13:16]; % (Larger) set of subsets to plot
@@ -86,7 +86,7 @@ legend(condition_names(subset2),'Location','northeast','Interpreter','none')
 % EXAMPLE 2B: overlaid semi-transparent kernel density estimates (smoothed histograms)
 
 % ~~~~~~~~~~~~~~  Parameters for KDE overlay 1    ~~~~~~~~~~~~~
-subset = 1:3;
+subset = 13:18;
 disp_data = ydata_by_condition(subset);
 alpha1 = 0.25; % Transparancy of each histogram
 xlim = prctile(cell2mat(disp_data),[0.1 99.5]);
@@ -201,7 +201,7 @@ hold(gca,'on')
 for i = 1:length(all_means)
     bar(i,all_means(i),'FaceColor',color_theme{i},'EdgeColor','none')
 end
-set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1])
+set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1],'TickLabelInterpreter','None')
 h = terrorbar(1:length(all_means),all_means,all_err,0.4);
 set(h,'Color',colors.grays{3},'LineWidth',2);
 ylabel(name1,'FontWeight','bold')
@@ -212,7 +212,7 @@ hold(gca,'on')
 for i = 1:length(pct_means)
     bar(i,pct_means(i),'FaceColor',color_theme{i},'EdgeColor','none')
 end
-set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1])
+set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1],'TickLabelInterpreter','None')
 h = terrorbar(1:length(pct_means),pct_means,pct_err,0.4);
 set(h,'Color',colors.grays{3},'LineWidth',2);
 ylabel(name2,'FontWeight','bold')

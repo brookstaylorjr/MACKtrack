@@ -25,14 +25,16 @@ else
     diagnos.img_cell = image_cell;
 end
 
+% Mask nuclear image if (and only if!) it is corrected
 if (nargin>2) && ~isempty(image_nuc)
     if p.NucleusFF>0    
         diagnos.img_nuc = flatfieldcorrect(image_nuc,double(p.Flatfield{p.NucleusFF}));
         if min(diagnos.img_nuc(:))<0
             diagnos.img_nuc = diagnos.img_nuc-min(diagnos.img_nuc(:));
         end
+        diagnos.mask_nuc = diagnos.img_nuc > trithreshold(diagnos.img_nuc);
     else
-        diagnos.img_nuc = image_nuc;
+        diagnos.mask_nuc = false(size(image_nuc));
     end
 end
 
@@ -90,8 +92,12 @@ try
         diagnos.mask1 = diagnos.mask0;
     end
 
+    % Add nuclear image to cell mask, if specified
+    diagnos.mask2 = diagnos.mask1|diagnos.mask_nuc;
+    
+    
     % Morphological cleanup: remove speckle noise; do small close operation, and fill small holes
-    diagnos.mask_clean = bwareaopen(diagnos.mask1,2);
+    diagnos.mask_clean = bwareaopen(diagnos.mask2,2);
     diagnos.mask_clean = imclose(diagnos.mask_clean,diskstrel(2));
     diagnos.mask_clean = bwareaopen(diagnos.mask_clean,p.NoiseSize);
     output.mask_cell = ~bwareaopen(~diagnos.mask_clean,p.MinHoleSize);
@@ -109,45 +115,3 @@ catch me % Fail gracefully (set all masks to false)
     output.mask0 = false(size(image_cell));
     diagnos = combinestructures(diagnos,output);
 end
-
-function thresh = trithreshold(img,bins,mode_thresh)
-v = img(:);
-v(v==max(v(:))) = [];
-v(v==min(v(:))) = [];
-
-all_thresh = zeros(3,1);
-% 1) Otsu threshold
-all_thresh(1) = quickthresh(img,false(size(img)),'none');
-
-% 2) Tsai threshold (based on histogram shape)
-try
-    all_thresh(2) = tsaithresh(v, false(size(v)),length(bins));
-catch me
-    all_thresh(2) = nan;
-end
-% 3) 2-gaussian mix
-start_2p = struct;
-sigma1 = std(v(v<mode_thresh))*5/3; % Get std from bottom half of left distribution
-start_2p.mu = [mode_thresh; mode_thresh+3*sqrt(sigma1)];
-start_2p.Sigma = cat(3,sigma1, (sigma1*3));
-p = min([0.97 numel(v(v<mode_thresh))*2/numel(v)]);
-start_2p.PComponents = [p 1-p];
-% Set maxIter for GM modeling (should be small for speed, <50)
-gmopt = statset('MaxIter',50);
-% Model distribution - subsample image a little bit (100K points)
-warning('off','stats:gmdistribution:FailedToConverge')
-dist_2p = fitgmdist(v(1:4:end),2,'Start',start_2p,'CovType','diagonal','Options',gmopt);
-warning('on','stats:gmdistribution:FailedToConverge')
-tmp = dist_2p.cluster(bins');
-tmp_switch = [1+find(abs(diff(tmp))>0)'];
-if length(tmp_switch)>1
-    len1 = [tmp_switch(1)-1 length(tmp)-tmp_switch(2)];
-    tmp_switch = tmp_switch(find(len1==max(len1),1,'first'));
-end
-try
-all_thresh(3) = bins(tmp_switch);
-catch me
-    all_thresh(3) = nan;
-    warning(['GMM thresholding failed (output was [',num2str(bins(tmp_switch)),'])- omitting.'])
-end
-thresh = nanmedian(all_thresh);

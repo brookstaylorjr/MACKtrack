@@ -68,8 +68,8 @@ parameters.ImageOffset = repmat({[0 0]},1,parameters.StackSize);
 if sum(isinf(parameters.ImageJumps))>0
     parameters.ImageJumps = parameters.TimeRange;
 end
+parameters.ImageJumps(parameters.ImageJumps==min(parameters.TimeRange)) = []; % (Error check: can't do a jump w/o a reference)
 
-parameters.ImageJumps(parameters.ImageJumps==1) = []; % (Error check: can't do a jump w/o a reference)
 % Check to make sure time vector is long enough
 if length(parameters.TimeRange) < parameters.StackSize
    error('Time vector is too short for specified stack size, aborting tracking.')

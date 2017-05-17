@@ -8,10 +8,8 @@ function [handlesOut] = initializeParameters(paramfile, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 S = load(paramfile,'-mat');
-save_direct = 0;
 if isfield(S,'parameters')
     handles.parameters = S.parameters;
-    save_direct = 1;
 elseif isfield(S,'AllMeasurements')
     handles.parameters = S.AllMeasurements.parameters;
 else
@@ -271,21 +269,11 @@ if handles.parameters.NucleusFF > length(flatfields)
     handles.parameters.NucleusFF = 0;
     set(handles.popupmenu6B,'Value',0);
 end
-set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
+set(handles.popupmenu6A,'String',cat(1,{'Don''t mask with nuclear image'},flatfields));
 set(handles.popupmenu6A,'Value',handles.parameters.NucleusFF+1)
 set(handles.popupmenu6B,'Value',handles.parameters.CellFF+1)
 guidata(handles.figure1,handles)
 
-
-%% Resave parameters in place to reflect new updated values
-if save_direct
-    load(paramfile,'-mat') % Reload original parameters for comparison
-    if ~isequaln(handles.parameters,parameters)
-        disp('Re-saving parameters with updated fields')
-        parameters = handles.parameters;
-        save(paramfile,'parameters')
-    end
-end
 
 handlesOut = handles;
 

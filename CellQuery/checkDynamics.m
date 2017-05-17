@@ -429,8 +429,8 @@ RGB = RGB.*(repmat(uint8(~cellmask),[1 1 3])) +  RGB2.*(repmat(uint8(cellmask),[
 RGB = maskoverlay(RGB,borders_individ,neon3, 0.6);
 
 % 3) Add text, draw image
-RGB = insertText(RGB, handles.centroids,handles.text_labels,'TextColor','w','BoxOpacity',0,'AnchorPoint','Center',...
-    'Font','Arial Narrow','FontSize',16);
+RGB = insertText(RGB, handles.centroids,handles.text_labels,'TextColor',[247 197 113],'BoxOpacity',0,...
+    'AnchorPoint','Center','Font','Arial Narrow','FontSize',16);
 imshow(RGB,'Parent',handles.axes1)
 set(handles.axes1,'XTick',[],'YTick',[])
 if setflag

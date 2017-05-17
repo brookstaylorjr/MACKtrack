@@ -1,6 +1,6 @@
 function [h_ax, bandwidth] = kdeoverlay(vects, varargin) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% [] = kdeoverlay(vects, places, varargin) 
+% [h_ax, bandwidth] = kdeoverlay(vects, varargin) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % KDEOVERLAY computes a kernel density estimate for a set of distributions ('vects')
 %

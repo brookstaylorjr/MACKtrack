@@ -32,7 +32,6 @@ old_nrow = size(img,1);
 old_ncol = size(img,2);
 
 % Identify if there are any saturated columns/rows padded at edges of image - drop, if present
-
 ind_r = sum((img==max_val | img==min_val),2)>=(old_ncol*0.99);
 if sum(ind_r)>0
     if (find(ind_r,1,'first')==1) || (find(ind_r,1,'last')==old_nrow)
@@ -46,8 +45,6 @@ if sum(ind_c)>0
         img(:,ind_c) = [];
     end
 end
-
-
 new_nrow = size(img,1);
 new_ncol = size(img,2);
 if debug
@@ -56,6 +53,11 @@ if debug
                 'Old dimensions: [',num2str(old_nrow),', ',num2str(old_ncol),']. ',...
                 'New dimensions: [',num2str(new_nrow),', ',num2str(new_ncol),']']));
     end
+end
+
+% Make sure we didn't drop image entirely - if fully max/min saturated (and dropped...), re-read
+if isempty(img)
+    img = imread(name);
 end
 
 if double_flag

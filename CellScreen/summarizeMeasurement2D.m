@@ -14,9 +14,9 @@ function [] = summarizeMeasurement2D(AllData, measure_x, measure_y, x_lim, y_lim
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin<5
-        y_lim = [0.01 97];
+        y_lim = [1 99];
     if nargin<4
-        x_lim = [0.01 97];
+        x_lim = [1 99];
     end
 end
 

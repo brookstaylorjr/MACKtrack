@@ -583,8 +583,6 @@ function pushbutton4C_Callback(~, ~, handles)
 % PUSHBUTTON4C: test first image in specified series
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 if ~handles.Locked2
-    handles.parameters.debug = get(handles.checkbox4A,'Value');
-
     set(handles.pushbutton4C,'ForegroundColor',handles.gray,'String','Testing...')
     set(handles.pushbutton4D,'ForegroundColor',handles.gray)
     drawnow;
@@ -605,7 +603,6 @@ if ~handles.Locked2
     set(handles.pushbutton4D,'ForegroundColor',handles.gray,'String','Running...')
     drawnow;
     parameters = handles.parameters;    
-    
     if ~parameters.isScreen
         disp('Starting tracking: ')
         try
@@ -645,6 +642,23 @@ if ~handles.Locked2
     end
             
 end
+
+function checkbox4A_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX4A: set debug mode (verbose output)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.debug = get(hObject,'Value');
+guidata(handles.figure1,handles)
+
+
+function checkbox4B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX4B: set parallel mode (for run)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.Parallel = get(hObject,'Value');
+guidata(handles.figure1,handles)
+
+
 % ========================================================================================
 
 %  %%%%%%%%%%%%%%%%%% PARAMETER / IMAGE TYPE SWITCHING %%%%%%%%%%%%%%%%%%%%%%%%
@@ -716,13 +730,6 @@ else
 end
 guidata(handles.figure1,handles)
 
-function checkbox4B_Callback(hObject, eventdata, handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% CHECKBOX4B: set parallel mode
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-
-handles.parameters.Parallel = get(hObject,'Value');
-guidata(handles.figure1,handles)
 
 %  %%%%%%%%%%%%%%%%%%%     UIPANEL 5 : NUCLEUS PARAMETERS     %%%%%%%%%%%%%%%%%%%%%%
 
@@ -1776,7 +1783,7 @@ set(handles.listbox7B,'String',flatfields)
 if handles.parameters.NucleusFF > length(flatfields)
     handles.parameters.NucleusFF = 0;
 end
-set(handles.popupmenu6A,'String',cat(1,{'None'},flatfields));
+set(handles.popupmenu6A,'String',cat(1,{'Don''t mask using nuclear image'},flatfields));
 set(handles.popupmenu6A,'Value',handles.parameters.NucleusFF+1);
 % (2) cell
 if handles.parameters.CellFF > length(flatfields)
