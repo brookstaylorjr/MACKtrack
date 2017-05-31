@@ -47,15 +47,17 @@ ha = tight_subplot(n_rows,n_cols,[0.01 0.01]);
 colormaps=  loadcolormaps;
 for i = 1:length(all_cond)
     drops = isnan(all_x{i}) | isnan(all_y{i});
-    [~,h1] = dscatter2(all_x{i}(~drops),all_y{i}(~drops),'parent',ha(i));
-    alpha(h1,0.4)
-    r = corr(all_x{i}(~drops),all_y{i}(~drops));
-    set(ha(i),'XLim',x_rng,'YLim',y_rng,'XTickLabel',{},'YTickLabel',{},'XGrid','on','Ygrid','on')
-    text(mean(x_rng),max(y_rng),[num2str(i),') ', all_cond{i},' ( n=',num2str(length(all_x{i})),' )'],...
-        'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(i),'BackgroundColor','w',...
-        'Interpreter','none')
-        text(max(x_rng),min(y_rng),['r = ',num2str(r)],...
-        'HorizontalAlignment','right','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w',...
-        'Interpreter','none')
+    if ~isempty(all_x{i}(~drops))
+        [~,h1] = dscatter2(all_x{i}(~drops),all_y{i}(~drops),'parent',ha(i));
+        alpha(h1,0.4)
+        r = corr(all_x{i}(~drops),all_y{i}(~drops));
+        set(ha(i),'XLim',x_rng,'YLim',y_rng,'XTickLabel',{},'YTickLabel',{},'XGrid','on','Ygrid','on')
+        text(mean(x_rng),max(y_rng),[num2str(i),') ', all_cond{i},' ( n=',num2str(length(all_x{i})),' )'],...
+            'HorizontalAlignment','center','VerticalAlignment','top','Parent',ha(i),'BackgroundColor','w',...
+            'Interpreter','none')
+            text(max(x_rng),min(y_rng),['r = ',num2str(r)],...
+            'HorizontalAlignment','right','VerticalAlignment','bottom','Parent',ha(i),'BackgroundColor','w',...
+            'Interpreter','none')
+    end
 end
 colormap(colormaps.viridis(end:-1:1,:))

@@ -29,6 +29,7 @@ end
 
 
 % Correct and get ratiometric measurement for the FRET/CFP image pair
+try
 fret = AuxImages{1}; 
 fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
 fret = fret-prctile(fret(:),2); % Background subtract
@@ -39,7 +40,10 @@ cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
 cfp = cfp -prctile(cfp(:),2);
 cfp(cfp<16) = 16; % add floor to image 
 fret_image = (fret)./(cfp);
-
+catch me
+    % Skip measurement if FRET images are invalid/not found - leave inputs intact
+    return;
+end
 
 % - - - - NUCLEAR measurements - - - -
 % A) Initialize fields
