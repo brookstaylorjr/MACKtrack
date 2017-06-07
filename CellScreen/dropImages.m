@@ -1,6 +1,6 @@
-function AllData_out = dropImages (AllData_in, varargin)
+function AllData_out = dropImages(AllData_in, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% data_out = dropImages (data_in, drop_images (varargin))
+% data_out = dropImages(AllData_in, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % DROPIMAGES filters "bad" images (by string match, e.g. 'E08_s1') from an experimental set, dropping respective 
 % single-cell measurements from those images. (Non-unique matches are allowed; all matched images will be displayed).

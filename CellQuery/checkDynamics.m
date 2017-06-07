@@ -200,7 +200,8 @@ handles.cmap = c.purple_hot;
 % Initialize slider + popup values
 set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
 handles.xy = handles.xys(1);
-set(handles.text5,'String',['xy ',num2str(handles.xy)]);
+set(handles.text5,'String',['xy ' ,num2str(handles.xy)]);
+set(handles.text7,'String',['t = ',num2str(handles.time)]);
 v1 = 1; v2 = length(handles.t); 
 set(handles.slider2, 'Min',v1, 'Max',v2,'SliderStep',[1/(v2-v1) 4/(v2-v1)],'Value',v1);
 handles.time = v1;
@@ -218,13 +219,14 @@ function slider1_Callback(hObject, eventdata, handles)
 sliderval = round(get(hObject,'Value'));
 handles.xy = handles.xys(sliderval);
 set(hObject,'Value',sliderval);
-set(handles.text5,'String',['xy ',num2str(handles.xy)]);
+set(handles.text5,'String',['xy ' , num2str(handles.xy)]);
 handles = newXY(handles);
 guidata(handles.figure1, handles);
 
 
 function slider2_Callback(hObject, eventdata, handles)
 handles.time = round(get(hObject,'Value'));
+set(handles.text7,'String',['t = ',num2str(handles.time)]);
 set(hObject,'Value',handles.time);
 handles = newTime(handles);
 guidata(handles.figure1, handles);

@@ -37,7 +37,7 @@ if sum(tmp(:)) < sum(cell_mask(:))
     cell_mask = ~bwareaopen(~(cell_mask|tmp),p.NoiseSize,4);
 end
 % Construct smoothed images + watershed image
-nucleus1 = medfilt2(nuc_orig,[p.MedianFilterSize, p.MedianFilterSize]); % Median-filtered
+nucleus1 = double(medfilt2(uint16(nuc_orig),[p.MedianFilterSize, p.MedianFilterSize])); % Median-filtered
 
 diagnos.nucleus_smooth1 = imfilter(nucleus1,gauss2D(p.MinNucleusRadius/4),'symmetric'); % Gaussian filtered
 diagnos.watershed1 = watershedalt(diagnos.nucleus_smooth1, cell_mask, 4);
@@ -51,7 +51,6 @@ diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Corre
 tmp1 = diagnos.edge_mag(cell_mask);
 edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),97),21);
 cc_list = {};
-z = [];
 for i = 1:length(edge_cutoffs)
     % a) Threshold, drop already-found objects
     mask0  = cell_mask & diagnos.edge_mag>=edge_cutoffs(end-i+1);
@@ -67,7 +66,6 @@ for i = 1:length(edge_cutoffs)
         fill_size = round(6*cutoff.Area(1));
     end
     mask0 = ~bwareaopen(~mask0,fill_size,4); 
-    z = cat(3,z,mask0);
     if ~isempty(tmp_drop)
         mask0(tmp_drop) = 0;
     end

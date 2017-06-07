@@ -19,21 +19,19 @@ disp(measurement_names)
 disp('- - - - - - - - ')
 
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
-summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
+summarizeMeasurement(AllData,'IntegratedNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 %%
-summarizeMeasurement2D(AllData,'MeanNuc1','MeanNuc2') % Summary 3: scatter plots of 2 variables of interest 
-
+summarizeMeasurement2D(AllData,'MeanNuc3','MeanCyto2') % Summary 3: scatter plots of 2 variables of interest 
 
 %%
-
-summarizeCondition(AllData.(condition_names{1})) % Summary 2: look at all measurements within a SINGLE condition (divided by image)
+summarizeCondition(AllData.RhoAMut_I) % Summary 2: look at all measurements within a SINGLE condition (divided by image)
 
 
 %% - - - - - - - - SECTION 2: REORGANIZE DATA to make it easier to pull out & compare selected conditions  - - - - - - - - 
 
 % Peel off/restructure 2 data fields of interest (e.g. PPARg and CEBPb intensity)
-[xdata_by_condition, xdata_by_well] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare
-[ydata_by_condition, ydata_by_well] = restructuredata(AllData,'MeanNuc1'); % A 2nd measurement we want to compare
+[xdata_by_condition, xdata_by_well] = restructuredata(AllData,'MeanNuc3'); % 1st measurment we want to compare
+[ydata_by_condition, ydata_by_well] = restructuredata(AllData,'MeanCyto2'); % A 2nd measurement we want to compare
 color_theme = colors.theme1(end:-1:1); % This is 4 colors: dark gray, dark blue, light blue, then red.
 color_theme = repmat(color_theme,[1 ceil(length(condition_names)/length(color_theme))]); % Repeat colors if there are >4 subsets
 
@@ -44,8 +42,8 @@ color_theme = repmat(color_theme,[1 ceil(length(condition_names)/length(color_th
 
 
 % ~~~~~~~~~~~   Parameters for violin plot 1 ~~~~~~~~~~~~~~~~~~
-subset = 1:12; % Subset of conditions we want to plot
-disp_data = ydata_by_condition(subset);
+subset = [1 2]; % Subset of conditions we want to plot
+disp_data = xdata_by_condition(subset);
 ylim = prctile(cell2mat(disp_data),[0.1 99.5]);
 y_label1 = 'CEBPb expression';
 area1 = 0.01; % Set width of each violin shape
@@ -62,9 +60,9 @@ legend(condition_names(subset),'Location','northwest','Interpreter','none')
 %%
 
 % ~~~~~~~~~~~   Violin plot 2 (log transformed, larger/grouped subset of data) ~~~~~~~~~
-subset2 = [5:8, 13:16]; % (Larger) set of subsets to plot
-disp_data = ydata_by_condition(subset2);
-groupings = [1:4, 7:10]; % Which groups of violin plots will be plotted together
+subset2 = [1 2]; % (Larger) set of subsets to plot
+disp_data = xdata_by_condition(subset2);
+groupings = [1 2]; % Which groups of violin plots will be plotted together
 area2 = 0.02; % Set width of each violin shape
 y_label2 = 'CEBPb expression';
 ylim2 = log(prctile(cell2mat(disp_data),[1 99.9]));
@@ -86,8 +84,8 @@ legend(condition_names(subset2),'Location','northeast','Interpreter','none')
 % EXAMPLE 2B: overlaid semi-transparent kernel density estimates (smoothed histograms)
 
 % ~~~~~~~~~~~~~~  Parameters for KDE overlay 1    ~~~~~~~~~~~~~
-subset = 13:18;
-disp_data = ydata_by_condition(subset);
+subset = 3:4;
+disp_data = xdata_by_condition(subset);
 alpha1 = 0.25; % Transparancy of each histogram
 xlim = prctile(cell2mat(disp_data),[0.1 99.5]);
 x_label1 = 'CEBPb expression';
@@ -97,7 +95,7 @@ ax1 = kdeoverlay(disp_data,'Color',color_theme,'Alpha',alpha1  ,'XLim',xlim,'Lin
 xlabel(x_label1); ylabel('Relative Frequency')
 legend(condition_names(subset),'Location','northeast','FontSize',10,'Interpreter','none')
 
-
+%%
 % ~~~~~~~~~~~~   Parameters for KDE overlay 2 (log-transformed) ~~~~~~~~~~~~~~~~~~
 subset = 1:3;
 disp_data = ydata_by_condition(subset);
@@ -169,9 +167,9 @@ colormap(colormaps.viridis(end:-1:1,:))
 % (Calculate these on a per well basis, including standard error)
 
 % _____Modify these______
-subset = 1:length(ydata_by_condition);
-well_data = ydata_by_well(subset);
-threshold = 2700;
+subset = 5:6;
+well_data = xdata_by_well(subset);
+threshold = 1700;
 name1 = 'Mean PPARg Expression';
 name2 = 'Expressing cells';
 xlabels = condition_names(subset);
