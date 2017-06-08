@@ -198,10 +198,13 @@ c = loadcolormaps;
 handles.cmap = c.purple_hot;
 
 % Initialize slider + popup values
-set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
+if length(handles.xys)>1
+    set(handles.slider1, 'Min',1, 'Max',length(handles.xys),'SliderStep',[1 4]/length(handles.xys),'Value',1);
+end
 handles.xy = handles.xys(1);
 set(handles.text5,'String',['xy ' ,num2str(handles.xy)]);
-set(handles.text7,'String',['t = ',num2str(handles.time)]);
+set(handles.text7,'String',['t = ' ,num2str(min(handles.times))]);
+
 v1 = 1; v2 = length(handles.t); 
 set(handles.slider2, 'Min',v1, 'Max',v2,'SliderStep',[1/(v2-v1) 4/(v2-v1)],'Value',v1);
 handles.time = v1;

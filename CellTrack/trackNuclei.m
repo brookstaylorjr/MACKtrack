@@ -12,6 +12,8 @@ function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, 
 % CellDataOut    modified from CellData
 % queue_out      queue_in, but with bottom frame relabeled with tracked objects
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%%
+
 disp('Tracking decisions:')
 % Define edge image for use later in decision-making
 imgedge = false(size(queue_in(1).nuclei));
@@ -168,7 +170,7 @@ for i = 1:size(blocks,1)
         p_obj = CellData.labeldata(1).obj(CellData.labeldata(1).obj>0);
         p_dist = sqrt( (CellData.labeldata(1).centroidx(p_obj) - labeldata(1).centroidx(blocks(i,1))).^2 + ...
             (CellData.labeldata(1).centroidy(p_obj) - labeldata(1).centroidy(blocks(i,1))).^2 );
-        p_obj = p_obj(p_dist<=p.DriftDistance); % (May want to consider expanding this radius)
+        p_obj = p_obj(p_dist<=p.DriftDistance);
         p_idx = find(ismember(CellData.blocks(:,1),p_obj));
 
         % Ensure "child" isn't due to spurious false positive -> if obj in new block only coincides w/ obj in candidate "parent"
@@ -208,9 +210,10 @@ for i = 1:size(blocks,1)
             newblocks = cat(1,newblocks, blocks(i,:), blocks_pre(p_idx,:));
             blockedge = cat(1,blockedge, 0, 0);
             blockparent = cat(1,blockparent,p_idx, p_idx);
-            blocks_pre(p_idx,:) = 0; % Zero parent     
+            blocks_pre(p_idx,:) = 0; % Zero parent
+            CellData.blocks(p_idx,:) = 0; % Zero parent in orig data as well
             CellData.FrameOut(p_idx) = curr_frame-1; % Assign parent the proper frame out
-            cellnum = size(blocks_pre,1)+length(blockedge)-1;
+            cellnum = size(blocks_pre,1)+length(blockedge)-1;           
             disp(['Created sisters (from #', num2str(p_idx),') '...
                 '#',num2str(cellnum),' & #',num2str(cellnum+1),...
                 ': [',num2str(newblocks(end-1,:)),'] and [',num2str(newblocks(end,:)),']'])
@@ -229,6 +232,7 @@ for i = 1:size(blocks,1)
         end
     end      
 end
+
 
 % Wrap-up: add in blocks and CellData fields
 CellDataOut.FrameIn = [CellData.FrameIn; curr_frame*ones(size(blockedge))];
