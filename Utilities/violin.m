@@ -1,8 +1,8 @@
-function violin = spaceviolin(vects, places, varargin) 
+function violin = violin(vects, places, varargin) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% [] = spaceviolin(vects, places, varargin) 
+% [] = violin(vects, places, varargin) 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% SPACEVIOLIN makes a violin plot, spacing them according to a secondary vector (e.g. doses)
+% VIOLIN creates a violin plot, spacing them according to a secondary vector (e.g. doses)
 %
 % INPUTS (required)
 % vects          1xN cell array of vectors (1-D array of object measurements)

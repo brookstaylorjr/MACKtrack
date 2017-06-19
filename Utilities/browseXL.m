@@ -39,6 +39,8 @@ handles.dropdown1 = uicontrol('Style','popupmenu','String',{'Well','Site (s)','C
     'BackgroundColor',[.99 .99 1]);
 handles.histbutton = uicontrol('Style','pushbutton', 'BackgroundColor',[1 1 1],...
     'String', 'hist');
+handles.exportbutton = uicontrol('Style','pushbutton', 'BackgroundColor',[1 1 1],...
+    'String', 'export');
 % Set resize and close functions
 set(handles.figure1,'ResizeFcn',{@fig_resize,handles},'Toolbar','figure');
 set(handles.figure1,'CloseRequestFcn',{@close_fig,handles},'Toolbar','figure');
@@ -164,6 +166,7 @@ if draw
     set(handles.slider1,'Callback',{@gui_callback,handles});
     set(handles.dropdown1,'Callback',{@gui_callback2,handles});
     set(handles.histbutton,'Callback',{@hist_callback,handles});
+    set(handles.exportbutton,'Callback',{@export_callback,handles});
 
     % Set GUI elements to appropriate position
     set(handles.slider1,'Min',1,'Max',length(handles.wells), 'Value',1, ...
@@ -214,7 +217,9 @@ h = figPos(4);
 w = figPos(3);
 set(handles.text1,'Position',[ceil(w/2)-200,h-24, 400,16]) % Centered at top
 % Left-to-right bottom row elements
-set(handles.histbutton,'Position',[4 4 50 22])
+set(handles.histbutton,'Position',[4 4 40 22])
+set(handles.exportbutton,'Position',[44 4 40 22])
+
 set(handles.slider1,'Position',[floor(w/2)-200 5 400 20])
 set(handles.dropdown1,'Position',[floor(w/2)+210 9 100 18])
 set(handles.text2,'Position', [floor(w/2)+320 6 120 16])
@@ -465,6 +470,21 @@ if isempty(gcbf)
 else
    delete(gcbf);
 end
+
+
+
+
+
+function export_callback(~,~,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% Export current image to workspace
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+handles = guidata(handles.figure1);
+handles.img
+tmp = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0,0);
+assignin('base','exported_image',tmp)
+
+
 
 
 function string_out = form_img(string_group, vals, lengths)

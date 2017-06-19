@@ -38,7 +38,7 @@ color_theme = repmat(color_theme,[1 ceil(length(condition_names)/length(color_th
 
 %% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %  EXAMPLE 2A: violin plots for selected experiments
-% (Type 'help spaceviolin' to see the options you can set for this plot)
+% (Type 'help violin' to see the options you can set for this plot)
 
 
 % ~~~~~~~~~~~   Parameters for violin plot 1 ~~~~~~~~~~~~~~~~~~
@@ -52,7 +52,7 @@ bin_scale = 0.2; % scale number of bins (DECREASE to make shape "smoother")
 % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 fig1 = figure('Position', positionfig(450, 390)); ax1 = axes('Parent',fig1);
-spaceviolin(disp_data(subset),1:length(subset),'Color',color_theme,'XSpace', padding,'Area',area1,'YLim',ylim,....
+violin(disp_data(subset),1:length(subset),'Color',color_theme,'XSpace', padding,'Area',area1,'YLim',ylim,....
     'BinScale',bin_scale, 'Axes',ax1); 
 ylabel(y_label1); 
 set(gca,'XTick',1:length(subset),'XTickLabel',{})
@@ -73,7 +73,7 @@ padding2 = 0.3;
 log_filter = @(vect) real(log(vect)); % (Make sure negative vals don't mess us up)
 disp_data = cellfun(log_filter,disp_data,'UniformOutput',0);
 fig1 = figure('Position', positionfig(900, 200)); ax1 = axes('Parent',fig1);
-spaceviolin(disp_data,groupings,'Color',color_theme,'XSpace', padding2,'Area',area2,'YLim',ylim2,...
+violin(disp_data,groupings,'Color',color_theme,'XSpace', padding2,'Area',area2,'YLim',ylim2,...
     'Connect','off','Axes',ax1,'LineWidth',0,'Bins',bins); 
 ylabel(y_label2); 
 set(gca,'XTick',[],'XTickLabel',{})

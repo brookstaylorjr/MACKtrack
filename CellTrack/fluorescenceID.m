@@ -25,7 +25,7 @@ else
     diagnos.img_cell = image_cell;
 end
 
-% Mask nuclear image if (and only if!) it is corrected
+% Mask nuclear image if it is provided, and selected for use.
 if (nargin>2) && ~isempty(image_nuc)
     if p.NucleusFF>0    
         diagnos.img_nuc = flatfieldcorrect(image_nuc,double(p.Flatfield{p.NucleusFF}));
@@ -36,6 +36,8 @@ if (nargin>2) && ~isempty(image_nuc)
     else
         diagnos.mask_nuc = false(size(image_nuc));
     end
+else
+        diagnos.mask_nuc = false(size(image_cell));
 end
 
 % Smooth and log-compress cell fluorescence image

@@ -20,10 +20,16 @@ if ModuleData.iter == parameters.TotalImages
     
     % If cells were not segmented, use 1st auxiliary image to identify cell boundaries
     if strcmpi(parameters.ImageType,'none')
-        parameters.CellFF = 1; % Default to FF #1 (by convention, corresponds to aux li
-        data = fluorescenceID(AuxImages{1}, parameters, []);
+        idx = 1;
+        aux_image = AuxImages{idx};
+        while isempty(aux_image)
+            idx = idx+1;
+            aux_image = AuxImages{idx};
+        end
+        parameters.CellFF = idx; % Default to (corresponding) flatfield
+        data = fluorescenceID(aux_image, parameters, []);
         data.nuclei = labels.Nucleus;
-        tmp_out = fluorescenceSegment(data, AuxImages{1}, parameters);
+        tmp_out = fluorescenceSegment(data, aux_image, parameters);
         labels.Cell = tmp_out.cells;
         % Save a diagnostic output version of this image
         home_folder = mfilename('fullpath');
@@ -31,7 +37,7 @@ if ModuleData.iter == parameters.TotalImages
         load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
         save_dir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'EndpointSegmentation',filesep]);
         if ~exist(save_dir,'dir');  mkdir(save_dir); end
-        tmp1 = AuxImages{1};
+        tmp1 = aux_image;
         tmp1(tmp1==min(tmp1(:))) = [];
         tmp1(tmp1==max(tmp1(:))) = [];
         tmp1 = modebalance(tmp1,0, ModuleData.BitDepth,'display');   
@@ -42,7 +48,7 @@ if ModuleData.iter == parameters.TotalImages
             saturation_val = [-4 prctile(tmp1(:),90)];
             alpha = 0.55;
         end
-        saveFig(AuxImages{1},labels.Cell,labels.Nucleus,[],ModuleData.BitDepth,...
+        saveFig(aux_image,labels.Cell,labels.Nucleus,[],ModuleData.BitDepth,...
             [save_dir,'Endpoint_pos',numseq(ModuleData.i,2),'.jpg'],alpha,[1024 1024], saturation_val);
     end
 
@@ -59,40 +65,3 @@ if ModuleData.iter == parameters.TotalImages
  
 end
     
-    
-%     OLD CODE (PARTIAL)
-%     
-%     %% Load the corresponding (final) cell image - calculate the "jump" to the endpoint images
-%     home_folder = mfilename('fullpath');
-%     slash_idx = strfind(home_folder,filesep);
-%     load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
-%     i = ModuleData.i; j = ModuleData.j;
-%     
-%     
-%     % Flatfield-correct aux image #2 and make cell mask
-%     AuxImages{1} = flatfieldcorrect(double(AuxImages{2}),double(parameters.Flatfield{1}));
-%     AuxImages{1} = AuxImages{1}-min(AuxImages{1}(:))+2;
-%     mask0 = AuxImages{1}>tsaithresh(AuxImages{1},false(size(AuxImages{1})));
-%     
-%     % Morphological cleanup on mask
-%     mask1 = bwareaopen(mask0,2);
-%     mask1 = imclose(mask1,diskstrel(3));
-%     mask1 = bwareaopen(mask1,parameters.NoiseSize);
-%     mask1 = ~bwareaopen(~mask1,parameters.MinHoleSize);
-% 
-%     % Zero out any nuclei that got washed away (i.e nucleus no longer overlaps with a cell)
-%     nuc_ids = unique(nuc_label(nuc_label>0));
-%     overlap = zeros(max(nuc_ids),1);
-%     tmp_cc = label2cc(nuc_label,0);
-%     for n = 1:length(nuc_ids)
-%         if ~isempty(tmp_cc.PixelIdxList{nuc_ids(n)})
-%             overlap(nuc_ids(n)) = sum(mask1(tmp_cc.PixelIdxList{nuc_ids(n)}))./numel(tmp_cc.PixelIdxList{nuc_ids(n)});
-%         end
-%     end    
-%     nuc_ids = find(overlap>0.66);
-%     nuc_label(~ismember(nuc_label,nuc_ids)) = 0; 
-%     cell_label = propagatesegment(nuc_label,mask1,AuxImages{1},2);
-%     AuxImages{1} = AuxImages{1} - prctile(AuxImages{1}(:),2);
-%     
-%     
-%     
