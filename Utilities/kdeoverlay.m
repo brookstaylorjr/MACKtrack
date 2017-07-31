@@ -27,7 +27,8 @@ p = inputParser;
 addRequired(p,'vects',@iscell);
 
 % Optional parameters
-default_color = mat2cell(linspecer(numel(vects)),ones(1,numel(vects)));
+colors = setcolors;
+default_color = colors.theme1;
 valid_color = @(x) assert(iscell(x)&&length(x{1})==3, 'Specify colors with a cell matrix of RGB triplets');
 addParameter(p,'Color', default_color,valid_color);
 
@@ -49,6 +50,12 @@ colors = p.Results.Color;
 bandwidth = p.Results.Bandwidth;
 linewidth = p.Results.LineWidth;
 alpha = p.Results.Alpha;
+
+% Repeat colors if length of vector is too short
+if length(colors) < length(vects)
+    colors = repmat(colors,[1 ceil(length(vects)/length(colors))]);
+end
+
 
 % Create figure (if axes wasn't provided)
 if ~ishandle(p.Results.Axes)

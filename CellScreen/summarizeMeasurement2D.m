@@ -34,7 +34,6 @@ end
 [all_x] = restructuredata(AllData,measure_x);
 [all_y] = restructuredata(AllData,measure_y);
 
-%
 x_rng = prctile(all_vals_x, x_lim);
 y_rng = prctile(all_vals_y, y_lim);
 
@@ -44,7 +43,6 @@ n_rows = ceil(length(all_x)/n_cols);
 figure('Position',positionfig(1150,n_rows*200),'Name', ['''',measure_x,''' vs. ''', measure_y,''' (all conditions)'])
 ha = tight_subplot(n_rows,n_cols,[0.01 0.01]);
 
-colormaps=  loadcolormaps;
 for i = 1:length(all_cond)
     drops = isnan(all_x{i}) | isnan(all_y{i});
     if ~isempty(all_x{i}(~drops))
@@ -60,4 +58,4 @@ for i = 1:length(all_cond)
             'Interpreter','none')
     end
 end
-colormap(colormaps.viridis(end:-1:1,:))
+colormap(cbrewer('seq','PuBu',256))

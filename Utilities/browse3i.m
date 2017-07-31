@@ -60,7 +60,7 @@ while ~ok_go
         end
     end
 end
-disp(['Loaded directory contents in ',num2str(round(loadtoc*100)/100),' sec'])
+disp(['Loaded contents of ',handles.dir ,' in ',num2str(round(loadtoc*100)/100),' sec'])
 
 
 % Need some kind of way to gracefully handle "extra" data points -> for now, filter them out.
@@ -173,8 +173,9 @@ if draw
     set(handles.histbutton,'Callback',{@hist_callback,handles});
 
     % Set GUI elements to appropriate position
+    if handles.max_s==handles.min_s; stepsz = 0; else stepsz = 1/(handles.max_s-handles.min_s); end
     set(handles.slider1,'Min',handles.min_s,'Max',handles.max_s, 'Value',handles.vals(1), ...
-        'SliderStep',[1/(handles.max_s-handles.min_s) 10/(handles.max_s-handles.min_s)]);
+        'SliderStep',[stepsz 10*stepsz]);
     set(handles.text1,'String', ['time:',num2str(handles.vals(2)),' | XY pos:', num2str(handles.vals(1))...
         ' | channel:', num2str(handles.vals(3))])
     set(handles.text2,'String',[numseq(handles.vals(1),handles.lengths(1)),'/',numseq(handles.max_s,handles.lengths(1))])

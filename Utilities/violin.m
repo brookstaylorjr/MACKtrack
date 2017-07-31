@@ -35,7 +35,9 @@ valid_places = @(x) assert(numel(x)==numel(vects), '2nd argument must be same si
 addRequired(p,'places',valid_places);
 
 % Optional parameters
-default_color = mat2cell(linspecer(numel(vects)),ones(1,numel(vects)));
+colors = setcolors;
+default_color = colors.peacock(end:-1:1);
+
 valid_color = @(x) assert(iscell(x)&&length(x{1})==3, 'Specify colors with a cell matrix of RGB triplets');
 addParameter(p,'Color', default_color,valid_color);
 

@@ -17,9 +17,8 @@ function swarmaxes = beeswarm(data, varargin)
 % 'SwarmWidth'   Relative width of each swarm (scaled from 1.0). Increase to make swarms wider/closer together
 % 'GroupSpacing' Spacing between separate groups of swarms (which may be composed of subgroups)
 % 'MarkerSize'   Size of each plotted point (default = 7)
-%
 % 'ShowMeans'    Show bar for mean. Default = TRUE
-% 'Axes'         Axes handle of axes where new beeswarm figure will be plotted (default: create new figure + axes)
+% 'Axes'         Axes handle where graph will be plotted (default: create new figure + axes)
 %
 %
 % OUTPUTS
@@ -42,7 +41,6 @@ addParameter(p,'RowPoints',15,@isnumeric)
 addParameter(p,'RowNum',12,@isnumeric)
 addParameter(p,'SwarmWidth',1,@isnumeric)
 addParameter(p,'GroupSpacing',1,@isnumeric)
-
 addParameter(p,'MarkerSize',7,@isnumeric)
 addParameter(p,'ShowMeans',1,@isboolean)
 addParameter(p,'Axes',nan,@ishandle);

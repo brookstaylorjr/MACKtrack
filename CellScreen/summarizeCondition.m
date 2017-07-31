@@ -23,8 +23,8 @@ else
     figtitle = 'Diagnostic info for structure';
 end
 
-clr = linspecer(100);
-clr(25:70,:) = []; % Drop super-light colors
+clr = cbrewer('div','Spectral',100);
+clr(40:65,:) = []; % Drop super-light colors
 clr = clr(round(linspace(1,size(clr,1),length(use_m))),:);
 
 figure('Name',figtitle,'Position',positionfig(150*num_images,100*length(use_m))) 

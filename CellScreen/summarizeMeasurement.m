@@ -32,10 +32,12 @@ n_rows = ceil(length(by_condition)/n_cols);
 
 figure('Position',positionfig(1200,n_rows*150),'Name', ['Distributions of ''',measure_name,'''(all conditions)'])
 ha = tight_subplot(n_rows,n_cols,[0.005 0.005]);
-clr = linspecer(100);
+clr = cbrewer('div','Spectral',100);
+
+
 all_y = zeros(size(ha));
 for i = 1:length(by_condition)
-    histogram(by_condition{i},bins,'FaceColor',clr(3,:),'Parent',ha(i),'EdgeColor','none')
+    histogram(by_condition{i},bins,'FaceColor',clr(end-3,:),'Parent',ha(i),'EdgeColor','none')
     set(ha(i),'XTIckLabel',{},'YTickLabel',{},'XGrid','on','XLim',bin_lim,'YGrid','on')
     if mod(i-1,n_cols) == 0
         ylabel(ha(i),measure_name,'FontSize',11,'FontWeight','normal','interpreter','none')
