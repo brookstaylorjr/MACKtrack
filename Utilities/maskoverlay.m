@@ -1,4 +1,10 @@
 function RGB = maskoverlay(img_in, mask, overlay_color, a)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% RGB = maskoverlay(img_in, mask, overlay_color, a)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% MASKOVERLAY creates an RGB composite image of (a) a base image (can be RGB or BW) with
+% (b) an overlaid mask, with specified transparency, a
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if nargin<4
     a = 0.5;

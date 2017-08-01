@@ -429,7 +429,7 @@ end
 % Make object region colormapped
 RGB2 = uint8(cat(3,reshape(handles.cmap(handles.img+1,1),size(handles.img)),...
     reshape(handles.cmap(handles.img+1,2),size(handles.img)),...
-reshape(handles.cmap(handles.img+1,3),size(handles.img)))*255);
+    reshape(handles.cmap(handles.img+1,3),size(handles.img)))*255);
 RGB = RGB.*(repmat(uint8(~cellmask),[1 1 3])) +  RGB2.*(repmat(uint8(cellmask),[1 1 3]));
 RGB = maskoverlay(RGB,borders_individ,neon3, 0.6);
 
