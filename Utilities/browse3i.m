@@ -462,7 +462,7 @@ string_group{3}, numseq(vals(3),lengths(3)), string_group{4}];
 function [vals] = extract_vals(string_in)
 all_numidx = regexp(string_in,'[0-9]');
 a = find(diff([2, all_numidx])~=1);
-b = [a(2:end)-1 length(all_numidx)];
+b = [a(2:end)-1 length(all_numidx)]; 
 vals = [eval(string_in(all_numidx(a(1):b(1)))),...
     eval(string_in(all_numidx(a(2):b(2)))),...
     eval(string_in(all_numidx(a(3):b(3))))];

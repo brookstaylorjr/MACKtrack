@@ -9,7 +9,7 @@ function [] = summarizeMeasurement(AllData, measure_name, pct)
 
 
 if nargin<3
-    pct = [0.01 97];
+    pct = [0.01 99];
 end
 
 % Collect data together

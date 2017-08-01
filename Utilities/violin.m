@@ -83,7 +83,7 @@ if strcmp(p.Results.ShowBins,'on') % Diagnostic output: histogram overlaid with 
     ha = tight_subplot(length(vects),1);
 end
 if length(places)>1
-    x_lim = [min(places)-(xspace*range(places)),max(places)+xspace*range(places)];
+    x_lim = [min(places)-(1.5*xspace*range(places)),max(places)+1.5*xspace*range(places)];
 else
     x_lim = sort([places*0.9,places*1.1],'ascend');
 end

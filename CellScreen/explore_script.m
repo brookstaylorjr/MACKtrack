@@ -45,7 +45,9 @@ summarizeCondition(AllData.OP9LD_DMI) % Summary 3: look at ALL measurements with
 
 
 
-%% - - - - - - - - SECTION 3: FILTER AND REORGANIZE DATA  - - - - - - - - 
+%% - - - - - - - - SECTION 3: EXAMPLES OF GRAPHING DATA  - - - - - - - - 
+% After data is split by condition (or by well), you can easily pick a subset of conditions and compare them.
+
 
 %% EXAMPLE 3A: a violin plot - type 'help violin' to see the full list of options you can set for this plot
 
@@ -113,15 +115,14 @@ legend(condition_names(subset),'Location','northeast','FontSize',10,'Interpreter
 
 
 
-%% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% EXAMPLE 2D: scatter plot of all conditions in subset (1 row of graphs)
+%% EXAMPLE 2D: scatter plot of all conditions in subset (1 row of graphs)
 
 % ~~~~~~~~~~~~~~  Parameters for scatter plot  ~~~~~~~~~~~~~
 x_data = xdata_by_condition;
 y_data = ydata_by_condition;
 x_title = 'CEBPb expression';
 y_title = 'PPARg expression';
-subset = 1:4;
+subset = 1:8;
 
 % Graph limits
 xlim = prctile(cell2mat(x_data(subset)),[0.01 99]);
@@ -160,7 +161,7 @@ end
 colormap(cbrewer('seq','PuBu',256))
 
 
-%% EXAMPLE 2D: Bar chart of (1) mean expression and (2) "differentiated cells" - percentage above some threshold.
+%% EXAMPLE 2E: Bar chart of (1) mean expression and (2) "differentiated cells" - percentage above some threshold.
 % (Calculate these on a per well basis, including standard error)
 
 % ~~~~~~~~~~~~~~  Parameters for bar plot  ~~~~~~~~~~~~~
