@@ -11,24 +11,12 @@ function [] = checkMasks(track_folder, parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
-
 % Load in parameters, if not provided
 if nargin<2
-    disp('Loading in default "TrackingParameters.mat"')
+    disp(['Loading in "TrackingParameters.mat" from ', track_folder])
     load(namecheck([track_folder,filesep,'TrackingParameters.mat']))
 end
 
-
-
-
-
-
-
-%% 
-
-% Get parameters for this tracking set
-tmp = load(namecheck([track_folder,filesep,'TrackingParameters.mat']));
-parameters = tmp.parameters;
 
 % Load scope/data locations
 home_folder = mfilename('fullpath');
@@ -39,14 +27,14 @@ if ~exist(locations.scope)
     error(['Invalid mount location for images: "',locations.scope,...
         '" not found. Please load, update, and re-save "locations.mat"'])
 end
-
+handles.data_dir = track_folder;
 
 %% FOR TESTING ONLY
-track_folder = '/Volumes/labdata/brooks/Tracked/2016-10-24_physio-screen/Day 1/';
-tmp = load(namecheck([track_folder,filesep,'TrackingParameters.mat']));
-parameters = tmp.parameters;
-load locations.mat
-parameters.ImagePath_full = parameters.ImagePath_full(13:end); % tmp bugfix -> get frid of /mnt/fluffy.
+% track_folder = '/Volumes/labdata/brooks/Tracked/2016-10-24_physio-screen/Day 1/';
+% tmp = load(namecheck([track_folder,filesep,'TrackingParameters.mat']));
+% parameters = tmp.parameters;
+% load locations.mat
+% parameters.ImagePath_full = parameters.ImagePath_full(13:end); % tmp bugfix -> get frid of /mnt/fluffy.
 
 
 
@@ -59,7 +47,7 @@ if exist([track_folder,filesep,'CellLabels'],'dir')
 end
 
 get_substr = @(str1) str1(14:end-4);
-handles.wells = cellfun(get_substr, label_list,'UniformOutput',0);
+handles.wells = cellfun(get_substr, handles.labels_n,'UniformOutput',0);
 conv_well = @(str1) ['_',str1(1:3),'_s',num2str(eval(str1(end-1:end)))];
 handles.wells = cellfun(conv_well,handles.wells,'UniformOutput',0);
 
@@ -74,89 +62,89 @@ for i = 1:length(handles.wells)
 end
 
 %%
-handles.wellVal = 1;
-handles.imgVal = 1;
-handles.boundaryVal = 1;
+
 colormaps = loadcolormaps;
 handles.cmap = colormaps.purple_hot;
-
-
-
-
-
-
+handles.radius = parameters.MinNucleusRadius;
 
 %%  Create figure, axes, and GUI elements
 zlength = length(handles.wells);
-
-% Load 1st image of 1st well
-handles.image_curr = loadImage(handles);
-
-%%
-
-
-
-handles.figure1 = gcf;
+handles.figure1 = figure('Position',positionfig(800,600));
 handles.axes1 = axes('Parent',handles.figure1);
+
 % Create status text
 handles.text1 = uicontrol('Style','text','String','','BackgroundColor',[1 1 1]);
-% Create slider
+
+% Create GUI elements
 handles.slider1  = uicontrol('Style', 'slider','Max',zlength,'Min',1,'Value',1,'SliderStep',[1/(zlength-1) 1/(zlength-1)],'BackgroundColor',[.99 .99 1]);
-set(handles.slider1,'Callback',{@slider_Callback,handles});
-% Make "Reset zoom" button
+set(handles.text1,'String',[handles.wells{1}])
+handles.popup1  = uicontrol('Style', 'popup','Value',1,'String',handles.images{1},'BackgroundColor',[.99 .99 1]);
+handles.popup2  = uicontrol('Style', 'popup','Value',1,'String',{'Nucleus', 'Cell', 'Annulus'} ,'BackgroundColor',[.99 .99 1]);
 handles.reset  = uicontrol('Style', 'pushbutton','String','Reset zoom','BackgroundColor',[.99 .99 1]);
+
+% Create image
+[handles.xlim, handles.ylim] = displayImage(handles);
+
+
+% Create all callbacks
+set(handles.popup1,'Callback',{@popup1_Callback,handles});
+set(handles.popup2,'Callback',{@popup2_Callback,handles});
+set(handles.slider1,'Callback',{@slider_Callback,handles});
 set(handles.reset,'Callback',{@reset_Callback,handles});
+set(handles.figure1,'ResizeFcn',{@fig_resize,handles},'Toolbar','figure');
+
+
+% Trigger resize element
+fig_resize([],[],handles)
 
 
 
 
-
-function slider_Callback(hSlide,~,handles)
+function slider_Callback(hObj,~,handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Update contents of figure based on slider's position
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-handles.wellVal = round(get(hSlide,'Value'));
-xlim = get(gca,'xlim');
-ylim = get(gca,'ylim');
-displayImage(handles)
-set(handles.text1,'String',[handles.wells{sliderVal},'/',num2str(size(handles.input,3))])
-axis image
-set(gca,'xlim',xlim,'ylim',ylim)
-set(handles.axes1,'YTick',[],'XTick',[])
-% ========================================================================================
+wellVal = round(get(hObj,'Value'));
+set(hObj,'Value',wellVal)
 
-function dropdown1_Callback(hSlide,~,handles)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% Update contents of figure based on slider's position
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-handles.wellVal = round(get(hSlide,'Value'));
+set(handles.text1,'String',[handles.wells{wellVal}])
+set(handles.popup1,'String',handles.images{wellVal});
+
+
 xlim = get(gca,'xlim');
 ylim = get(gca,'ylim');
-displayImage(handles)
-set(handles.text1,'String',[handles.wells{sliderVal},'/',num2str(size(handles.input,3))])
-axis image
-set(gca,'xlim',xlim,'ylim',ylim)
-set(handles.axes1,'YTick',[],'XTick',[])
+displayImage(handles, xlim, ylim);
 % ========================================================================================
 
 
 
+function popup1_Callback(hObj,~,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% Update contents of figure based on slider's position
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+xlim = get(gca,'xlim');
+ylim = get(gca,'ylim');
+displayImage(handles, xlim, ylim);
+
+% ========================================================================================
 
 
+function popup2_Callback(hObj,~,handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% Update contents of figure based on slider's position
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+xlim = get(gca,'xlim');
+ylim = get(gca,'ylim');
+displayImage(handles, xlim, ylim);
 
-
-
-
-
+% ========================================================================================
 
 function reset_Callback(~,~,handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Reset zoom state of figure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-
-xlim = [1 size(handles.image_curr,2)];
-ylim = [1 size(handles.image_curr,1)];
-
+xlim = handles.xlim;
+ylim = handles.ylim;
 set(gca,'xlim',xlim,'ylim',ylim)
 
 % ========================================================================================
@@ -169,39 +157,54 @@ function fig_resize(~,~,handles)
 figPos = get(handles.figure1,'Position');
 h = figPos(4);
 w = figPos(3);
-set(handles.slider1,'Position',[floor(w/2)-300 5 400 20])
-set(handles.reset,'Position',[floor(w/2)+182,8, 60, 18]);
-set(handles.text1,'Position',[floor(w/2)+102,5, 80, 20]);
+w_ref = round(w/2) - 410;
+
+set(handles.slider1,'Position',[w_ref 2 200 20])
+set(handles.text1,'Position',[w_ref+210 2 60 20]);
+set(handles.popup1,'Position',[w_ref+280 5 300 20])
+set(handles.popup2,'Position',[w_ref+590 5 100 20])
+set(handles.reset,'Position',[w_ref+710 8 66 18]);
+
+
 axis image
 set(handles.axes1,'OuterPosition',[0 20/h 1 (h-32)/h],'LooseInset',get(handles.axes1,'TightInset')+[10/w 10/h 10/w 10/h])
 set(handles.axes1,'YTick',[],'XTick',[])
 % ========================================================================================
 
 
-function  disp_image = displayImage(handles)
+function  [xlim, ylim] = displayImage(handles, xlim, ylim)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % Display image (with specified boundaries overlaid)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+wellVal = get(handles.slider1,'Value');
+imgVal = get(handles.popup1,'Value');
+boundaryVal = get(handles.popup2,'Value');
 
 % Load constituent parts of image - image 'base', Nuclear and Cell labels (if present)
-base_img = checkread(namecheck([handles.image_dir,filesep,handles.images{handles.wellVal}{handles.imgVal}]));
+base_img = checkread(namecheck([handles.image_dir,filesep,handles.images{wellVal}{imgVal}]));
+if nargin<3
+    xlim = [1 size(base_img,2)];
+    ylim = [1 size(base_img,1)];
+end
 
-boundaryVal = handles.boundaryVal;
+
 if ~isfield(handles,'labels_c')
     boundaryVal(boundaryVal==2) = 3;
 end
 
 switch boundaryVal
     case 1 % Nuclear boundaries
-        load(namecheck([track_folder,filesep,'NuclearLabels',filesep,handles.labels_n{handles.wellVal}]))
+        load(namecheck([handles.data_dir,filesep,'NuclearLabels',filesep,handles.labels_n{wellVal}]))
         boundaries = NuclearLabel;
     case 2 % Cell boundaries
-        load(namecheck([track_folder,filesep,'CellLabels',filesep,handles.labels_c{handles.wellVal}]))
+        load(namecheck([handles.data_dir,filesep,'CellLabels',filesep,handles.labels_c{wellVal}]))
+        boundaries = CellLabel;
+
     case 3 % Annulus boundaries
-        load(namecheck([track_folder,filesep,'NuclearLabels',filesep,handles.labels_n{handles.wellVal}]))
+        load(namecheck([handles.data_dir,filesep,'NuclearLabels',filesep,handles.labels_n{wellVal}]))
         % Create annulus to estimate cytoplasmic area.
-        tmp_mask = imdilate(NuclearLabel>0,diskstrel(parameters.MinNucleusRadius*1.5)); % (Expand by 1.5 radii)
-        boundaries = IdentifySecPropagateSubfunction(double(lNuclearLabel),zeros(size(lNuclearLabel)),tmp_mask,100);
+        tmp_mask = imdilate(NuclearLabel>0,diskstrel(handles.radius*1.5)); % (Expand by 1.5 radii)
+        boundaries = IdentifySecPropagateSubfunction(double(NuclearLabel),zeros(size(NuclearLabel)),tmp_mask,100);
 end
 boundaries = (imdilate(boundaries,ones(3))-boundaries)>0;
 
@@ -219,3 +222,7 @@ disp_image = uint8(cat(3,reshape(handles.cmap(base_img+1,1),size(base_img)),...
 
 disp_image = maskoverlay(disp_image, boundaries, [248   152    29], 0.6);
 
+imshow(disp_image,'Parent',handles.axes1)
+axis image
+set(gca,'xlim',xlim,'ylim',ylim)
+set(handles.axes1,'YTick',[],'XTick',[])

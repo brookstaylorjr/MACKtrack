@@ -2,7 +2,7 @@
 % required, and save it with your data).
 % Brooks Taylor, 7/21/2017
 % First, load in some data - change this file path to use a different "AllData" file.
-load('/Volumes/labdata/kyle/Fixed_Cell_Data/170413 - MCF10A Hela Correlations MEK ERK GAPDH ENO MCM5 MCM7/Tracked2/MCF10A/AllData.mat')
+load('/Volumes/labdata/kyle/Fixed_Cell_Data/170413 - MCF10A Hela Correlations MEK ERK GAPDH ENO MCM5 MCM7/Tracked3/MCF10A/AllData.mat')
 %%
 summarizeMeasurement(AllData,'IntegratedNuc4') % assess hists of Hoechst
 
@@ -15,9 +15,9 @@ AllData = filterAllData(AllData,'IntegratedNuc4', thresh_func);
 %%
 % Note: in this experiment, 'IntegratedCell' and 'MedianCell', and 'IntegratedCyto' and 'MedianCyto', are SWAPPED
 % Peel off/restructure 2 data fields of interest (e.g. PPARg and CEBPb intensity)
-[w2_by_condition, w2_by_well] = restructuredata(AllData,'MedianCell1'); % 1st measurment we want to compare/use
-[w3_by_condition, w3_by_well] = restructuredata(AllData,'MedianCell2'); % A 2nd measurement we want to compare/use
-[tot_by_condition, tot_by_well] = restructuredata(AllData,'MedianCell3'); % A 2nd measurement we want to compare/use
+[w2_by_condition, w2_by_well] = restructuredata(AllData,'IntegratedCell1'); % 1st measurment we want to compare/use
+[w3_by_condition, w3_by_well] = restructuredata(AllData,'IntegratedCell2'); % A 2nd measurement we want to compare/use
+[tot_by_condition, tot_by_well] = restructuredata(AllData,'IntegratedCell3'); % A 2nd measurement we want to compare/use
 
 
 %%
