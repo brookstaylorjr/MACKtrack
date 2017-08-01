@@ -142,7 +142,7 @@ for i = 1:length(subset)
     % Remove high outlier data
     x_tmp = x_data{subset(i)};
     y_tmp = y_data{subset(i)};
-    outliers = (x_tmp>prctile(x_tmp,99.9)) | (y_tmp>prctile(y_tmp,99.9));
+    outliers = (x_tmp>prctile(x_tmp,99.9)) | (y_tmp>prctile(y_tmp,99.9))|isnan(x_tmp)|isnan(y_tmp);
     
     
     [~,h] = dscatter2(x_data{subset(i)}(~outliers), y_data{subset(i)}(~outliers),'Parent',ha(i),'DensityLim',density_lim);

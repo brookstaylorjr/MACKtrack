@@ -167,7 +167,7 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
-    newfolder = ffp([get(handles.edit1A,'String'),filename]);
+    newfolder = namecheck([get(handles.edit1A,'String'),filename]);
     % Remove leading slash, add trailing slash
     if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
         newfolder = [newfolder,filesep];
@@ -186,7 +186,7 @@ function pushbutton1A_Callback(hObject, eventdata, handles)
 % PUSHBUTTON1A: go up one directory level
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 handles  = guidata(handles.figure1);
-newfolder = ffp(get(handles.edit1A,'String'));
+newfolder = namecheck(get(handles.edit1A,'String'));
 
 if ~isempty(newfolder) && strcmp(newfolder(end),filesep)
     newfolder =newfolder(1:end-1);
@@ -273,7 +273,7 @@ set(handles.listbox1A,'String',handles.file_names,...
  'Value',1)
 
 set(handles.edit1A,'String',dir_path)
-handles.parameters.ImagePath= ffp(dir_path);
+handles.parameters.ImagePath= namecheck(dir_path);
 check_expr(handles);
 % ========================================================================================
 
@@ -466,7 +466,7 @@ function pushbutton3A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % PUSHBUTTON3A: Browse for folder
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-tmp = ffp([handles.locations.data,filesep,handles.parameters.SaveDirectory]);
+tmp = namecheck([handles.locations.data,filesep,handles.parameters.SaveDirectory]);
 if ~exist(tmp,'dir')
     tmp = handles.locations.data;
 end
@@ -519,7 +519,7 @@ end
 if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
     newfolder = newfolder(2:end);
 end
-newfolder = ffp(newfolder);
+newfolder = namecheck(newfolder);
 handles.parameters.SaveDirectory = newfolder;
 set(handles.edit3A,'String',newfolder)
 check_expr(handles)
@@ -566,8 +566,8 @@ function pushbutton4B_Callback(hObject, eventdata, handles)
 parameters = handles.parameters;
 if ispc
     % Replace file separator in SaveDirectory and in ImagePath
-    parameters.SaveDirectory = ffp(parameters.SaveDirectory);
-    parameters.ImagePath = ffp(parameters.ImagePath);
+    parameters.SaveDirectory = namecheck(parameters.SaveDirectory);
+    parameters.ImagePath = namecheck(parameters.ImagePath);
 end
 
 FileName = '';

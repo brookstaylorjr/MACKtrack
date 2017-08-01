@@ -57,7 +57,7 @@ imfo = imfinfo([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr
 bit_depth = imfo.BitDepth;
 
 % Make save directories/image stacks
-outputDirectory = ffp([locations.data,filesep, parameters.SaveDirectory,filesep,'xy',num2str(xyPos),filesep]);
+outputDirectory = namecheck([locations.data,filesep, parameters.SaveDirectory,filesep,'xy',num2str(xyPos),filesep]);
 mkdir(outputDirectory)
 mkdir([outputDirectory,'NuclearLabels'])    
 mkdir([outputDirectory,'CellLabels'])
@@ -98,10 +98,10 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         % Load in images
         tic
         nucName1 = eval(parameters.NucleusExpr);
-        images.nuc = checkread(ffp([locations.scope,parameters.ImagePath,nucName1]),bit_depth,1,parameters.debug);
+        images.nuc = checkread(namecheck([locations.scope,parameters.ImagePath,nucName1]),bit_depth,1,parameters.debug);
         if ~strcmpi(parameters.ImageType,'none')
             cellName1 = eval(parameters.CellExpr);
-            images.cell = checkread(ffp([locations.scope,parameters.ImagePath,cellName1]),bit_depth,1,parameters.debug);
+            images.cell = checkread(namecheck([locations.scope,parameters.ImagePath,cellName1]),bit_depth,1,parameters.debug);
         else
             images.cell = images.nuc;
         end

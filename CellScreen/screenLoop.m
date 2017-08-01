@@ -14,7 +14,7 @@ home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 
-start_dir = ffp([locations.scope, filesep,parameters.ImagePath]);
+start_dir = namecheck([locations.scope, filesep,parameters.ImagePath]);
 
 % Crawl down from starting directory - find all plate layouts (and corresponding image folders)
 [layout_dir, image_dir, all_dir] = getImageDirectories(start_dir);
@@ -78,7 +78,7 @@ for idx = 1:length(layout_dir)
     % Save full measurments file
     save([save_subdir,filesep,'AllData.mat'],'AllData')
     % Save tracking parameters file - adjust to include full image directory
-    parameters.ImagePath_full = image_dir{idx};
+    parameters.ImagePath_full = image_dir{idx}(length(locations.scope)+1 : end);
     save([save_subdir,filesep,'TrackingParameters.mat'],'parameters')
     
     % Reformat data in a flattened format for R/Python users as well
