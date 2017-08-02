@@ -65,12 +65,12 @@ for img = 1:length(AuxImages)
         % B) Assign measurements
         for n = 1:cyto_cc.NumObjects
             CellMeasurements.(['MeanAnnulus_cyto',num2str(img)])(n,iteration) = nanmean(img0(cyto_cc.PixelIdxList{n}));
-            CellMeasurements.(['MedianAnnulus_cyto',num2str(img)])(n,iteration) = nansum(img0(cyto_cc.PixelIdxList{n}));
-            CellMeasurements.(['IntegratedAnnulus_cyto',num2str(img)])(n,iteration) = nanmedian(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianAnnulus_cyto',num2str(img)])(n,iteration) = nanmedian(img0(cyto_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedAnnulus_cyto',num2str(img)])(n,iteration) = nansum(img0(cyto_cc.PixelIdxList{n}));
 
             CellMeasurements.(['MeanAnnulus_cell',num2str(img)])(n,iteration) = nanmean(img0(cell_cc.PixelIdxList{n}));
-            CellMeasurements.(['MedianAnnulus_cell',num2str(img)])(n,iteration) = nansum(img0(cell_cc.PixelIdxList{n}));
-            CellMeasurements.(['IntegratedAnnulus_cell',num2str(img)])(n,iteration) = nanmedian(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['MedianAnnulus_cell',num2str(img)])(n,iteration) = nanmedian(img0(cell_cc.PixelIdxList{n}));
+            CellMeasurements.(['IntegratedAnnulus_cell',num2str(img)])(n,iteration) = nansum(img0(cell_cc.PixelIdxList{n}));
         end
         
     end

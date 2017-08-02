@@ -3,8 +3,7 @@
 % Brooks Taylor, 7/21/2017
 % First, load in some data - change this file path to use a different "AllData" file.
 load('/Volumes/labdata/kyle/Fixed_Cell_Data/170413 - MCF10A Hela Correlations MEK ERK GAPDH ENO MCM5 MCM7/Tracked3/MCF10A/AllData.mat')
-%%
-summarizeMeasurement(AllData,'IntegratedNuc4') % assess hists of Hoechst
+% summarizeMeasurement(AllData,'IntegratedNuc4') % assess hists of Hoechst
 
 
 %%
