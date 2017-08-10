@@ -1,4 +1,4 @@
-% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
+e% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
 % required, and save it with your data).
 % Brooks Taylor, 7/21/2017
 
@@ -36,7 +36,7 @@ summarizeCondition(AllData.OP9LD_DMI) % Summary 3: look at ALL measurements with
 
 % (Optional) filter out poor quality data (here, dim nuclei - likely false positives)
 % thresh_func = @(dapi) (dapi < 550); % (you can pick a value by inspecting histograms from "summarizeMeasurement")
-% AllData = filterAllData(AllData,'MeanNuc1', thresh_func);
+% AllData = filterAllData(AllData,'IntegratedNuc1', thresh_func);
 
     
 % Peel off/restructure 2 data fields of interest (e.g. PPARg and CEBPb intensity)

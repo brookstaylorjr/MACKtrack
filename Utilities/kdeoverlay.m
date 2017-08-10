@@ -29,7 +29,8 @@ addRequired(p,'vects',@iscell);
 % Optional parameters
 colors = setcolors;
 default_color = colors.theme1;
-valid_color = @(x) assert(iscell(x)&&length(x{1})==3, 'Specify colors with a cell matrix of RGB triplets');
+valid_color = @(x) assert(  (isnumeric(x)&&(size(x,2)==3)) || (iscell(x)&&length(x{1})==3), ...
+    'Specify colors with a cell matrix of RGB triplets');
 addParameter(p,'Color', default_color,valid_color);
 
 all = cell2mat(vects(:));
@@ -56,6 +57,10 @@ if length(colors) < length(vects)
     colors = repmat(colors,[1 ceil(length(vects)/length(colors))]);
 end
 
+if iscell(colors)
+    colors = cell2mat(colors(:));
+end
+
 
 % Create figure (if axes wasn't provided)
 if ~ishandle(p.Results.Axes)
@@ -76,9 +81,9 @@ for i = 1:length(vects)
     [y_val] = ksdensity(vects{i},x_val,'function','pdf','bandwidth',bandwidth);
     
     if linewidth>0
-        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors{i},'FaceAlpha',alpha,'EdgeColor',colors{i},'LineWidth',linewidth)
+        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors(i,:),'FaceAlpha',alpha,'EdgeColor',colors(i,:),'LineWidth',linewidth)
     else
-        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors{i},'FaceAlpha',alpha,'EdgeColor','none')
+        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors(i,:),'FaceAlpha',alpha,'EdgeColor','none')
     end
 end
 

@@ -69,14 +69,13 @@ p = mfilename('fullpath');
 slash_idx = strfind(p,filesep);
 handles.save_loc = [p(1:slash_idx(end-1)), 'locations.mat'];
 load(handles.save_loc,'-mat')
-try
-    locations.scope = namecheck(locations.scope,'');
-catch me; locations.scope = '';
-end
-try
-    locations.data = namecheck(locations.data,'');
-catch me; locations.data = '';
-end
+
+locations.scope = namecheck(locations.scope);
+if ~exist(locations.scope,'dir'); locations.scope = ''; end
+
+locations.data = namecheck(locations.data);
+if ~exist(locations.data,'dir'); locations.data = ''; end
+
 
 handles.locations = locations;
 
@@ -118,7 +117,7 @@ function edit1_Callback(hObject, eventdata, handles)
 try
     newfolder = get(hObject,'String');
     if exist(newfolder,'dir')
-        newfolder = namecheck(newfolder,'');
+        newfolder = namecheck(newfolder);
         set(handles.edit1,'String',newfolder,'ForegroundColor',handles.blue)
         handles.locations.scope = newfolder;
         handles.Locked1 = 0;
@@ -150,7 +149,7 @@ function pushbutton1_Callback(hObject, eventdata, handles)
 newfolder = uigetdir();
 
 if (newfolder~=0)
-    newfolder = namecheck(newfolder,'');
+    newfolder = namecheck(newfolder);
     set(handles.edit1,'String',newfolder)
     set(handles.edit1,'ForegroundColor',handles.blue)
     handles.locations.scope = newfolder;
@@ -171,7 +170,7 @@ function edit2_Callback(hObject, eventdata, handles)
 try
     newfolder = get(hObject,'String');
     if exist(newfolder,'dir')
-        newfolder = namecheck(newfolder,'');
+        newfolder = namecheck(newfolder);
         set(handles.edit2,'String',newfolder, 'ForegroundColor',handles.blue)
         handles.locations.data = newfolder;
         handles.Locked2 = 0;
@@ -204,7 +203,8 @@ function pushbutton2_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 newfolder = uigetdir();
 if (newfolder~=0)
-    newfolder = namecheck(newfolder,'');
+    newfolder = namecheck(newfolder);
+    
     set(handles.edit2,'String',newfolder)
     set(handles.edit2,'ForegroundColor',handles.blue)
     handles.locations.data = newfolder;

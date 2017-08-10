@@ -77,8 +77,8 @@ handles.home_folder = handles.home_folder(1:slash_idx(end-1));
 load([handles.home_folder, 'locations.mat'],'-mat')
 
 
-locations.scope = namecheck(locations.scope,'');
-locations.data = namecheck(locations.data,'');
+locations.scope = namecheck(locations.scope);
+locations.data = namecheck(locations.data);
 if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
     h = setLocations;
     uiwait(h);
@@ -167,15 +167,8 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     % Get name of item selected in list box
     filename = file_list{index_selected};
     % If item is a directory, load list box with contents of new folder
-    newfolder = namecheck([get(handles.edit1A,'String'),filename]);
-    % Remove leading slash, add trailing slash
-    if  ~isempty(newfolder) && ~strcmp(newfolder(end),filesep)
-        newfolder = [newfolder,filesep];
-    end
-    if ~isempty(newfolder) && strcmp(newfolder(1),filesep)
-        newfolder = newfolder(2:end);
-    end
-    if exist([handles.locations.scope,newfolder],'dir')
+    newfolder = namecheck([get(handles.edit1A,'String'),filename,filesep]);
+    if exist([handles.locations.scope,filesep,newfolder],'dir')
         load_listbox(newfolder,handles)
     end
 end
@@ -273,7 +266,7 @@ set(handles.listbox1A,'String',handles.file_names,...
  'Value',1)
 
 set(handles.edit1A,'String',dir_path)
-handles.parameters.ImagePath= namecheck(dir_path);
+handles.parameters.ImagePath = namecheck(dir_path);
 check_expr(handles);
 % ========================================================================================
 

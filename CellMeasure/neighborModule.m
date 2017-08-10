@@ -15,17 +15,17 @@ function [CellMeasurements, ModuleDataOut] = neighborModule(CellMeasurements,par
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-% Default conversion factor for my images = 4.03 pix/micron
-conversion = 4.03;
+% Measure things in terms of one nucleus diameter
+conversion = parameters.MinNucleusRadius*2;
 
 
 % On first call, initialize all new CellMeasurements fields
 if ~isfield(CellMeasurements,'OccupiedPerimeter')
     CellMeasurements.OccupiedPerimeter = nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.Neighbor10 =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.Neighbor5 =  nan(parameters.TotalCells,parameters.TotalImages);
+    CellMeasurements.Neighbor12 =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.Neighbor25 =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.Neighbor50 =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.Neighbor100 =  nan(parameters.TotalCells,parameters.TotalImages);
 
 end
 
@@ -78,16 +78,16 @@ for n=1:length(cells)
     [r, c] = ind2sub(size(labels.Cell), cc1.PixelIdxList{n});
     edgedist = min([size(labels.Cell,1)-max(r), size(labels.Cell,2)-max(c), min(r)-1,min(c)-1]);
     if edgedist > (10*conversion)
-        CellMeasurements.Neighbor10(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (10*conversion));
+        CellMeasurements.Neighbor5(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (5*conversion));
     end
     if edgedist > (25*conversion)
-        CellMeasurements.Neighbor25(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (25*conversion));
+        CellMeasurements.Neighbor12(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (12*conversion));
     end
     if edgedist > (50*conversion)
-        CellMeasurements.Neighbor50(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (50*conversion));
+        CellMeasurements.Neighbor25(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (25*conversion));
     end
     if edgedist > (100*conversion)
-        CellMeasurements.Neighbor100(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (100*conversion));
+        CellMeasurements.Neighbor50(cells(n),ModuleData.iter) =  sum(all_dist(:,n) < (50*conversion));
     end
 end
 

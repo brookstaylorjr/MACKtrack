@@ -81,7 +81,7 @@ num = n_subgroups;
 
 if num==1; num = length(data); end
 if isempty(clr)
-    clr = linspecer(num);
+    clr = cbrewer('div','Spectral', num);
 end
 % Cycle colors, if required
 if size(clr,1)<num

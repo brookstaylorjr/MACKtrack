@@ -2,12 +2,11 @@ function [] = screenLoop(parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % [] = screenLoop(parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% SCREENLOOP crawls through all subdirectories specified under ImagePath, looking for layout.xlsx files that correspond
-% to plate screener images. Cells in correponding channels are segmented and measured. The input file structure will
-% be echoed under the output (save) directory.
+% SCREENLOOP crawls through all subdirectories specified under parameters.ImagePath, looking for layout.xlsx files that
+% correspond to plate screener images. Cells in correponding channels are segmented and measured. The input file 
+% structure will be echoed under the output (save) directory.
 %
-% Function is currently configured to process default naming from a MicroXLS . 
-%
+% Function is currently configured to process default naming from a MicroXLS microscope (Molecular Devices). 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Get locations.mat, identify starting directory
 home_folder = mfilename('fullpath');

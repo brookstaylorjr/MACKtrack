@@ -39,7 +39,7 @@ end
 
 % Cycle through XY directories and combine their measurements
 for i = parameters.XYRange
-    parameters.XYDir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(i),filesep],'');
+    parameters.XYDir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(i),filesep]);
     if exist([parameters.XYDir,'CellMeasurements.mat'],'file')
         load([parameters.XYDir,'CellMeasurements.mat'])
         measureFields = fieldnames(CellMeasurements);
@@ -63,6 +63,23 @@ end
 AllMeasurements.parameters = parameters;
 AllMeasurements.parameters.locations = locations;
 
-% Save AllMeasurements in condition directory
-save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat'],''),'AllMeasurements','-v7.3')
+% Save AllMeasurements in condition directory. If we have trajectories for > 100K cells, save each field separately.
+if size(AllMeasurements.CellData,1) < 1e5 
+    save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat']),'AllMeasurements','-v7.3')
+else
+    names = fieldnames(AllMeasurements);
+    savedir = namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements']);
+    mkdir(savedir)
+    for i =1:length(names)
+        if isnumeric(AllMeasurements.(names{i}))
+            eval([names{i}, '= single(AllMeasurements.(names{i}));'])
+        else
+            eval([names{i}, '= (AllMeasurements.(names{i});'])
+        end
+        save([savedir, filesep, names{i}, '.mat'],names{i},'-v7.3')
+
+    end
+    
 end
+
+
