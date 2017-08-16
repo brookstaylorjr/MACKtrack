@@ -1,16 +1,22 @@
 function [measure_out, lineage_matrix] = copychildren(measure_in, celldata_in, t)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% [measure_out, divisions,divide_pts] = copychildren(measure_in, celldata_in)
+% [measure_out, lineage_matrix] = copychildren(measure_in, celldata_in, t)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % COPYCHILDREN uses lineage information to copy mother trajectories (i.e. prior to division) to any daughter cells.
 % Requires a raw matrix of measurements (one row per cell), and "CellData" information matrix from MACKtrack.
 % CellData info:  [ xy position | cell idx | frame in | frame out | parent | is_edge ]
 %
-% INPUTS:
-% measure_in     Measurement field to be copied
+% INPUTS
+% measure_in     Measurement data (each row is one cell) to be copied
 % celldata_in    CellData information matrix. Can be a cell matrix, with multiple measurements - multidim. cell
 %                    matricies will be vectorized
 % t              (optional) time vector that corresponds to a measurement matrix (may include non-whole timepoints)
+%
+% OUTPUTS
+% measure_out      Measurement data with copied lineage information
+% lineage_matrix   Lineage information for each cell, per timepoint
+%
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin<3

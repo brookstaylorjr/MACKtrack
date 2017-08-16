@@ -309,8 +309,8 @@ function handles = loadImage(handles)
 i = handles.xy;
 xy_idx = find(handles.xys==handles.xy,1,'first');
 j = handles.time-handles.shift(xy_idx);
-img_path = [handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
-    eval(handles.ImageExpr)];
+img_path = namecheck([handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
+    eval(handles.ImageExpr)]);
 % 2) Get bit depth of image, load, and rotate (if necessary)
 if ~isfield(handles.parameters,'BitDepth')
     imfo = imfinfo(img_path);

@@ -28,16 +28,14 @@ if nargin<3
     end
 end
 
-
+%%
 % Load data; set parameters
 [measure, info] = loadID(id);
-info.ImageExpr = info.parameters.fretModule.ImageExpr;
+info.ImageExpr = ['makefret(',info.parameters.fretModule.ImageExpr,')'];
 
-t_max = (size(measure.MedianFRET,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
-info.graph_limits = [400 1000];
-
-
-all_fret = measure.MedianFRET;
+t_max = (size(measure.MeanFRET_cyto,2)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
+info.graph_limits = [0.7 2];
+all_fret = measure.MeanFRET_cyto;
 
 % Add parent trajectories to children
 find_parent = @(row) find((info.CellData(:,1) == row(1)) & (info.CellData(:,2)== row(5)));
@@ -47,13 +45,15 @@ for i = 1:size(all_fret,1)
     end
 end
 
+graph.var_all = all_fret;
+[all_fret, graph.lineage] = copychildren(all_fret, info.CellData);
+
 
 
 %% Filtering
-droprows = zeros(size(measure.MedianFRET,1),1);
+droprows = zeros(size(measure.MeanFRET_cyto,1),1);
 %droprows = [droprows, sum(isnan(measure.MeanIntensityNuc(:,1:4)),2)>2]; % Cells existing @ expt start
-droprows = [droprows, sum(isnan(all_fret(:,1:200)),2)>15]; % Long-lived cells
-droprows = [droprows, sum(isnan(all_fret(:,1:2)),2)>1]; % Cells existing @ start
+droprows = [droprows, sum(isnan(all_fret(:,1:min([200 size(all_fret,2)]))),2)>15]; % Long-lived cells
 info.keep = max(droprows,[],2) == 0;
 
 %% Subtract basal level of FRET (?)

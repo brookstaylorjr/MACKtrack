@@ -1,13 +1,13 @@
-function swarmaxes = beeswarm(data, varargin)
+function swarm_axes = beeswarm(data, varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% handles = beeswarm(data, varargin)
+% swarm_axes = beeswarm(data, varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % BEESWARM plots distributions of points by spreading them around the y-axis. Input data
 % can be 1) a matrix of column data, or (2) a cell matrix (one set of "swarms" per cell - will
 % be subgrouped by columns in the cell matrix)
 % 
 % INPUTS (required)
-% data           matrix or cell array of 
+% data           matrix or cell array of data points
 %
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
@@ -22,7 +22,7 @@ function swarmaxes = beeswarm(data, varargin)
 %
 %
 % OUTPUTS
-% swarm_axes        Axes handle of violin figure
+% swarm_axes        Axes handle of beeswarm figure
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -30,7 +30,7 @@ function swarmaxes = beeswarm(data, varargin)
 % Create input parser object, add required params from function input
 p = inputParser;
 % 1) Plot data (matrix or cell)
-valid_data = @(x) assert(ismatrix(x) || iscell(x),'Plot data amust be matrix or cell matrix');
+valid_data = @(x) assert(ismatrix(x),'Plot data must be matrix or cell matrix');
 addRequired(p,'data',valid_data);
 
 % Optional parameters
@@ -127,13 +127,13 @@ end
 % Create figure (if axes wasn't provided)
 if ~ishandle(p.Results.Axes)
     swarmfig = figure('Position', positionfig(600,400), 'PaperPositionMode','auto');
-    swarmaxes = axes('Parent',swarmfig);
+    swarm_axes = axes('Parent',swarmfig);
 else
-    swarmaxes = p.Results.Axes;
+    swarm_axes = p.Results.Axes;
 end
 
 % Place points/ bars in figure
-hold(swarmaxes,'on')
+hold(swarm_axes,'on')
 for i = 1:length(data)
     for j = 1:size(data{i},2)
         if n_subgroups==1
@@ -160,12 +160,12 @@ if show_means
     end
 end
 
-hold(swarmaxes,'off')
+hold(swarm_axes,'off')
 
 
 
 
-set(swarmaxes,'XLim',[min(base_spacing)-1,max(base_spacing)+1],'XTick',[])
+set(swarm_axes,'XLim',[min(base_spacing)-1,max(base_spacing)+1],'XTick',[])
 
 
 

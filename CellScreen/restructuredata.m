@@ -6,6 +6,8 @@ function [by_condition, by_well, by_image] = restructuredata(AllData, measure_na
 % 1) condition
 % 2) WELLS within a given condition
 % 3) IMAGES within a given condition
+%
+% Example: [xdata_by_condition, xdata_by_well, xdata_by_image] = restructuredata(AllData,'MeanNuc2');
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 % Collect data together

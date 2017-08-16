@@ -1,4 +1,4 @@
-e% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
+% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
 % required, and save it with your data).
 % Brooks Taylor, 7/21/2017
 
@@ -40,7 +40,7 @@ summarizeCondition(AllData.OP9LD_DMI) % Summary 3: look at ALL measurements with
 
     
 % Peel off/restructure 2 data fields of interest (e.g. PPARg and CEBPb intensity)
-[xdata_by_condition, xdata_by_well] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare/use
+[xdata_by_condition, xdata_by_well, xdata_by_image] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare/use
 [ydata_by_condition, ydata_by_well] = restructuredata(AllData,'MeanNuc3'); % A 2nd measurement we want to compare/use
 
 
