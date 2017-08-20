@@ -53,16 +53,6 @@ for i = parameters.XYRange
     end
 end % [end (xy) loop]
 
-% Add parameters (drop extraneous fields) to AllMeasurements
-if isfield(parameters,'X')
-    parameters = rmfield(parameters,'X');
-end
-if isfield(parameters,'XYDir')
-    parameters = rmfield(parameters,'XYDir');
-end
-AllMeasurements.parameters = parameters;
-AllMeasurements.parameters.locations = locations;
-
 % Save AllMeasurements in condition directory. If we have trajectories for > 100K cells, save each field separately.
 if size(AllMeasurements.CellData,1) < 1e5 
     save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat']),'AllMeasurements','-v7.3')

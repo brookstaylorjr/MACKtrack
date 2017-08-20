@@ -16,16 +16,18 @@ function [output, diagnos] =  fluorescenceID(image_cell, p, image_nuc)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 % Perform flatfield correction on images (if specified)
-if p.CellFF>0    
-    diagnos.img_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}));
-    if min(diagnos.img_cell(:))<0
-        diagnos.img_cell = diagnos.img_cell-min(diagnos.img_cell(:));
+if p.CellFF>0
+    image_cell = image_cell-double(p.Flatfield{end});
+    if min(image_cell(:))<0
+        warn('Current image has sub-noise signal levels - ouput may not be reliable!')
+        image_cell = image_cell-min(image_cell(:));
     end
+    diagnos.img_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}));
 else
     diagnos.img_cell = image_cell;
 end
 
-% Mask nuclear image if it is provided, and selected for use.
+%% Mask nuclear image if it is provided, and selected for use.
 if (nargin>2) && ~isempty(image_nuc)
     if p.NucleusFF>0    
         diagnos.img_nuc = flatfieldcorrect(image_nuc,double(p.Flatfield{p.NucleusFF}));
@@ -96,7 +98,7 @@ try
 
     % Add nuclear image to cell mask, if specified
     diagnos.mask2 = diagnos.mask1|diagnos.mask_nuc;
-    
+ 
     
     % Morphological cleanup: remove speckle noise; do small close operation, and fill small holes
     diagnos.mask_clean = bwareaopen(diagnos.mask2,2);

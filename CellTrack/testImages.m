@@ -52,21 +52,7 @@ end
 
 % Convert any parameter flatfield images to functions
 if isfield(p,'Flatfield')
-    X = [];
-    warning off MATLAB:nearlySingularMatrix
-    for i = 1:length(p.Flatfield)
-        if size(X,1) ~= numel(p.Flatfield{i})
-            X = backgroundcalculate(size(p.Flatfield{i}));
-        end        
-        corr_img = p.Flatfield{i};
-        pStar = (X'*X)\(X')*corr_img(:);
-        % Apply correction
-        corr_img = reshape(X*pStar,size(corr_img));
-        if rotate_flag
-            corr_img = imrotate(corr_img,90);
-        end
-        p.Flatfield{i} = corr_img-min(corr_img(:));
-    end
+    p.Flatfield = processFlatfields(p.Flatfield);
 end
 
 

@@ -40,21 +40,20 @@ for idx = 1:length(layout_dir)
     catch me
         error(['No images found that correspond to well ',wells{1}{1},'. Double-check "layout.xlsx" file'])
     end
-        
+    
+    
     % Make parameter additions: 1) bit depth and 2) flatfield image fits.
     imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
     parameters.BitDepth = imfo.BitDepth;
+  
+    % (Save tracking parameters file before flatfield fitting - adjust to include full image directory)
+    parameters.ImagePath_full = image_dir{idx}(length(locations.scope)+1 : end);
+    save([save_subdir,filesep,'TrackingParameters.mat'],'parameters')
+   
+    
     % Calculate flatfield images - replace them in parameters
     if isfield(parameters,'Flatfield')
-        X = backgroundcalculate([imfo.Height,imfo.Width]);
-        warning off MATLAB:nearlySingularMatrix
-        for i = 1:length(parameters.Flatfield)
-            corr_img = parameters.Flatfield{i};
-            pStar = (X'*X)\(X')*corr_img(:);
-            % Apply correction
-            corr_img = reshape(X*pStar,size(corr_img));
-            parameters.Flatfield{i} = corr_img-min(corr_img(:));
-        end
+        parameters.Flatfield = processFlatfields(parameters.Flatfield);
     end
     
     % Analyze all wells/images per conditon (in parallel, if selected)
@@ -76,10 +75,7 @@ for idx = 1:length(layout_dir)
     
     % Save full measurments file
     save([save_subdir,filesep,'AllData.mat'],'AllData')
-    % Save tracking parameters file - adjust to include full image directory
-    parameters.ImagePath_full = image_dir{idx}(length(locations.scope)+1 : end);
-    save([save_subdir,filesep,'TrackingParameters.mat'],'parameters')
-    
+
     % Reformat data in a flattened format for R/Python users as well
     [AllData_mat, AllData_fields, AllData_conditions] = AllData_to_mat(AllData);
     save([save_subdir,filesep,'AllData_R.mat'],'AllData_mat','AllData_fields','AllData_conditions')

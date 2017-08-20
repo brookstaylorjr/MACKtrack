@@ -35,5 +35,4 @@ for i = 1:length(all_cond)
     for j = 1:length(images)
         by_image{i}{j} = AllData.(all_cond{i}).Measurements.(measure_name)(AllData.(all_cond{i}).CellData(:,2)==images(j));
     end
-
 end

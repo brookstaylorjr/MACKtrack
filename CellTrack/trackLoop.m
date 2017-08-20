@@ -32,23 +32,6 @@ switch lower(parameters.ImageType)
         X = [];
 end
 
-% Convert any parameter flatfield images to functions
-if isfield(parameters,'Flatfield')
-    X = [];
-    warning off MATLAB:nearlySingularMatrix
-    for i = 1:length(parameters.Flatfield)
-        if size(X,1) ~= numel(parameters.Flatfield{i})
-            X = backgroundcalculate(size(parameters.Flatfield{i}));
-        end        
-        corr_img = parameters.Flatfield{i};
-        pStar = (X'*X)\(X')*corr_img(:);
-        % Apply correction
-        corr_img = reshape(X*pStar,size(corr_img));
-        parameters.Flatfield{i} = corr_img-min(corr_img(:));
-    end
-end
-
-
 
 % Get image bit depth
 i = xyPos;
@@ -56,12 +39,19 @@ j =  parameters.TimeRange(1);
 imfo = imfinfo([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]);
 bit_depth = imfo.BitDepth;
 
-% Make save directories/image stacks
+% Make save directories, save tracking parameters
 outputDirectory = namecheck([locations.data,filesep, parameters.SaveDirectory,filesep,'xy',num2str(xyPos),filesep]);
 mkdir(outputDirectory)
 mkdir([outputDirectory,'NuclearLabels'])    
 mkdir([outputDirectory,'CellLabels'])
 mkdir([outputDirectory,'SegmentedImages'])
+save([outputDirectory,'TrackingParameters.mat'],'parameters')
+
+% Convert any parameter flatfield images to functions
+if isfield(parameters,'Flatfield')
+    parameters.Flatfield = processFlatfields(parameters.Flatfield);
+end
+
 
 % Make default shift (for tracking cells across image jumps)
 parameters.ImageOffset = repmat({[0 0]},1,parameters.StackSize);

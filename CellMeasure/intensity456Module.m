@@ -36,10 +36,15 @@ end
 % Main cycle: correct image, initialize data (if not present), make measurments
 for img = 1:length(AuxImages)
     if ~isempty(AuxImages{img})
-        % 1) Background correct image (try to do flatfield, if available)
-        if (length(parameters.Flatfield)>=(img+3)) && isequal(size(AuxImages{img}),size(parameters.Flatfield{img+3}))
-            img0 = flatfieldcorrect(AuxImages{img},double(parameters.Flatfield{img+3}));
-            img0 = img0-prctile(img0(:),2); % Background subtract
+% 1) Background correct image (try to do flatfield, if available)
+        if (length(parameters.Flatfield)>(3+img))
+            if isequal(size(AuxImages{img}),size(parameters.Flatfield{img+3}))
+                AuxImages{img} = AuxImages{img} - parameters.Flatfield{end};
+                img0 = flatfieldcorrect(AuxImages{img},double(parameters.Flatfield{img+3}));
+                img0 = img0-prctile(img0(:),2); % Background subtract
+            else
+                error(['Size mismatch between provided flatfield (#', num2str(img), ' and AuxImage'])
+            end
         else
             if ~isfield(ModuleData,'distr')
                 [img0, ModuleData.distr] = modebalance(AuxImages{img},2,ModuleData.BitDepth,'measure'); 
