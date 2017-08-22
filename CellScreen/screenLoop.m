@@ -20,11 +20,25 @@ start_dir = namecheck([locations.scope, filesep,parameters.ImagePath]);
 save_dir = [locations.data,filesep,parameters.SaveDirectory];
 mkdir(save_dir)
 
+% Pre-save parameters for each tracked set
+for idx = 1:length(layout_dir)
+    save_subdir = [save_dir,filesep,layout_dir{idx}(length(start_dir)+1:end)];
+    mkdir(save_subdir)
+    parameters.ImagePath_full = namecheck(image_dir{idx}(length(locations.scope)+1:end));
+    save([save_subdir,filesep,'TrackingParameters.mat'],'parameters')
+end
+
+% Process flatfields - stash original values
+params_save = parameters;
+if isfield(parameters,'Flatfield')
+    params_save.Flatfield_orig = parameters.Flatfield;
+    parameters.Flatfield = processFlatfields(parameters.Flatfield);
+end
+
 
 for idx = 1:length(layout_dir)
     % a) PER PLATE LAYOUT: identify al conditions (and corresponding wells) to be measured
     save_subdir = [save_dir,filesep,layout_dir{idx}(length(start_dir)+1:end)];
-    mkdir(save_subdir)
     mkdir([save_subdir,filesep,'SegmentedImages'])
     mkdir([save_subdir,filesep,'NuclearLabels'])
     if ~strcmpi(parameters.ImageType,'none')
@@ -41,20 +55,10 @@ for idx = 1:length(layout_dir)
         error(['No images found that correspond to well ',wells{1}{1},'. Double-check "layout.xlsx" file'])
     end
     
-    
-    % Make parameter additions: 1) bit depth and 2) flatfield image fits.
+    % Get image bit depth (for processing)
     imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
     parameters.BitDepth = imfo.BitDepth;
-  
-    % (Save tracking parameters file before flatfield fitting - adjust to include full image directory)
-    parameters.ImagePath_full = image_dir{idx}(length(locations.scope)+1 : end);
-    save([save_subdir,filesep,'TrackingParameters.mat'],'parameters')
-   
     
-    % Calculate flatfield images - replace them in parameters
-    if isfield(parameters,'Flatfield')
-        parameters.Flatfield = processFlatfields(parameters.Flatfield);
-    end
     
     % Analyze all wells/images per conditon (in parallel, if selected)
     Data = cell(size(conditions));

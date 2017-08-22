@@ -62,7 +62,7 @@ if iscell(colors)
 end
 
 
-% Create figure (if axes wasn't provided)
+%% Create figure (if axes wasn't provided)
 if ~ishandle(p.Results.Axes)
     kdefig = figure('Position', positionfig(800, 300), 'PaperPositionMode','auto');
     h_ax = axes('Parent',kdefig);
@@ -81,9 +81,9 @@ for i = 1:length(vects)
     [y_val] = ksdensity(vects{i},x_val,'function','pdf','bandwidth',bandwidth);
     
     if linewidth>0
-        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors(i,:),'FaceAlpha',alpha,'EdgeColor',colors(i,:),'LineWidth',linewidth)
+        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors(i,:),'FaceAlpha',alpha,'EdgeColor',colors(i,:),'LineWidth',linewidth,'Parent',h_ax)
     else
-        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors(i,:),'FaceAlpha',alpha,'EdgeColor','none')
+        fill([x_val,fliplr(x_val)],[y_val,zeros(size(y_val))],colors(i,:),'FaceAlpha',alpha,'EdgeColor','none','Parent',h_ax)
     end
 end
 

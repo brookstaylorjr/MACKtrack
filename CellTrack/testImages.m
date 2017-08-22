@@ -9,7 +9,9 @@ function [] = testImages(handles)
 
 % - - - - Setup: create structure for images, define options - - - -
 p = handles.parameters;
+assignin('base','p',handles.parameters) % Move parameters into workspace
 locations = handles.locations;
+
 i = min(p.XYRange);
 j = min(p.TimeRange);
 p.i = i; p.j = j;
@@ -187,7 +189,6 @@ set(handles.reset,'Callback',{@reset_Callback,handles});
 imagesc(handles.overlays.(overlayList{1}),'Parent',handles.diagnosticAxes), colormap gray
 set(handles.diagnosticAxes,'YTick',[],'XTick',[])
 set(handles.diagnosticFig,'ResizeFcn',{@fig_resize,handles},'Toolbar','figure');
-assignin('base','p',handles.parameters)
 if isfield(handles,'figure1')
     guidata(handles.figure1,handles)
 end

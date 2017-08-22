@@ -12,6 +12,19 @@ num_images = size(struct1.Images,1);
 % Get list of all measurements (of maximum size)
 m_lengths = [];
 m_names = fieldnames(struct1.Measurements);
+
+% If there are lots and lots of measurements, drop less commonly-used measurements
+if length(m_names)>15
+    m_names(~cellfun(@isempty,strfind(m_names,'Median'))) = [];
+    m_names(~cellfun(@isempty,strfind(m_names,'Integrated'))) = [];
+    m_names(~cellfun(@isempty,strfind(m_names,'Cyto'))) = [];
+    m_names(~cellfun(@isempty,strfind(m_names,'Annulus'))) = [];
+    m_names(~cellfun(@isempty,strfind(m_names,'AxisRatio'))) = [];
+    m_names(~cellfun(@isempty,strfind(m_names,'Perimeter'))) = [];
+    m_names(~cellfun(@isempty,strfind(m_names,'Compactness'))) = [];
+    warning('Too many measurements to show at once - showing only subset') 
+end
+
 for i = 1:length(m_names)
     m_lengths = cat(1,m_lengths, size(struct1.Measurements.(m_names{i}),1));
 end

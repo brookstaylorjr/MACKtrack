@@ -30,15 +30,13 @@ for i = 1:cyto_cc.NumObjects
     end
 end
 
-
-
 % Main cycle: correct image, initialize data (if not present), make measurments
 for img = 1:length(AuxImages)
     if ~isempty(AuxImages{img})
         % 1) Background correct image (try to do flatfield, if available)
         if (length(parameters.Flatfield)>img)
             if isequal(size(AuxImages{img}),size(parameters.Flatfield{img}))
-                AuxImages{img} = AuxImages{img} - parameters.Flatfield{end};
+                AuxImages{img} = double(AuxImages{img}) - double(parameters.Flatfield{end});
                 img0 = flatfieldcorrect(AuxImages{img},double(parameters.Flatfield{img}));
                 img0 = img0-prctile(img0(:),2); % Background subtract
             else

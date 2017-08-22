@@ -17,14 +17,13 @@ function [output, diagnos] =  fluorescenceID(image_cell, p, image_nuc)
 
 % Perform flatfield correction on images (if specified)
 if p.CellFF>0
-    image_cell = image_cell-double(p.Flatfield{end});
-    if min(image_cell(:))<0
-        warn('Current image has sub-noise signal levels - ouput may not be reliable!')
-        image_cell = image_cell-min(image_cell(:));
+    diagnos.image_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}),'subtract');
+    if min(diagnos.image_cell(:))<0
+        diagnos.image_cell = diagnos.image_cell-min(diagnos.image_cell(:)) + ...
+            0.01*range(diagnos.image_cell(:));
     end
-    diagnos.img_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}));
 else
-    diagnos.img_cell = image_cell;
+    diagnos.image_cell = image_cell;
 end
 
 %% Mask nuclear image if it is provided, and selected for use.
@@ -43,7 +42,7 @@ else
 end
 
 % Smooth and log-compress cell fluorescence image
-img = imfilter(log(diagnos.img_cell+1),gauss2D(2),'symmetric');
+img = imfilter(log(diagnos.image_cell+1),gauss2D(2),'symmetric');
 diagnos.log_cell = img;
 
 % Get img histogram & mode
