@@ -53,8 +53,8 @@ for i = parameters.XYRange
     end
 end % [end (xy) loop]
 
-% Save AllMeasurements in condition directory. If we have trajectories for > 100K cells, save each field separately.
-if size(AllMeasurements.CellData,1) < 1e5 
+% Save AllMeasurements in condition directory. If we have trajectories for > 50K cells, save each field separately.
+if size(AllMeasurements.CellData,1) < 5e4
     save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat']),'AllMeasurements','-v7.3')
 else
     names = fieldnames(AllMeasurements);

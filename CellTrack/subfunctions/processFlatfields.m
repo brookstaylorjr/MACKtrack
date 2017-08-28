@@ -34,6 +34,10 @@ X = backgroundcalculate(sz,3);
 warning off MATLAB:nearlySingularMatrix
 for i = 1:length(flatfields_in)
     corr_img = double(flatfields_in{i}) - double(BG);
+    if min(corr_img(:)) < 0
+        error('Flatfield normalization yielded negative values. Please reload these images.')
+    end
+    
     pStar = (X'*X)\(X')*corr_img(:);
     % Apply correction
     corr_img = reshape(X*pStar,size(corr_img));

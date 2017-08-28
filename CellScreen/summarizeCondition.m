@@ -44,7 +44,7 @@ figure('Name',figtitle,'Position',positionfig(150*num_images,100*length(use_m)))
 ha = tight_subplot(length(use_m),num_images,[0.005 0.005]);
 
 for i = 1:length(use_m)
-    bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.01 97]);
+    bin_range = prctile(struct1.Measurements.(m_names{use_m(i)}),[0.5 97]);
     if sum(isnan(bin_range))==0
         bins = linspace(bin_range(1),bin_range(2),60);
     else

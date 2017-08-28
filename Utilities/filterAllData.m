@@ -1,6 +1,6 @@
-function AllData_out = filterAllData(AllData, filter_field, filter_function,verbose)
+function AllData_out = filterAllData(AllData, filter_field, filter_function, verbose)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% AllData_out = filterAllData(AllData_in, filter_function)
+% AllData_out = filterAllData(AllData_in, filter_function, verbose)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % FILTERALLDATA applies a supplied filtering function (e.g. @(x) x>0) to an input filter field (string, e.g.
 % 'MeanNuc1'). Any cells that meet this criteria (in above example, with negative values) will be filtered out.
@@ -27,7 +27,7 @@ for i = 1:length(all_cond)
     filtered_cells = filter_function(AllData.(all_cond{i}).Measurements.(filter_field));
     if verbose
         disp([all_cond{i},': filtered out ', num2str(sum(filtered_cells)),'/', num2str(length(filtered_cells)),...
-            'cells (',num2str(sum(filtered_cells)/length(filtered_cells)*100),'%)'])
+            ' cells (',num2str(sum(filtered_cells)/length(filtered_cells)*100),'%)'])
     end
     measure_names = fieldnames(AllData.(all_cond{i}).Measurements);
     AllData.(all_cond{i}).CellData(filtered_cells,:) = [];

@@ -24,9 +24,9 @@ locations = handles.locations;
 % LOAD IMAGES
 i = min(parameters.XYRange);
 j = min(parameters.TimeRange);
-nucleusFile = [locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)];
+nucleusFile = namecheck([locations.scope,filesep,parameters.ImagePath,filesep,eval(parameters.NucleusExpr)]);
 
-imfo = imfinfo([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]);
+imfo = imfinfo(nucleusFile);
 bit_depth = imfo.BitDepth;
 
 nucOrig = checkread(nucleusFile,bit_depth);

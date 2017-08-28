@@ -30,14 +30,15 @@ end
 
 % Correct and get ratiometric measurement for the FRET/CFP image pair
 try
-fret = AuxImages{1}; 
+fret = AuxImages{1};
+fret = fret - double(parameters.Flatfield{end});
 fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
 fret = fret-prctile(fret(:),2); % Background subtract
 fret(fret<16) = 16; % add floor to image 
 
 cfp = AuxImages{2};
+cfp = cfp - double(parameters.Flatfield{end});
 cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
-cfp = cfp -prctile(cfp(:),2);
 cfp(cfp<16) = 16; % add floor to image 
 fret_image = (fret)./(cfp);
 catch me

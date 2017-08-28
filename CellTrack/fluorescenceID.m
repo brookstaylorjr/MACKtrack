@@ -15,6 +15,15 @@ function [output, diagnos] =  fluorescenceID(image_cell, p, image_nuc)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
+% Short circuit this function if we force full confluence
+if p.Confluence==3
+    output.mask_cell = true(size(image_cell));
+    output.mask0 = true(size(image_cell));
+    diagnos = output;
+    return;
+end
+
+
 % Perform flatfield correction on images (if specified)
 if p.CellFF>0
     diagnos.image_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}),'subtract');
