@@ -439,7 +439,7 @@ RGB = maskoverlay(RGB,borders_individ,neon3, 0.6);
 
 % 3) Add text, draw image
 RGB = insertText(RGB, handles.centroids,handles.text_labels,'TextColor',[247 197 113],'BoxOpacity',0,...
-    'AnchorPoint','Center','Font','Arial Narrow','FontSize',16);
+    'AnchorPoint','Center','Font','Arial','FontSize',16);
 imshow(RGB,'Parent',handles.axes1)
 set(handles.axes1,'XTick',[],'YTick',[])
 if setflag
