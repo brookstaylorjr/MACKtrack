@@ -128,6 +128,10 @@ function handles_out = load_vizdata(handles)
 fcn_names = get(handles.popupmenu2,'String');
 newval = get(handles.popupmenu2,'Value');
 max_val = length(fcn_names);
+
+if isfield(handles,'imgmax')
+    handles = rmfield(handles,'imgmax');
+end
 % Read in function from dropdown menu, and process data appropriately
     flag = 0;
     while flag == 0

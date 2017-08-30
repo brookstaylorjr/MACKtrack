@@ -8,8 +8,12 @@ function [graph, info, measure] = see_paprg(id,varargin)
 % id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
+% 'Measurement'     name of measurement field that will be read as PPARg - defaults to 'MeanNuc1'
+% 'ImageExpr'       expr. for the fluorescence image used to measure PPARg - defaults to 1st slot of intensityModule
 % 'Display'         'on' or 'off' - show graphs (default: process data only; no graphs)
 % 'Verbose'         'on' or 'off' - show verbose output
+% 'MinLifetime'     cell trajectories with < MinLifetime frames will be filtered out. Default = 100.
+%
 %
 % OUTPUTS:  
 % graph          primary output structure; must specify
@@ -25,12 +29,13 @@ function [graph, info, measure] = see_paprg(id,varargin)
 %% Create input parser object, add required params from function input
 p = inputParser;
 % Required: ID input
-valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||isstruct(x)||exist(x,'file'),...
-    'ID input must be spreadsheet ID or full file path');
+valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||isstruct(x)||exist(x,'file')||exist(x,'dir'),...
+    'ID input must be either: (1) an AllMeasurements structure, (2) AllMeasurements file or folder location, or (3) a spreadsheet ID');
 addRequired(p,'id',valid_id);
 
 % Optional parameters
 expectedFlags = {'on','off'};
+addParameter(p,'Measurement','MeanNuc1', @ischar);
 addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'MinLifetime',100, @isnumeric);
@@ -39,6 +44,7 @@ addParameter(p,'MinLifetime',100, @isnumeric);
 parse(p,id, varargin{:})
 if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
 if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
+measure_field = p.Results.Measurement;
 
 % Load data; set parameters
 [measure, info] = loadID(id);
@@ -47,7 +53,7 @@ if isfield(measure,'MeanPPARg')
     all_pparg = measure.MeanPPARg;
     info.ImageExpr = info.parameters.ppargModule.ImageExpr;
 else
-    all_pparg = measure.MeanNuc1;
+    all_pparg = measure.(measure_field);
     info.ImageExpr = info.parameters.intensityModule.ImageExpr;
 end
 
