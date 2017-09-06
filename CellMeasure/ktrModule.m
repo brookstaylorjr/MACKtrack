@@ -32,7 +32,7 @@ for i = 1:length(AuxImages)
         
         % STEP 1: IMAGE NORMALIZATION
         % Normalization 1: flatfield correction -> estimate range for scaling
-        corr_img = flatfieldcorrect(double(AuxImages{i}),double(parameters.Flatfield{i}));
+        corr_img = flatfieldcorrect(double(AuxImages{i})-double(parameters.Flatfield{end}),double(parameters.Flatfield{i}));
         % Normalization 2: background-subtract -> assume image is pretty confluent...
         corr_img = corr_img - prctile(corr_img(:),2);        
         AuxImages{i} = corr_img;

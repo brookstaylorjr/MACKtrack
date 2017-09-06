@@ -17,7 +17,7 @@ iteration  = ModuleData.iter;
 measure_cc = label2cc(labels.Nucleus,0);
 
 % Normalization 1: flatfield correction -> estimate range for scaling
-corr_img = flatfieldcorrect(double(AuxImages{1}),double(parameters.Flatfield{1}));
+corr_img = flatfieldcorrect(double(AuxImages{1})-double(parameters.Flatfield{end}),double(parameters.Flatfield{1}));
 
 % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
 corr_img = corr_img - min(corr_img(:));
@@ -46,7 +46,7 @@ end
 
 % Measure nuclei in 2nd auxiliary, if it is specified
 if ~isempty(AuxImages{2})
-    corr_img = flatfieldcorrect(double(AuxImages{2}),double(parameters.Flatfield{1}));
+    corr_img = flatfieldcorrect(double(AuxImages{2})-double(parameters.Flatfield{end}),double(parameters.Flatfield{2}));
 
     % Normalization 2: mode-balance - bimodal distribution assumed after dropping nuclei (leaves cytoplasmic + b.g.)
     corr_img = corr_img - min(corr_img(:));
