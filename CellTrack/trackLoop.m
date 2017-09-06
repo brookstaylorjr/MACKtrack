@@ -106,7 +106,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
             else
                 prev_name = eval(parameters.CellExpr);
             end
-            prev_img = checkread([locations.scope,parameters.ImagePath,prev_name],bit_depth,1,parameters.debug);
+            prev_img = checkread(namecheck([locations.scope,parameters.ImagePath,prev_name]),bit_depth,1,parameters.debug);
             new_offset = parameters.ImageOffset{end}+calculatejump(prev_img,images.cell);
             disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(new_offset),']'])       
         else
@@ -169,10 +169,10 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
         j = parameters.TimeRange(saveCycle); % Number of the input image corresponding to the BOTTOM of stack
         % Re-read image corresponding to bottom of the stack (for segmentation and saving)
         if strcmpi(parameters.ImageType,'none')
-            images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]...
+            images.bottom = checkread(namecheck([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)])...
                 ,bit_depth,1,parameters.debug);
         else
-            images.bottom = checkread([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)]...
+            images.bottom = checkread(namecheck([locations.scope,parameters.ImagePath,eval(parameters.CellExpr)])...
             ,bit_depth,1,parameters.debug);
         end
                 
