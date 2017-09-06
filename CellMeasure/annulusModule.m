@@ -39,7 +39,7 @@ for img = 1:length(AuxImages)
     if ~isempty(AuxImages{img})
         % 1) Background correct image (try to do flatfield, if available)
         if (length(parameters.Flatfield)>=img) && isequal(size(AuxImages{img}),size(parameters.Flatfield{img}))
-            img0 = flatfieldcorrect(AuxImages{img},double(parameters.Flatfield{img}));
+            img0 = flatfieldcorrect(AuxImages{img}-double(parameters.Flatfield{end}),double(parameters.Flatfield{img}));
             img0 = img0-prctile(img0(:),2); % Background subtract
         else
             if ~isfield(ModuleData,'distr')

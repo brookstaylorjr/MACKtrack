@@ -36,7 +36,7 @@ end
 % Get image bit depth
 i = xyPos;
 j =  parameters.TimeRange(1);
-imfo = imfinfo([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]);
+imfo = imfinfo(namecheck([locations.scope,parameters.ImagePath,eval(parameters.NucleusExpr)]));
 bit_depth = imfo.BitDepth;
 
 % Make save directories, save tracking parameters

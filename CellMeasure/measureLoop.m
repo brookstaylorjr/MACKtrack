@@ -12,10 +12,6 @@ parameters.XYDir = namecheck([parameters.locations.data,filesep,parameters.SaveD
 CellMeasurements = struct;      
 ModuleData = struct;
 
-% Convert any parameter flatfield images to functions; add bacground image
-if isfield(parameters,'Flatfield')
-    parameters.Flatfield = processFlatfields(parameters.Flatfield);
-end
 
 % Load and add CellData field to CellMeasurements
 if exist([parameters.XYDir,'CellData.mat'],'file')

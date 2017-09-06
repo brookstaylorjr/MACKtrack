@@ -21,8 +21,16 @@ home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 parameters.locations = locations;
-AllMeasurements= struct;
 parameters.TotalImages = length(parameters.TimeRange);
+% Record parameters before flatfield imgs are modified
+AllMeasurements= struct;
+AllMeasurements.parameters = parameters;
+
+% Convert any parameter flatfield images to functions; add background image
+if isfield(parameters,'Flatfield')
+    parameters.Flatfield = processFlatfields(parameters.Flatfield);
+end
+
 
 % Outer loop: Cycle xy folders (in each condition)
 if parallel_flag
@@ -53,8 +61,9 @@ for i = parameters.XYRange
     end
 end % [end (xy) loop]
 
-% Save AllMeasurements in condition directory. If we have trajectories for > 50K cells, save each field separately.
-if size(AllMeasurements.CellData,1) < 5e4
+
+% Save AllMeasurements in condition directory. If we have trajectories for > 100K cells, save each field separately.
+if size(AllMeasurements.CellData,1) < 1e5
     save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat']),'AllMeasurements','-v7.3')
 else
     names = fieldnames(AllMeasurements);
@@ -67,9 +76,7 @@ else
             eval([names{i}, '= (AllMeasurements.(names{i});'])
         end
         save([savedir, filesep, names{i}, '.mat'],names{i},'-v7.3')
-
     end
-    
 end
 
 
