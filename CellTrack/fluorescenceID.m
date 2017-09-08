@@ -24,9 +24,15 @@ if p.Confluence==3
 end
 
 
-% Perform flatfield correction on images (if specified)
+% Perform flatfield correction on images (if specified).
+% Flatfield correction for background tends to be better using a (scaled) subtraction, but for foreground 
+% it tends to be better using division - use Confluence flag to pick between these 2 options.
 if p.CellFF>0
-    diagnos.image_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}),'subtract');
+    if p.Confluence == 2
+        diagnos.image_cell = flatfieldcorrect(image_cell-double(p.Flatfield{end}),double(p.Flatfield{p.CellFF}));
+    else
+        diagnos.image_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}),'subtract');
+    end
     if min(diagnos.image_cell(:))<0
         diagnos.image_cell = diagnos.image_cell-min(diagnos.image_cell(:)) + ...
             0.01*range(diagnos.image_cell(:));
@@ -38,7 +44,7 @@ end
 %% Mask nuclear image if it is provided, and selected for use.
 if (nargin>2) && ~isempty(image_nuc)
     if p.NucleusFF>0    
-        diagnos.img_nuc = flatfieldcorrect(image_nuc,double(p.Flatfield{p.NucleusFF}));
+        diagnos.img_nuc = flatfieldcorrect(image_nuc-double(p.Flatfield{end}),double(p.Flatfield{p.NucleusFF}));
         if min(diagnos.img_nuc(:))<0
             diagnos.img_nuc = diagnos.img_nuc-min(diagnos.img_nuc(:));
         end

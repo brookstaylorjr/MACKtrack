@@ -53,11 +53,13 @@ if isnumeric(varargin{1})
         parameters.XYRange = eval(data.xy_ranges{idx});
         parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
         p = parameters; eval(data.modify{idx}); parameters = p;  % Overwrite parameters as necessary
-
+        if ~isfield(parameters,'Parallel')
+            parameters.Parallel = length(parameters.XYRange)>1;
+        end
         % MEASUREMENT
         disp(['Measuring ', parameters.SaveDirectory,'...'])
         try
-            MACKmeasure(parameters,length(parameters.XYRange)>1);      
+            MACKmeasure(parameters);      
         catch ME
             disp(['Error in measurement:' , ME.message])
             for err = 1:length(ME.stack)
@@ -78,12 +80,13 @@ else
         error(['measureID accepts a parameters structure, file location, or row entries',...
             'of experiments (from scope spreadsheet). Type ''help measureID'' for further detail'])
     end
-    
-
     % MEASUREMENT
+    if ~isfield(parameters,'Parallel')
+        parameters.Parallel = length(parameters.XYRange)>1;
+    end
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        MACKmeasure(parameters,length(parameters.XYRange)>1);      
+        MACKmeasure(parameters);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)

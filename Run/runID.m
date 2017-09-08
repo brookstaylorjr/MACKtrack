@@ -24,6 +24,8 @@ if ~exist(locations.scope)
 end
 
 
+
+
 % OPTION 1: pass indicies corresponding to row entries in a spreadsheet.
 if isnumeric(varargin{1})
     
@@ -59,9 +61,13 @@ if isnumeric(varargin{1})
         parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
         p = parameters; eval(data.modify{idx}); parameters = p;  % Overwrite parameters as necessary
 
+        if ~isfield(parameters,'Parallel')
+            parameters.Parallel = length(parameters.XYRange)>1;
+        end
+        
         mkdir([locations.data,filesep,parameters.SaveDirectory])
         % TRACKING
-        if length(parameters.XYRange)>1
+        if parameters.Parallel
             parfor i = 1:length(parameters.XYRange)
                 xyPos = parameters.XYRange(i);
                 try
@@ -103,7 +109,10 @@ else
     
     mkdir([locations.data,filesep,parameters.SaveDirectory])
     % TRACKING
-    if length(parameters.XYRange)>1
+    if ~isfield(parameters,'Parallel')
+        parameters.Parallel = length(parameters.XYRange)>1;
+    end
+    if parameters.Parallel
         parfor i = 1:length(parameters.XYRange)
             xyPos = parameters.XYRange(i);
             try
@@ -123,7 +132,7 @@ else
     % MEASUREMENT
     disp(['Measuring ', parameters.SaveDirectory,'...'])
     try
-        MACKmeasure(parameters,length(parameters.XYRange)>1);      
+        MACKmeasure(parameters);      
     catch ME
         disp(['Error in measurement:' , ME.message])
         for err = 1:length(ME.stack)

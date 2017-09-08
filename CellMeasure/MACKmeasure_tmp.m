@@ -26,24 +26,24 @@ parameters.TotalImages = length(parameters.TimeRange);
 AllMeasurements= struct;
 AllMeasurements.parameters = parameters;
 
-% Convert any parameter flatfield images to functions; add background image
-if isfield(parameters,'Flatfield')
-    parameters.Flatfield = processFlatfields(parameters.Flatfield);
-end
-
-
-% Outer loop: Cycle xy folders (in each condition)
-if parallel_flag
-    parfor i = 1:length(parameters.XYRange)
-        xy = parameters.XYRange(i);
-        measureLoop(xy,parameters)
-    end % [end (xy) loop]
-else
-    for i = 1:length(parameters.XYRange)
-        xy = parameters.XYRange(i);
-        measureLoop(xy,parameters)
-    end % [end (xy) loop]
-end
+% % Convert any parameter flatfield images to functions; add background image
+% if isfield(parameters,'Flatfield')
+%     parameters.Flatfield = processFlatfields(parameters.Flatfield);
+% end
+% 
+% 
+% % Outer loop: Cycle xy folders (in each condition)
+% if parallel_flag
+%     parfor i = 1:length(parameters.XYRange)
+%         xy = parameters.XYRange(i);
+%         measureLoop(xy,parameters)
+%     end % [end (xy) loop]
+% else
+%     for i = 1:length(parameters.XYRange)
+%         xy = parameters.XYRange(i);
+%         measureLoop(xy,parameters)
+%     end % [end (xy) loop]
+% end
 
 % Cycle through XY directories and combine their measurements
 for i = parameters.XYRange

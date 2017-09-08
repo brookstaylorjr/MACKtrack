@@ -29,7 +29,6 @@ if ModuleData.iter == parameters.TotalImages
     CellMeasurements.MeanFRET_multi(:,ModuleData.col_idx+1:end) = [];
     CellMeasurements.IntegratedFRET_multi(:,ModuleData.col_idx+1:end) = [];
     CellMeasurements.MedianFRET_multi(:,ModuleData.col_idx+1:end) = [];
-
     return;
 end
 
@@ -69,7 +68,7 @@ for i = 1:size(AuxImages{1},3)
     fret = fret - double(parameters.Flatfield{end});
     fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
     fret = fret-prctile(fret(:),2); % Background subtract
-    fret(fret<16) = 16; % add floor to image 
+    fret(fret<16) = 1; % add floor to image 
     
     cfp = AuxImages{2}(:,:,i);
     cfp = cfp - double(parameters.Flatfield{end});
