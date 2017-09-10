@@ -30,17 +30,17 @@ end
 
 % Correct and get ratiometric measurement for the FRET/CFP image pair
 try
-fret = AuxImages{1};
-fret = fret - double(parameters.Flatfield{end});
-fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
-fret = fret-prctile(fret(:),2); % Background subtract
-fret(fret<16) = 16; % add floor to image 
+    fret = AuxImages{1};
+    fret = fret - double(parameters.Flatfield{end});
+    fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
+    fret = fret-prctile(fret(:),2); % Background subtract
+    fret(fret<16) = 1.6; % add floor to image 
 
-cfp = AuxImages{2};
-cfp = cfp - double(parameters.Flatfield{end});
-cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
-cfp(cfp<16) = 16; % add floor to image 
-fret_image = (fret)./(cfp);
+    cfp = AuxImages{2};
+    cfp = cfp - double(parameters.Flatfield{end});
+    cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
+    cfp(cfp<16) = 16; % add floor to image 
+    fret_image = (fret)./(cfp);
 catch me
     % Skip measurement if FRET images are invalid/not found - leave inputs intact
     return;
@@ -68,10 +68,13 @@ if isfield(labels,'Cell')
 	    CellMeasurements.MeanFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
 	    CellMeasurements.IntegratedFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
 	    CellMeasurements.MedianFRET_cyto = nan(parameters.TotalCells,parameters.TotalImages);
-
 	    CellMeasurements.MeanFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
 	    CellMeasurements.IntegratedFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
 	    CellMeasurements.MedianFRET_cell = nan(parameters.TotalCells,parameters.TotalImages);
+        
+        % Grab a "high" measurement - 90th percentile to acct for potential cell shrinkage
+        CellMeasurements.HighFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.HighFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
 
 	end
 
@@ -84,5 +87,8 @@ if isfield(labels,'Cell')
 	    CellMeasurements.MeanFRET_cell(n,iteration) = nanmean(fret_image(cell_cc.PixelIdxList{n}));
 	    CellMeasurements.IntegratedFRET_cell(n,iteration) = nansum(fret_image(cell_cc.PixelIdxList{n}));
 	    CellMeasurements.MedianFRET_cell(n,iteration) = nanmedian(fret_image(cell_cc.PixelIdxList{n}));
+        
+        CellMeasurements.HighFRET_cell =  prctile(fret_image(cell_cc.PixelIdxList{n}),90);
+        CellMeasurements.HighFRET_cyto =  prctile(fret_image(cyto_cc.PixelIdxList{n}),90);
 	end
 end

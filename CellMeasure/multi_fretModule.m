@@ -14,72 +14,52 @@ function [CellMeasurements, ModuleData] = multi_fretModule(CellMeasurements, par
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-% On first call, initialize all new CellMeasurements fields 
-if ~isfield(CellMeasurements,'MeanFRET_multi')
-    % Intensity-based measurement initialization
-    CellMeasurements.MeanFRET_multi =  nan(parameters.TotalCells,5*parameters.TotalImages);
-    CellMeasurements.IntegratedFRET_multi =  nan(parameters.TotalCells,5*parameters.TotalImages);
-    CellMeasurements.MedianFRET_multi = nan(parameters.TotalCells,5*parameters.TotalImages);
-    ModuleData.col_idx = 0;
-end
-
-% Skip last image
-if ModuleData.iter == parameters.TotalImages
-    disp('Skipping last image.')
-    CellMeasurements.MeanFRET_multi(:,ModuleData.col_idx+1:end) = [];
-    CellMeasurements.IntegratedFRET_multi(:,ModuleData.col_idx+1:end) = [];
-    CellMeasurements.MedianFRET_multi(:,ModuleData.col_idx+1:end) = [];
-    return;
-end
-
-
-% Define label matricies for cells/nuclei
-tmp_label = labels.Cell;
-tmp_label(labels.Nucleus>0) = 0; % cytoplasm only
-measure_cc = label2cc(tmp_label,0);
-
-
-
-
+%% STEP 1: FIND All IMAGES (BETWEEN CURRENT AND NEXT "WHOLE" TIMEPOINT)
 % Get total number of image pairs we're going to measure - scan for images with same timepoints
 % i.e. if we're at t100, look for existence of t100.01, t100.02, etc.
-
 t_expr = '[0-9]_T[0-9]*_'; % regexp will match this in finding t vals -> note: value starts 3 pos past the output idx
+aux_tmp = cell(size(AuxImages));
+flag  = 1; m =1;
+while flag
+    flag = 0;
+    for n = 1:length(AuxImages)
+        name_tmp = ModuleData.AuxName{n};      
+        if ~isempty(name_tmp)
+            [ ~,idx1] = regexp(name_tmp,t_expr);
+            test_name1 = [name_tmp(1:idx1-1),'.',numseq(m,2),name_tmp(idx1:end)];
+            if exist(test_name1,'file') 
+                aux_tmp{n} = checkread(test_name1,ModuleData.BitDepth);
+                flag = 1;
+            end
+        end
+    end
+    m = m+1;
+    if flag; AuxImages = cat(1,AuxImages,aux_tmp); end
+end
 
-name1 = ModuleData.AuxName{1};
-name2 = ModuleData.AuxName{2};
-[~,idx1] = regexp(name1,t_expr);
-[~,idx2] = regexp(name2,t_expr);
+% Add corresponding time sequences for "multi" sequences (assume even spacing until next timepoint)
+new_ts = linspace(ModuleData.iter, ModuleData.iter+1,size(AuxImages,1)+1);
 
-for j = 1:5
-    test_name1 = [name1(1:idx1-1),'.',numseq(j,2),name1(idx1:end)];
-    test_name2 = [name2(1:idx2-1),'.',numseq(j,2),name2(idx2:end)];
-    if exist(test_name1,'file') && exist(test_name2,'file')
-        AuxImages{1} = cat(3,AuxImages{1},checkread(test_name1,ModuleData.BitDepth));
-        AuxImages{2} = cat(3,AuxImages{2},checkread(test_name2,ModuleData.BitDepth));
+if ~isfield(CellMeasurements,'MultiFRET_t'); CellMeasurements.MultiFRET_t = []; end
+CellMeasurements.MultiFRET_t = cat(2, CellMeasurements.MultiFRET_t, new_ts(1:end-1));
+
+
+%% STEP 2: MEASURE ALL IMAGES - CONCATENATE MEASUREMENT
+tmp_measurements = struct;
+tmp_params = parameters; 
+tmp_data = ModuleData; tmp_data.iter  = 1; 
+tmp_params.TotalImages = size(AuxImages,1); 
+for n = 1:size(AuxImages,1)
+    tmp_measurements = fretModule(tmp_measurements,tmp_params, labels, AuxImages(n,:), tmp_data);
+    tmp_data.iter = tmp_data.iter+1;
+end
+
+names = fieldnames(tmp_measurements);
+if ModuleData.iter==1
+    CellMeasurements = combinestructures(CellMeasurements,tmp_measurements);
+else
+    for m = 1:length(names)
+        CellMeasurements.(names{m}) = cat(2,CellMeasurements.(names{m}),tmp_measurements.(names{m}));
     end
 end
 
-
-% Get ratiometric measurement for FRET
-for i = 1:size(AuxImages{1},3)
-    ModuleData.col_idx = ModuleData.col_idx+1;
-    fret = AuxImages{1}(:,:,i); 
-    fret = fret - double(parameters.Flatfield{end});
-    fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
-    fret = fret-prctile(fret(:),2); % Background subtract
-    fret(fret<16) = 1; % add floor to image 
-    
-    cfp = AuxImages{2}(:,:,i);
-    cfp = cfp - double(parameters.Flatfield{end});
-    cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
-    cfp(cfp<16) = 16; % add floor to image 
-    fret_image = (fret)./(cfp);
-
-    % Cycle through each cell and assign measurements
-    for n = 1:measure_cc.NumObjects
-        CellMeasurements.MeanFRET_multi(n,ModuleData.col_idx) = nanmean(fret_image(measure_cc.PixelIdxList{n}));
-        CellMeasurements.IntegratedFRET_multi(n,ModuleData.col_idx) = nansum(fret_image(measure_cc.PixelIdxList{n}));
-        CellMeasurements.MedianFRET_multi(n,ModuleData.col_idx) = nanmedian(fret_image(measure_cc.PixelIdxList{n}));
-    end
-end

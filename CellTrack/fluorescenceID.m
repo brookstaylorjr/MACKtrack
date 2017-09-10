@@ -25,14 +25,9 @@ end
 
 
 % Perform flatfield correction on images (if specified).
-% Flatfield correction for background tends to be better using a (scaled) subtraction, but for foreground 
-% it tends to be better using division - use Confluence flag to pick between these 2 options.
 if p.CellFF>0
-    if p.Confluence == 2
-        diagnos.image_cell = flatfieldcorrect(image_cell-double(p.Flatfield{end}),double(p.Flatfield{p.CellFF}));
-    else
-        diagnos.image_cell = flatfieldcorrect(image_cell,double(p.Flatfield{p.CellFF}),'subtract');
-    end
+    ff = double(p.Flatfield{p.CellFF});
+    diagnos.image_cell = flatfieldcorrect(image_cell,ff-min(ff(:)),'subtract');
     if min(diagnos.image_cell(:))<0
         diagnos.image_cell = diagnos.image_cell-min(diagnos.image_cell(:)) + ...
             0.01*range(diagnos.image_cell(:));
@@ -105,7 +100,7 @@ try
             err2 = sum(abs(polyval(f2,x2)-y2));
             tot_err(j) = err1+err2;
         end        
-        diagnos.mask1 = (img>threshes(v1(find(tot_err==min(tot_err),1,'last'))));
+        diagnos.mask1 = img>threshes(v1(find(tot_err==min(tot_err),1,'last')));
     else
         diagnos.mask1 = diagnos.mask0;
     end

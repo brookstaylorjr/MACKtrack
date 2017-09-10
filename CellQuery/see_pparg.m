@@ -1,8 +1,9 @@
-function [graph, info, measure] = see_paprg(id,varargin)
+function [graph, info, measure] = see_pparg(id,varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [graph, info, measure] = see_paprg(id,graph_flag, verbose_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% SEE_PPARG is a basic visualization function to plot single-cell expression levels of PPARg (or similar) over time
+% SEE_PPARG is a basic visualization function to plot single-cell expression levels of PPARg (or similar) over time.
+% If a 'Measurement' is not provided, this function will use 'MeanPPARg' or 'MeanNuc1'.
 %
 % INPUTS (required):
 % id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
@@ -12,7 +13,6 @@ function [graph, info, measure] = see_paprg(id,varargin)
 % 'ImageExpr'       expr. for the fluorescence image used to measure PPARg - defaults to 1st slot of intensityModule
 % 'Display'         'on' or 'off' - show graphs (default: process data only; no graphs)
 % 'Verbose'         'on' or 'off' - show verbose output
-% 'MinLifetime'     cell trajectories with < MinLifetime frames will be filtered out. Default = 100.
 %
 %
 % OUTPUTS:  
@@ -35,10 +35,10 @@ addRequired(p,'id',valid_id);
 
 % Optional parameters
 expectedFlags = {'on','off'};
-addParameter(p,'Measurement','MeanNuc1', @ischar);
+addParameter(p,'Measurement','', @ischar);
+addParameter(p,'ImageExpr','', @ischar);
 addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
-addParameter(p,'MinLifetime',100, @isnumeric);
 
 % Parse parameters, assign to variables
 parse(p,id, varargin{:})
@@ -49,14 +49,23 @@ measure_field = p.Results.Measurement;
 % Load data; set parameters
 [measure, info] = loadID(id);
 t_max = (length(info.parameters.TimeRange)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
-if isfield(measure,'MeanPPARg')
-    all_pparg = measure.MeanPPARg;
-    info.ImageExpr = info.parameters.ppargModule.ImageExpr;
-else
-    all_pparg = measure.(measure_field);
-    info.ImageExpr = info.parameters.intensityModule.ImageExpr;
-end
 
+if ~isempty(measure_field)
+    assert(isfield(measure,measure_field),['Error: supplied measurement field (',measure_field,') not found.'])
+    assert(~isempty(p.Results.ImageExpr),['A matching image expression must be provided for measurement ', measure_field])
+    info.ImageExpr = p.Results.ImageExpr;
+else
+    if isfield(measure,'MeanPPARg')
+        measure_field = 'MeanPPARg';
+        info.ImageExpr = info.parameters.ppargModule.ImageExpr;
+    elseif isfield(measure,'MeanNuc1')
+        measure_field = 'MeanNuc1';
+        info.ImageExpr = info.parameters.intensityModule.ImageExpr;    
+    else
+        error('No valid PPARg measurement found')
+    end
+end
+all_pparg = measure.(measure_field);
 info.graph_limits = prctile(all_pparg(~isnan(all_pparg)),[3 97]);
 
 

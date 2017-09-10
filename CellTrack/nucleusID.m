@@ -126,7 +126,9 @@ if p.WeakObjectCutoff>0
 
     % Rank remaining pixels, and use highest-valued pixels to bridge adjacent watershed regions
     diagnos.weak_ranked = rankpixels(diagnos.watershed_remainder, nucleus1);
-    high_valued = bwconncomp(diagnos.weak_ranked==max(diagnos.weak_ranked(:)));
+    tmp_mask = diagnos.weak_ranked==max(diagnos.weak_ranked(:));
+    tmp_mask = bwareaopen(tmp_mask,3); % Remove any speckle noise
+    high_valued = bwconncomp(tmp_mask);
     % Merge watershed areas based on connected "high" areas
     for i = 1:high_valued.NumObjects
         obj = unique(diagnos.watershed_remainder(high_valued.PixelIdxList{i}));
@@ -144,26 +146,31 @@ if p.WeakObjectCutoff>0
     diagnos.watershed_remainder((imdilate(diagnos.watershed_remainder,ones(3))-diagnos.watershed_remainder)>0) = 0;
 
     % Check that brightest part of "nucleus" is relatively concentric-shaped and contiguous
+    tmp_mask = imdilate(diagnos.weak_ranked2==1,ones(3))|(diagnos.weak_ranked==0);
+    tmp_mask2 = diagnos.watershed_remainder==0;
+    tmp_mask2(~tmp_mask) = 0;
+    diagnos.weak_ranked2(tmp_mask2) = 0;
     test_weak =  diagnos.weak_ranked2 - imerode(diagnos.weak_ranked2,ones(3));
-    bright_edge = bwareaopen(test_weak==4,8);
-    test_weak(bright_edge) = 100; % Penalize cells with strong intensity values near edge
-
 
     % Label2a: based on watershed remainder
     diagnos.label2a = diagnos.watershed_remainder;
     diagnos.weak_objects = zeros(size(test_weak)); % (diagnostic image)
     weak_obj = label2cc(diagnos.label2a);
+    
+    get_score = @(pix) (sum(test_weak(pix)==2) + 3.3*sum(test_weak(pix)==3) + 10*sum(test_weak(pix)==4))/sqrt(numel(pix));
+    all_scores = cellfun(get_score,weak_obj.PixelIdxList)/p.MinNucleusRadius; % scale measurement in range w/ prior score
     for i = 1:weak_obj.NumObjects
-        testval = mean(test_weak(weak_obj.PixelIdxList{i}));
-        diagnos.weak_objects(weak_obj.PixelIdxList{i}) = min([testval,3]);
-        if (testval > p.WeakObjectCutoff) || (testval==0)
-            diagnos.label2a(weak_obj.PixelIdxList{i}) = 0;
-        end      
+        diagnos.weak_objects(weak_obj.PixelIdxList{i}) = all_scores(i);
     end
-    % Clean up label2
-    diagnos.label2a(diagnos.weak_ranked2<=2) = 0; % Only look at brightest 25% of area
+    diagnos.weak_objects(diagnos.weak_objects>5) = 5;
+    
+    % Omit non-concentric objects, then get brightest 12% of pixels in region and proceed).
+    diagnos.label2a(diagnos.weak_objects>p.WeakObjectCutoff) = 0;
+    diagnos.label2a(diagnos.weak_ranked2<=2) = 0; 
     diagnos.label2a = imclose(diagnos.label2a,diskstrel(2));
-    diagnos.label2a(~imopen(diagnos.label2a>0,diskstrel(floor(p.MinNucleusRadius*2/3)))) = 0;
+    diagnos.label2a(~imopen(diagnos.label2a>0,diskstrel(p.NuclearSmooth))) = 0;
+    diagnos.label2a(~bwareaopen(diagnos.label2a,cutoff.Area(1))) = 0;
+    
     
     % Fix bug where some edge pixels belong to another object
     diagnos.label2a= imerode(imdilate(diagnos.label2a,ones(3)),ones(3));

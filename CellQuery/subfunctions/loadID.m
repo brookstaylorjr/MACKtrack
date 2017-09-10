@@ -14,6 +14,7 @@ function [measure, info, AllMeasurements] = loadID(id)
 % AllMeasurements  originally-saved output file, augmented w/ measurement-specific information
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
+
 tic
 home_folder = mfilename('fullpath'); % Load locations (for images and output data)
 slash_idx = strfind(home_folder,filesep);
@@ -41,6 +42,9 @@ elseif isstruct(id)
 else
     error(['loadID accepts an "AllMeasurements" structure, or a file location/spreadsheet row index.'])
 end
+
+info.locations = locations;
+
 
 % Parse AllMeasurements
 info.CellData = AllMeasurements.CellData;

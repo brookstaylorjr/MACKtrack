@@ -86,7 +86,7 @@ if ~exist(locations.scope,'dir') || ~exist(locations.data,'dir')
 end
 handles.locations = locations;
 
-% 3) Load specified measurements file - get source image directory and output label matricies
+% 3) Load specified measurements file. Get source image directory and output label matricies
 [~, info, handles.AllMeasurements] = loadID(varargin{1});
 handles.ImageDir = namecheck(info.ImageDirectory);
 if ~exist(handles.ImageDir,'dir')
@@ -108,12 +108,11 @@ if ~exist(handles.OutputDir,'dir')
 end
 
 
-% Load visualization data into handles
+% 4) Load visualization data into handles, set GUI elements
 set(handles.popupmenu2,'Value',1)
 handles.FcnVal = [];
 handles = load_vizdata(handles);
 guidata(handles.figure1, handles)
-
 hZoom = zoom(gcf);
 set(hZoom,'ActionPostCallback',{@customZoom,handles});
 
@@ -163,14 +162,25 @@ end
             end
         end
     end
+handles.see_fcn = fcn_name;
 
 
 % Get primary fields- timepoints & data
-handles.times = info.parameters.TimeRange;
+handles.t_img = info.parameters.TimeRange;
+handles.t_graph = graph.t;
+
+% Handle multi-timepoint measurement (if applicable)
+if isfield(info,'t_aux'); 
+    handles.t_aux = info.t_aux;
+else
+    handles.t_aux = handles.t_img;
+end
+
 handles.xys = unique(graph.celldata(:,1));
 handles.celldata = graph.celldata;
 handles.var = graph.var;
-handles.t = graph.t;
+
+
 handles.parameters = info.parameters;
 handles.ImageExpr = info.ImageExpr;
 
@@ -181,16 +191,20 @@ else
     handles.lineage = handles.celldata(:,2);
 end
 if isfield(graph,'var2'); handles.var2 = graph.var2; end
+
 if isfield(graph,'shift'); 
     handles.shift = graph.shift; 
 else
     handles.shift = zeros(length(unique(handles.celldata(:,1))),1);
 end
-if isfield(info,'graph_limits'); 
+
+if isfield(info,'graph_limits');
     handles.ylim = info.graph_limits; 
 else
     handles.ylim = prctile(handles.var(:),[1 99]);
 end
+
+
 
 % Make calculated fields - average across all cells per timept
 handles.mu = nanmean(handles.var);
@@ -207,11 +221,11 @@ if length(handles.xys)>1
 end
 handles.xy = handles.xys(1);
 set(handles.text5,'String',['xy ' ,num2str(handles.xy)]);
-set(handles.text7,'String',['t = ' ,num2str(min(handles.times))]);
+set(handles.text7,'String',['t = ' ,num2str(min(handles.t_img))]);
 
-v1 = 1; v2 = length(handles.t); 
+v1 = 1; v2 = length(handles.t_graph); 
 set(handles.slider2, 'Min',v1, 'Max',v2,'SliderStep',[1/(v2-v1) 4/(v2-v1)],'Value',v1);
-handles.time = v1;
+handles.timept = v1;
 % Initialize image+graph, update handles
 handles = newXY(handles);
 handles_out = handles;
@@ -232,9 +246,9 @@ guidata(handles.figure1, handles);
 
 
 function slider2_Callback(hObject, eventdata, handles)
-handles.time = round(get(hObject,'Value'));
-set(handles.text7,'String',['t = ',num2str(handles.time)]);
-set(hObject,'Value',handles.time);
+handles.timept = round(get(hObject,'Value'));
+set(handles.text7,'String',['t = ',num2str(handles.t_aux(handles.timept))]);
+set(hObject,'Value',handles.timept);
 handles = newTime(handles);
 guidata(handles.figure1, handles);
 
@@ -312,15 +326,58 @@ function handles = loadImage(handles)
 % 1) Get time/XY (i/j) indicies for new image + label matricies
 i = handles.xy;
 xy_idx = find(handles.xys==handles.xy,1,'first');
-j = handles.time-handles.shift(xy_idx);
-img_path = namecheck([handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
-    eval(handles.ImageExpr)]);
-% 2) Get bit depth of image, load, and rotate (if necessary)
-if ~isfield(handles.parameters,'BitDepth')
-    imfo = imfinfo(img_path);
-    handles.parameters.BitDepth = imfo.BitDepth;
+
+j= handles.timept-handles.shift(xy_idx);
+
+% For multi-TP need to distinguish btw the timepoint for image vs timept for mask.
+% For now, we're going to assume shift isn't compatible w/ this - would require some jankiness otherwise.
+if ~isequal(handles.t_img, handles.t_aux)
+    j_aux = handles.t_aux(handles.timept);
+    j = floor(j_aux);
+else
+    j_aux = j;
 end
-measure_img = checkread(img_path,handles.parameters.BitDepth);
+
+% Load appropriate image (defined by i/j pair)
+if ~isempty(handles.ImageExpr)
+    img_path = namecheck([handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
+        eval(handles.ImageExpr)]);
+    if ~isfield(handles.parameters,'BitDepth')
+        imfo = imfinfo(img_path);
+        handles.parameters.BitDepth = imfo.BitDepth;
+    end
+    measure_img = checkread(img_path,handles.parameters.BitDepth);
+    
+    % 4) Calculate a reasonable image range (using early and late timepoints)
+    if ~isfield(handles,'imgmax')
+        j = handles.t_img(round(end/2));
+        img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
+        scale_img = checkread(img_path,handles.parameters.BitDepth);
+        rng1 = prctile(scale_img(:),[3 99]);
+        j = handles.t_img(1);
+        img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
+        scale_img = checkread(img_path,handles.parameters.BitDepth);
+        rng2 = prctile(scale_img(:),[3 99]);
+        handles.imgmax = max([rng1 rng2]);
+        handles.imgmin = min([rng1 rng2]);  
+    end
+  
+else
+    j_aux
+    measure_img = eval([handles.see_fcn,'(handles.AllMeasurements, ''GetImage'', [i j_aux]);']);  
+    if ~isfield(handles,'imgmax')
+        j_aux = handles.t_img(round(end/2));
+        scale_img = eval([handles.see_fcn,'(handles.AllMeasurements, ''GetImage'', [i j_aux]);']);
+        rng1 = prctile(scale_img(:),[3 99]);
+        j_aux = handles.t_img(1);
+        scale_img = eval([handles.see_fcn,'(handles.AllMeasurements, ''GetImage'', [i j_aux]);']);
+        rng2 = prctile(scale_img(:),[3 99]);
+        handles.imgmax = max([rng1 rng2]);
+        handles.imgmin = min([rng1 rng2]);
+    end
+end
+
+
 if size(measure_img,1)>size(measure_img,2)
     measure_img = imrotate(measure_img,90);
     flip_flag = 1;
@@ -343,7 +400,7 @@ catch me
     CellLabel = [];
 end
 
-
+% 4) Process & scale image for display
 if exist('flip_flag','var') && (flip_flag ==1)
     handles.nuc_label = imrotate(NuclearLabel,90);
     handles.cell_label = imrotate(CellLabel,90);
@@ -357,20 +414,6 @@ if scale_factor <1
     if ~isempty(handles.cell_label)
         handles.cell_label = imresize(handles.cell_label,scale_factor,'nearest');
     end
-end
-
-% 4) Alter base image for display: saturate according to an early + a late image
-if ~isfield(handles,'imgmax')
-    j = handles.parameters.TimeRange(round(end/2));
-    img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
-    scale_img = checkread(img_path,handles.parameters.BitDepth);
-    rng1 = prctile(scale_img(:),[3 99]);
-    j = handles.parameters.TimeRange(1);
-    img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
-    scale_img = checkread(img_path,handles.parameters.BitDepth);
-    rng2 = prctile(scale_img(:),[3 99]);
-    handles.imgmax = max([rng1 rng2]);
-    handles.imgmin = min([rng1 rng2]);  
 end
 measure_img = (measure_img-handles.imgmin)/(handles.imgmax-handles.imgmin);
 measure_img(measure_img>1) = 1; measure_img(measure_img<0) = 0;
@@ -447,6 +490,7 @@ if setflag
 else
     axis image
 end
+
 % text(handles.centroids(:,1),handles.centroids(:,2),handles.text_labels,'Color',[1 1 1],...
 %     'FontName','Arial Narrow','FontSize',14,'Parent',handles.axes1);
 
@@ -456,33 +500,33 @@ clr = [0.6588 0.7059 0.8000];
 fill_clr = (clr+3*[0.9 0.9 0.9])/4;
 
 cla(handles.axes2)
-plot(handles.t,handles.mu_subset,'Color',clr,'LineWidth',2,'Parent',handles.axes2)
+plot(handles.t_graph,handles.mu_subset,'Color',clr,'LineWidth',2,'Parent',handles.axes2)
 hold(handles.axes2,'on')
 
-patch([handles.t,fliplr(handles.t)],...
+patch([handles.t_graph,fliplr(handles.t_graph)],...
     [handles.mu_subset+handles.sigma_subset,fliplr(handles.mu_subset-handles.sigma_subset)],...
     fill_clr,'LineStyle','none','Parent',handles.axes2)
-plot(handles.t,handles.mu_subset,'Color',clr,'LineWidth',2,'Parent',handles.axes2)
+plot(handles.t_graph,handles.mu_subset,'Color',clr,'LineWidth',2,'Parent',handles.axes2)
 
 % 2) Plot whole-population average as dashed/dotted lines
-plot(handles.t,handles.mu,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
-% plot(handles.t,handles.mu+handles.sigma,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
-% plot(handles.t,handles.mu-handles.sigma,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
+plot(handles.t_graph,handles.mu,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
+% plot(handles.t_graph,handles.mu+handles.sigma,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
+% plot(handles.t_graph,handles.mu-handles.sigma,'Color',[.2 .2 .2],'LineStyle','-.','Parent',handles.axes2)
 
 % 3) Plot single cell as solid line 
-plot(handles.axes2,handles.t, handles.var(handles.xy_subset(handles.cell_idx),:),'Color',[68 129 227]/255,'LineWidth',3)
+plot(handles.axes2,handles.t_graph, handles.var(handles.xy_subset(handles.cell_idx),:),'Color',[68 129 227]/255,'LineWidth',3)
 
 
 % Make a line for timept
-plot(handles.t(handles.time),handles.var(handles.xy_subset(handles.cell_idx),handles.time),'o',...
+plot(handles.t_graph(handles.timept),handles.var(handles.xy_subset(handles.cell_idx),handles.timept),'o',...
     'MarkerSize',16,'Color','k','Parent',handles.axes2)
-handles.line1 = line([handles.t(handles.time) handles.t(handles.time)],handles.ylim,...
+handles.line1 = line([handles.t_graph(handles.timept) handles.t_graph(handles.timept)],handles.ylim,...
     'Color',[0 0 0],'Parent',handles.axes2);
 hold(handles.axes2,'off')
 
-set(handles.axes2,'FontSize',12, 'YLim',handles.ylim,'XLim',[min(handles.t),max(handles.t)],'Box','on')
+set(handles.axes2,'FontSize',12, 'YLim',handles.ylim,'XLim',[min(handles.t_graph),max(handles.t_graph)],'Box','on')
 
-text(max(handles.t),max(handles.ylim),...
-    ['x =  ',num2str(.01*round(handles.var(handles.xy_subset(handles.cell_idx),handles.time)*100)),' '],...
+text(max(handles.t_graph),max(handles.ylim),...
+    ['x =  ',num2str(.01*round(handles.var(handles.xy_subset(handles.cell_idx),handles.timept)*100)),' '],...
     'VerticalAlignment','top','HorizontalAlignment','right','Parent',handles.axes2,'FontSize',16,'FontWeight','bold',...
     'Color',[68 129 227]/255)
