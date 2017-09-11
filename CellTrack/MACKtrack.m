@@ -544,12 +544,12 @@ function pushbutton4A_Callback(hObject, eventdata, handles)
 [FileName,PathName] = uigetfile('*','Select parameters file',[handles.home_folder,'Parameters']);
 if (FileName~=0)
     handles = initializeParameters([PathName,FileName], handles);
+    % Load from parent directory and update handles structure
+    load_listbox(handles.parameters.ImagePath, handles)
+    % Resave parameters
+    parameters = handles.parameters;
+    save([PathName,FileName],'parameters');
 end
-% Load from parent directory and update handles structure
-load_listbox(handles.parameters.ImagePath, handles)
-% Resave parameters
-parameters = handles.parameters;
-save([PathName,FileName],'parameters');
 % ========================================================================================
 
 function pushbutton4B_Callback(hObject, eventdata, handles)
