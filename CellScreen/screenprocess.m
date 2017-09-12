@@ -1,11 +1,11 @@
- function Data = microxlprocess(image_dir, image_names, wells, save_subdir, parameters)
+ function Data = screenprocess(image_dir, image_names, wells, save_subdir, parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% measurements = microxlprocess(image_dir, image_names, wells, save_subdir, parameters)
+% measurements = screenprocess(image_dir, image_names, wells, save_subdir, parameters)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % MICROXLSPROCESS is called by screenLoop (in parallel) to parse an image directory, find
 % wells/images corresponding condition, and segment/measure cells in those images.
 %
-% Micro XL imaging naming schema is assumed in identifying images - thumbnails are ignored.
+% See notes on supported naming schema in 'screenLoop' function
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 % Initialize substructures

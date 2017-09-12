@@ -6,7 +6,16 @@ function [] = screenLoop(parameters)
 % correspond to plate screener images. Cells in correponding channels are segmented and measured. The input file 
 % structure will be echoed under the output (save) directory.
 %
-% Function is currently configured to process default naming from a MicroXLS microscope (Molecular Devices). 
+% A note on naming schema:
+
+% Schema 1: MetaXpress (Molecular Devices)
+% 1) anything with the word "thumb" in the title will be ignored
+% 2) wells are zero-padded and surrounded by underscores (e.g. "_H08_")
+% 3) channels are used in diagnostic - probably need to fix this @ some point!!
+%
+% Schema 2: Slidebook (3i)
+% 1) wells are not zero-padded, are preceded by a space, and succeeed by a dash (e.g. " H8-" 
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Get locations.mat, identify starting directory
 home_folder = mfilename('fullpath');
@@ -16,7 +25,7 @@ load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 start_dir = namecheck([locations.scope, filesep,parameters.ImagePath]);
 
 % Crawl down from starting directory - find all plate layouts (and corresponding image folders)
-[layout_dir, image_dir, all_dir] = getImageDirectories(start_dir);
+[layout_dir, image_dir] = getImageDirectories(start_dir);
 save_dir = [locations.data,filesep,parameters.SaveDirectory];
 mkdir(save_dir)
 
@@ -64,11 +73,11 @@ for idx = 1:length(layout_dir)
     Data = cell(size(conditions));
     if parameters.Parallel
         parfor k = 1:length(conditions)
-            Data{k} = microxlprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
+            Data{k} = screenprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
         end
     else
         for k = 1:length(conditions)
-            Data{k} = microxlprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
+            Data{k} = screenproccess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
         end
     end
     % Combine data into a more "useful" structure

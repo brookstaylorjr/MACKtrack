@@ -286,8 +286,9 @@ end
 
 
 
+image_jumps = parameters.ImageOffset;
 
-
-% Save CellData
+% Save CellData and accessory data
 save([outputDirectory,'CellData.mat'],'CellData')
+save([outputDirectory,'ImageJumps.mat'],'image_jumps')
 
