@@ -73,8 +73,8 @@ if isfield(labels,'Cell')
 	    CellMeasurements.MedianFRET_cell = nan(parameters.TotalCells,parameters.TotalImages);
         
         % Grab a "high" measurement - 90th percentile to acct for potential cell shrinkage
-        CellMeasurements.HighFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
-        CellMeasurements.HighFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.HighFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages,10);
+        CellMeasurements.HighFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages,10);
 
 	end
 
@@ -88,7 +88,7 @@ if isfield(labels,'Cell')
 	    CellMeasurements.IntegratedFRET_cell(n,iteration) = nansum(fret_image(cell_cc.PixelIdxList{n}));
 	    CellMeasurements.MedianFRET_cell(n,iteration) = nanmedian(fret_image(cell_cc.PixelIdxList{n}));
         
-        CellMeasurements.HighFRET_cell(n,iteration) =  prctile(fret_image(cell_cc.PixelIdxList{n}),90);
-        CellMeasurements.HighFRET_cyto(n,iteration) =  prctile(fret_image(cyto_cc.PixelIdxList{n}),90);
+        CellMeasurements.HighFRET_cell(n,iteration,:) =  prctile(fret_image(cell_cc.PixelIdxList{n}),linspace(80, 99, 10));
+        CellMeasurements.HighFRET_cyto(n,iteration,:) =  prctile(fret_image(cyto_cc.PixelIdxList{n}),linspace(80, 99, 10));
 	end
 end

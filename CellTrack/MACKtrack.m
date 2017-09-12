@@ -375,7 +375,7 @@ if ~strcmpi(handles.parameters.ImageType,'none')
         % Try to get an exact match (for tracking) or a partial one (for screens)
         pass = 1;
         if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
-            if ~isempty(id)
+            if exist('id','var') && ~isempty(id)
                 id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
                 if length(id)>1
                     id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
@@ -411,7 +411,6 @@ if ~strcmpi(handles.parameters.ImageType,'none')
     catch ME
          set(handles.text2I,'String','Invalid MATLAB string used for cell image expression','ForegroundColor','r');
          handles.Locked = 1;
-         ME
     end
 else
     set(handles.text2I,'ForegroundColor',handles.gray);
@@ -599,6 +598,9 @@ if ~handles.Locked2
     if ~parameters.isScreen
         disp('Starting tracking: ')
         try
+            save(namecheck([handles.locations.data,filesep,parameters.SaveDirectory,filesep,'TrackingParameters.mat']),...
+                'parameters')
+
             % 1) Track loop (put in parfor if 'parallel' option is selected'
             if parameters.Parallel
                 parfor i = 1:length(parameters.XYRange)

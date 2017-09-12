@@ -56,7 +56,8 @@ end
 
 
 % Set graph characteristics
-line_colors = jet(101);
+line_colors = cbrewer('div','Spectral',121);
+line_colors(51:70,:) = []; % Drop light-colored rows
 xpos = max(xvect)-0.02*(max(xvect)-min(xvect));
 ypos =  max(measure_bounds) - 0.26*diff(measure_bounds);
 
@@ -81,5 +82,4 @@ for i =1:length(plot_order)
     end
     
     text(xpos,ypos,['#',num2str(i),': x = ',num2str(disp_str)],'Parent',ha(i),'HorizontalAlignment','right')
-
 end

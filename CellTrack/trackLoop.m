@@ -45,7 +45,6 @@ mkdir(outputDirectory)
 mkdir([outputDirectory,'NuclearLabels'])    
 mkdir([outputDirectory,'CellLabels'])
 mkdir([outputDirectory,'SegmentedImages'])
-save([outputDirectory,'TrackingParameters.mat'],'parameters')
 
 % Convert any parameter flatfield images to functions
 if isfield(parameters,'Flatfield')

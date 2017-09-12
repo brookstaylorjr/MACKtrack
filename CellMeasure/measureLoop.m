@@ -28,7 +28,6 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
          CellData.Parent,... % 5) ID number of parent
          CellData.Edge];   % 6) Boolean of whether cell touches image edge during lifetime
 
-
     % Inner loop: cycle time points (in each xy)
     tic
     for iter = 1:parameters.TotalImages

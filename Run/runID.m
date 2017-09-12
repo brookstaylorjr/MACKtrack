@@ -66,6 +66,8 @@ if isnumeric(varargin{1})
         end
         
         mkdir([locations.data,filesep,parameters.SaveDirectory])
+        save(namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'TrackingParameters.mat']),'parameters')
+        
         % TRACKING
         if parameters.Parallel
             parfor i = 1:length(parameters.XYRange)
@@ -108,6 +110,8 @@ else
     end
     
     mkdir([locations.data,filesep,parameters.SaveDirectory])
+    save(namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'TrackingParameters.mat']),'parameters')
+
     % TRACKING
     if ~isfield(parameters,'Parallel')
         parameters.Parallel = length(parameters.XYRange)>1;
