@@ -6,15 +6,7 @@ function [] = screenLoop(parameters)
 % correspond to plate screener images. Cells in correponding channels are segmented and measured. The input file 
 % structure will be echoed under the output (save) directory.
 %
-% A note on naming schema:
-
-% Schema 1: MetaXpress (Molecular Devices)
-% 1) anything with the word "thumb" in the title will be ignored
-% 2) wells are zero-padded and surrounded by underscores (e.g. "_H08_")
-% 3) channels are used in diagnostic - probably need to fix this @ some point!!
-%
-% Schema 2: Slidebook (3i)
-% 1) wells are not zero-padded, are preceded by a space, and succeeed by a dash (e.g. " H8-" 
+% (See the subfunction 'wellmatch' for valid naming schema)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Get locations.mat, identify starting directory
@@ -55,17 +47,16 @@ for idx = 1:length(layout_dir)
     end
     AllData = struct;
     [conditions, wells] = parseLayout(layout_dir{idx});
+    
     % Get image list, and associated bit depth of full resolution (i.e. not thumbnail) images
     image_names = quickdir(image_dir{idx});
-    try
-    tmp_name = image_names{find(cellfun(@isempty,strfind(image_names,'thumb'))...
-        &~cellfun(@isempty,strfind(image_names,['_',wells{1}{1},'_'])),1,'first')};
-    catch me
+    [tmp_names, parameters.scope_type] = wellmatch(image_names, wells{1}{1});
+    if isempty(tmp_names)
         error(['No images found that correspond to well ',wells{1}{1},'. Double-check "layout.xlsx" file'])
     end
     
     % Get image bit depth (for processing)
-    imfo = imfinfo([image_dir{idx}, filesep, tmp_name]);
+    imfo = imfinfo([image_dir{idx}, filesep, tmp_names{1}]);
     parameters.BitDepth = imfo.BitDepth;
     
     

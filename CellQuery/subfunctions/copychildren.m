@@ -19,11 +19,6 @@ function [measure_out, lineage_matrix] = copychildren(measure_in, celldata_in, t
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-if nargin<3
-    t = 1:size(measure_in,2);
-end
-
-
 % Create output measurements (force to be cell if not already)
 if ~iscell(measure_in)
     measure_out{1} = measure_in;
@@ -33,8 +28,12 @@ else
     notcell = 0;
 end
 
-% Ensure t is a vector, not a matrix
-if size(t,1)>1 && size(t,2)>1
+% Grab time vector, if not provided
+if nargin<3
+    t = 1:size(measure_out{1},2);
+end
+
+if size(t,1)>1 && size(t,2)>1 % Ensure t is a vector, not a matrix (default output for some measure modules)
     t_idx = find(size(t)==size(measure_out{1},2));
     if t_idx==1
         t = t(:,1);
@@ -48,7 +47,6 @@ end
 % Do copy operation
 lineage_matrix = nan(size(measure_out{1}));
 sites = unique(celldata_in(:,1));
-
 for idx = 1:length(sites)
     rows = celldata_in(:,1)==sites(idx);
     celldata = celldata_in(rows,:);

@@ -17,7 +17,7 @@ function [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameter
 iteration  = ModuleData.iter;
 nuc_cc = label2cc(labels.Nucleus,0);
 
-if isfield(labels,'Cell')
+if ~strcmpi(parameters.ImageType,'none')
 	cyto_label = labels.Cell;
 	cyto_label(labels.Nucleus>0) = 0; % cytoplasm only
 	cyto_cc = label2cc(cyto_label,0);
@@ -62,7 +62,7 @@ for n = 1:nuc_cc.NumObjects
 end
 
 % - - - - CYTOPLASMIC/WHOLE-CELL measurements - - - -
-if isfield(labels,'Cell')
+if ~strcmpi(parameters.ImageType,'none')
 	% A) Initialize fields
 	if ~isfield(CellMeasurements,'MeanFRET_cyto')
 	    CellMeasurements.MeanFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);

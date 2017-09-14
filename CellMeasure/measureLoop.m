@@ -30,7 +30,7 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
 
     % Inner loop: cycle time points (in each xy)
     tic
-    for iter = 1:parameters.TotalImages
+    for iter = 1:parameters.TotalImages 
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Run measurement modules, adding new fields to CellMeasurements
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%

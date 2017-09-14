@@ -328,7 +328,7 @@ try
         id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)),1,'first');
         if ~isempty(id)
             id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
-            if length(id)>1
+            if (length(id)>=1) && ~strcmp(handles.file_names{id(1)},sampleFile)
                 partial_match = 1;
                 id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
                 id = id(1);

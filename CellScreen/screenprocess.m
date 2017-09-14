@@ -15,12 +15,9 @@ Data.Images = {};
 idx = 0;
 for i = 1:length(wells)          
     % a) PER WELL: Identify all nuclear images in condition/well
-    nuc_id = ~cellfun(@isempty,strfind(image_names,['_',wells{i},'_']));
-    nuc_id = nuc_id & ~cellfun(@isempty,strfind(image_names,eval(parameters.NucleusMatch)));
-    nuc_id = nuc_id & cellfun(@isempty,strfind(image_names,'thumb')); % Drop anything with the name "thumb"
-    nuc_id = find(nuc_id);
-    Data.Images = cat(1, Data.Images, image_names{nuc_id});
-    if isempty(nuc_id)
+    nuc_images = wellmatch(image_names,wells{i},eval(parameters.NucleusMatch),parameters.scope_type);
+    Data.Images = cat(1, Data.Images, nuc_images);
+    if isempty(nuc_images)
         warning(['No corresponding images found for well ', wells{i}])
         continue
     end
@@ -28,26 +25,24 @@ for i = 1:length(wells)
     
     if strcmpi(parameters.ImageType,'fluorescence')
         if i==1
-            cell_images = {};
+            all_cell_images = {};
         end        
-        cell_id = ~cellfun(@isempty,strfind(image_names,['_',wells{i},'_']));
-        cell_id = cell_id & ~cellfun(@isempty,strfind(image_names,eval(parameters.CellMatch)));
-        cell_id = cell_id & cellfun(@isempty,strfind(image_names,'thumb')); % Drop anything with the name "thumb"
-        cell_id = find(cell_id);
-        cell_images = cat(1, cell_images, image_names{cell_id});
-        % (quickdir returns images in alphabetical order, so well positions for nucleus/cell should be aligned)
+        cell_images = wellmatch(image_names,wells{i},eval(parameters.CellMatch),parameters.scope_type);
+        all_cell_images = cat(1,all_cell_images,cell_images);
+        % (quickdir returns images in alphabetical order, so well positions for nucleus/cell should already be aligned)
     end
     %%
     
     % b) PER IMAGE: Load, segment, save, and measure nuclear image
-    for j = 1:length(nuc_id) 
+    for j = 1:length(nuc_images) 
         idx = idx+1; % Track total number of images used
-        % 1) SEGMENT nuclear image
+        
+        % 1) SEGMENT nuclear image (and cell image, if applicable)
         tic
-        nuc_orig = double(imread([image_dir,filesep,image_names{nuc_id(j)}]));
+        nuc_orig = double(imread([image_dir,filesep,nuc_images{j}]));
         
         if strcmpi(parameters.ImageType,'fluorescence')
-            cell_orig = double(imread([image_dir,filesep,image_names{cell_id(j)}]));
+            cell_orig = double(imread([image_dir,filesep,cell_images{j}]));
             output = fluorescenceID(cell_orig, parameters, nuc_orig);
             tmp = nucleusID(nuc_orig,parameters,output);
             output = combinestructures(tmp,output);
@@ -64,7 +59,6 @@ for i = 1:length(wells)
             cell_orig = nuc_orig;
         end
         t1 = toc;
-
         
         % 2) SAVE diagnostic output and nuclear (and cell, if defined) label matricies
         tic
@@ -116,19 +110,16 @@ for i = 1:length(wells)
                 % Check/load/correct auxiliary images
                 for aux = 1:3
                     % Check name
-                    if aux==1; curr_expr = parameters.(ModuleData.name).ImageExpr;
-                    else curr_expr = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]); end
-                    try
-                        measure_id = ~cellfun(@isempty,strfind(image_names,['_',wells{i},'_']));
-                        measure_id = measure_id & ~cellfun(@isempty,strfind(image_names,eval(curr_expr)));
-                        measure_id = measure_id & cellfun(@isempty,strfind(image_names,'thumb')); % Drop thumbs
-                        measure_id = find(measure_id);
-                        if ~isempty(measure_id) && (length(measure_id)~=length(nuc_id))
-                            disp(['NOTE: number of nuclear images for well ', wells{i}, '(',num2str(length(nuc_id)),...
+                    if aux==1; curr_measure = parameters.(ModuleData.name).ImageExpr;
+                    else curr_measure = parameters.(ModuleData.name).(['ImageExpr',num2str(aux)]); end
+                    try                    
+                        measure_images = wellmatch(image_names,wells{i},eval(curr_measure),parameters.scope_type);
+                        if ~isempty(measure_images) && (length(measure_images)~=length(nuc_images))
+                            disp(['NOTE: number of nuclear images for well ', wells{i}, '(',num2str(length(nuc_images)),...
                                 ' sites found) does not match up with # of measurement images (',...
-                                num2str(length(measure_id)),' sites) - may cause measurement error!'])
+                                num2str(length(measure_images)),' sites) - may cause measurement error!'])
                         end
-                        curr_name = [image_dir,filesep,image_names{measure_id(j)}];
+                        curr_name = [image_dir,filesep,measure_images{j}];
                     catch
                         curr_name = '--';
                     end
@@ -143,9 +134,7 @@ for i = 1:length(wells)
                             AuxImages{aux} = zeros(size(labels.Nucleus));
                             warning([curr_name, 'is invalid - replacing with blank image'])
                         end
-                        tmp_idx = regexp(curr_name,'[0-9]_w[0-9]');
-                        tmp_idx = tmp_idx(1);
-                        measure_names = [measure_names, ' + ' curr_name(tmp_idx-6:tmp_idx+3)];
+                        measure_names = [measure_names, ' + ' , eval(curr_measure)];
 
                     end
                 end
@@ -178,10 +167,9 @@ for i = 1:length(wells)
         end
 
         % 4) DISPLAY status
-        tmp1 = image_dir;
-        tmp1(strfind(tmp1,'\')) = '/';
+        tmp1 = namecheck(image_dir);
         str = ['- - - - [',tmp1,'] - - - - - -'];
-        str = sprintf([str,'\n', 'Segmentation (', image_names{nuc_id(j)}, ') - ',  num2str(t1),' sec ']);     
+        str = sprintf([str,'\n', 'Segmentation (', nuc_images{j}, ') - ',  num2str(t1),' sec ']);     
         str = sprintf([str,'\n', 'Saving (', 'NuclearLabel-',wells{i},'_',numseq(j,2),'.mat', ') - ',  ...
             num2str(t2),' sec ']);
         str = sprintf([str,'\n', 'Measurement - ',  num2str(t3),' sec ']);
@@ -194,5 +182,5 @@ end
 
 % Add in cell image names (if applicable
 if exist('cell_images','var')
-    Data.Images = cat(2,Data.Images,cell_images);
+    Data.Images = cat(2,Data.Images,all_cell_images);
 end

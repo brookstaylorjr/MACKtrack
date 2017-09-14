@@ -49,7 +49,7 @@ while ~ok_go
         loadtoc = toc;
         ok_go = 1;
     catch ME
-        handles.dir = uigetdir(start_dir,'Invalid folder - choose another one');
+        handles.dir = uigetdir(start_dir,'Invalid fMACKolder - choose another one');
         if handles.dir==0
             error('No folder selected - exiting.')
         else
@@ -63,8 +63,8 @@ end
 disp(['Loaded contents of ',handles.dir ,' in ',num2str(round(loadtoc*100)/100),' sec'])
 
 
-% Need some kind of way to gracefully handle "extra" data points -> for now, filter them out.
-filter_str = @(str) (length(str)>10) && strcmp(str(end-10),'.');
+% Need some kind of way to gracefully handle "extra" data points (e.g. 000.01) -> for now, filter them out.
+filter_str = @(str) (length(str)>10) && length(strfind(str,'.'))>1;
 drop_names  = cellfun(filter_str,handles.dir_contents);
 if sum(drop_names)>0
     disp('Warning: found "intermediate" timepoint images in this folder (e.g. ''t001.02_C0.tiff'') - dropping these.')
@@ -72,7 +72,7 @@ if sum(drop_names)>0
 end
 
 
-ext_matches = {'.jpg', '.tif', 'tiff', '.png'};
+ext_matches = {'.tif', 'tiff'};
 draw = 0;
 % Cycle through to get 1st image - parse its name, then break the loop
 for i=1:length(handles.dir_contents)
@@ -159,7 +159,7 @@ if draw
     
    
 
-    img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0,0);
+    img = imread([handles.dir,filesep,handles.img]);
     handles.CLim = double([min(img(:)), max(img(:))]);
     set(handles.axes1,'CLim',handles.CLim)
     if size(img,1) > size(img,2)
@@ -197,7 +197,7 @@ function [handles_out] = drawimage(handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Update image in the axes
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-img = checkread([handles.dir,filesep,handles.img],handles.bit_depth,0,0);
+img = imread([handles.dir,filesep,handles.img]);
 if size(img,1) > size(img,2)
     img = imrotate(img,90);
 end

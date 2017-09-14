@@ -39,12 +39,21 @@ edge_thin = [false(1,size(edge_thin,2));edge_thin;false(1,size(edge_thin,2))];
 [t1,~,H,bins] = tsaithresh(edge_mag,~edge_thin);
 edgemask_low = (edge_mag>t1) & edge_thin;
 
-% High threshold:look at local slope of smoothed hist function (H), find point where slope decreases to 10% of original (neg) value
+% High threshold: look at local slope of smoothed hist function (H) ->  
+% find point where slope decreases to 10% of value @ Tsai threshold
 H_slope = diff(H);
 x = bins(1:end-1);
 H_slope(x<t1) = [];
 x(x<t1) = [];
 t2 = x(find(abs(H_slope) < 0.10*(abs(H_slope(1))),1,'first'));
+
+% Fallback: if Tsai threshold did a bad job (e.g. function was very "bumpy"), I need a different fallback -> 
+% find point of max negative slope, then keep going til you hit 10% of that value
+if isempty(t2)
+    H_slope(1:find(H_slope==min(H_slope),1,'first')) = inf;
+    
+    t2 = x(find(abs(H_slope) < 0.10*max(abs(H_slope)),1,'first'));
+end
 edgemask_high = (edge_mag>t2) & edge_thin;
 
 % Hysteresis thresholding: use removemarked to only keep strong-marked edgea

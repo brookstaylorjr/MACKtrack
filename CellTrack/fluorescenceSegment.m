@@ -21,7 +21,11 @@ nuc_mask = data.nuclei>0;
 
 % Form base edge mask from the default Canny edge filter - break/filter small branches
 small = round(5);
+try
 edges = cannyalt(image_in,2);
+catch me
+    disp('uh oh')
+end
 edges = bwmorph(edges,'skel',Inf);
 edges([1,end],:) = 0;edges(:,[1,end]) = 0;
 edge_broken = edges &~imdilate(bwmorph(edges,'branchpoints'),ones(3));
