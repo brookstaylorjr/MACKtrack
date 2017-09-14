@@ -68,7 +68,7 @@ for idx = 1:length(layout_dir)
         end
     else
         for k = 1:length(conditions)
-            Data{k} = screenproccess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
+            Data{k} = screenprocess(image_dir{idx}, image_names, wells{k}, save_subdir, parameters);
         end
     end
     % Combine data into a more "useful" structure
