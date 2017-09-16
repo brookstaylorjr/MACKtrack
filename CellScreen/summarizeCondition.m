@@ -66,7 +66,9 @@ for i = 1:length(use_m)
         if i ==1
             title_name = struct1.Images{j};
             idx1 = strfind(title_name,'_w');
-            title_name = title_name(idx1(1)-6:idx1(1)-1);
+            try
+                title_name = title_name(idx1(1)-6:idx1(1)-1);
+            end
             title(ha(g_idx),title_name,'FontSize',10,'FontWeight','normal','interpreter','none')
         end
     end

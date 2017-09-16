@@ -46,7 +46,7 @@ corners = blockproc(old_img,blocksize,get_corners);
 r_corner = corners(:,1:2:end);
 c_corner = corners(:,2:2:end);
     
-image_jump = -[r(:) - r_corner(:)-blocksize(1), c(:) - c_corner(:)-blocksize(2)];
+image_jump = -[r(:) - r_corner(:)-blocksize(1)+1, c(:) - c_corner(:)-blocksize(2)+1];
 image_jump(maxes(:)<0.35) = nan;
 image_jump = nanmedian(image_jump)*sz_down;
 image_jump(isnan(image_jump)) = 0; % If we couldn't get an accurate fix, just assume no jump at all.
