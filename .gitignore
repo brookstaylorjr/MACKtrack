@@ -1,2 +1,4 @@
 # Exclude parameter files (except default)
 /Parameters/Other/*
+.DS_Store
+*/.DS_Store
