@@ -80,12 +80,24 @@ for i = 1:length(edge_cutoffs)
     cc_new = bwconncomp(mask0,8);
     cc_list = cat(2,cc_list,cc_new.PixelIdxList);
 end
-%%
+
 cc_all.PixelIdxList = cc_list';
 cc_all.ImageSize = size(diagnos.edge_mag);
 cc_all.NumObjects = length(cc_list);
 cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
+
+% Quality check #1: ensure no object is wholly surrounded by another object, with no intervening background
+erode1 = imerode(diagnos.label1a,ones(3));
+dilate1 = imdilate(diagnos.label1a,ones(3));
+get_unique = @(pixlist) unique([erode1(pixlist(:));dilate1(pixlist(:))]) ;
+uniquelist = cellfun(get_unique,cc_all.PixelIdxList,'UniformOutput',0);
+filter_obj = @(uniquelist) ~ismember(0,uniquelist) & length(uniquelist==2);
+surroundeds = find(cellfun(filter_obj, uniquelist));
+for i = 1:length(surroundeds)
+    tmp_list = uniquelist{surroundeds(i)};
+    diagnos.label1a(diagnos.label1a==surroundeds(i)) = tmp_list(tmp_list~=surroundeds(i));
+end
 
 
 %% 2) Label1b: subdivide objects using concave points on perimeter (~ >225 degrees)

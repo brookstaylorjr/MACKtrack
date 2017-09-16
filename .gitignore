@@ -1,4 +1,6 @@
 # Exclude parameter files (except default)
 /Parameters/Other/*
+
+# Exclude OSX pref files
 .DS_Store
 */.DS_Store
