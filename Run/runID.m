@@ -58,7 +58,7 @@ if isnumeric(varargin{1})
         parameters.ImagePath = data.image_paths{idx};
         parameters.TimeRange = eval(data.time_ranges{idx});
         parameters.XYRange = eval(data.xy_ranges{idx});
-        parameters.SaveDirectory = [data.save_dir{idx},filesep,data.save_folder{idx}];
+        parameters.SaveDirectory = namecheck([data.save_dir{idx},filesep,data.save_folder{idx}]);
         p = parameters; eval(data.modify{idx}); parameters = p;  % Overwrite parameters as necessary
 
         if ~isfield(parameters,'Parallel')
@@ -109,7 +109,7 @@ else
             'of experiments (from scope spreadsheet). Type ''help runID'' for further detail'])
     end
     
-    mkdir([locations.data,filesep,parameters.SaveDirectory])
+    mkdir(namecheck([locations.data,filesep,parameters.SaveDirectory]))
     save(namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'TrackingParameters.mat']),'parameters')
 
     % TRACKING

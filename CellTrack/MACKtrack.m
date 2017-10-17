@@ -598,6 +598,7 @@ if ~handles.Locked2
     if ~parameters.isScreen
         disp('Starting tracking: ')
         try
+            mkdir(namecheck([handles.locations.data,filesep,parameters.SaveDirectory]))
             save(namecheck([handles.locations.data,filesep,parameters.SaveDirectory,filesep,'TrackingParameters.mat']),...
                 'parameters')
 

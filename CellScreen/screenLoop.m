@@ -36,7 +36,6 @@ if isfield(parameters,'Flatfield')
     parameters.Flatfield = processFlatfields(parameters.Flatfield);
 end
 
-
 for idx = 1:length(layout_dir)
     % a) PER PLATE LAYOUT: identify al conditions (and corresponding wells) to be measured
     save_subdir = [save_dir,filesep,layout_dir{idx}(length(start_dir)+1:end)];

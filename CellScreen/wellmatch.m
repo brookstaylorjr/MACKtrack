@@ -15,7 +15,7 @@ function [names_out, scope_type] = wellmatch(contents, well_in, channel_in, scop
 %
 % Schema 2: Slidebook (3i)
 % 1) .tif only (NOT compatible w/ old versions of Slidebook!!)
-% 2) wells are NOT zero-padded, are preceded by a space, and succeeed by an underscore (e.g. " H8_" 
+% 2) wells are NOT zero-padded, are preceded by a space, and succeeed by an underscore (e.g. " H5_" 
 % 3) omit '.log' and '.xml' files (if there)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
@@ -29,7 +29,7 @@ if nargin < 4
 
     % a) MetaXpress: image names and should have database ID @ end - a set of 8,4,4,4, and 12 characters
     hyphen_places = diff([strfind(imglist{1},'-'),strfind(imglist{1},'.tif')]);
-    if (length(hyphen_places)>4) && isequal(hyphen_places(end-3:end),[5 5 5 13])
+    if (length(hyphen_places)>=4) && isequal(hyphen_places(end-3:end),[5 5 5 13])
         scope_type = 'metaxpress';
     % b) Slidebook: last characters of image names should be '_C[0-9].tif'
     elseif ~isempty(regexp(imglist{1}, '_C[0-9].tif','ONCE'))

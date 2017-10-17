@@ -4,7 +4,8 @@ function varargout = checkDynamics(varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % CHECKDYNAMICS creates a figure showing tracked/outlined cells that corrrespond to a 
 % dynamic measurement, graphed below. Measurements are first processed by specific 
-% functions called (e.g.) see_nfkb or see_nfkb_dim.
+% vizualization functions called (e.g.) see_nfkb or see_fret.
+%
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 %  MATLAB code generated for checkDynamics.fig:
 %      checkDynamics, by itself, creates a new checkDynamics or raises the existing
@@ -204,16 +205,13 @@ else
     handles.ylim = prctile(handles.var(:),[1 99]);
 end
 
-
-
 % Make calculated fields - average across all cells per timept
 handles.mu = nanmean(handles.var);
 handles.sigma = nanstd(handles.var);
 handles.graph_lim = prctile(handles.var,[1 99.5]);
 
-
 c = loadcolormaps;
-handles.cmap = c.purple_hot;
+handles.cmap = c.red_hot;
 
 % Initialize slider + popup values
 if length(handles.xys)>1
@@ -325,9 +323,9 @@ drawGraph(handles)
 function handles = loadImage(handles)
 % 1) Get time/XY (i/j) indicies for new image + label matricies
 i = handles.xy;
-xy_idx = find(handles.xys==handles.xy,1,'first');
-
-j= handles.timept-handles.shift(xy_idx);
+xy_idx = find(handles.xys==handles.xy,1,'first'); % XY index
+j= handles.timept-handles.shift(xy_idx); % Timepoint index (for images)
+label_idx = find( abs(handles.t_img-j) == min(abs(handles.t_img-j))); % Timepoint index (for label mats)
 
 % For multi-TP need to distinguish btw the timepoint for image vs timept for mask.
 % For now, we're going to assume shift isn't compatible w/ this - would require some jankiness otherwise.
@@ -338,7 +336,9 @@ else
     j_aux = j;
 end
 
-% Load appropriate image (defined by i/j pair)
+% Load corresponding image (defined by i/j pair). If the viz function ("see_...") returns a basic ImageExpr, load this.
+% If it doesn't (e.g. because the image must be derived, like a FRET image), run the viz function in 'GetImage' mode.
+
 if ~isempty(handles.ImageExpr)
     img_path = namecheck([handles.locations.scope, filesep, handles.parameters.ImagePath,filesep,...
         eval(handles.ImageExpr)]);
@@ -348,7 +348,6 @@ if ~isempty(handles.ImageExpr)
     end
     measure_img = checkread(img_path,handles.parameters.BitDepth);
     
-    % 4) Calculate a reasonable image range (using early and late timepoints)
     if ~isfield(handles,'imgmax')
         j = handles.t_img(round(end/2));
         img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
@@ -362,8 +361,7 @@ if ~isempty(handles.ImageExpr)
         handles.imgmin = min([rng1 rng2]);  
     end
   
-else
-    j_aux
+else 
     measure_img = eval([handles.see_fcn,'(handles.AllMeasurements, ''GetImage'', [i j_aux]);']);  
     if ~isfield(handles,'imgmax')
         j_aux = handles.t_img(round(end/2));
@@ -392,10 +390,10 @@ end
 
 % 3) Load label matricies (rotate if necessary)
 load([handles.OutputDir,filesep,'xy',num2str(i),filesep,...
-    'NuclearLabels',filesep,'NuclearLabel-',numseq(j,4),'.mat'])
+    'NuclearLabels',filesep,'NuclearLabel-',numseq(label_idx,4),'.mat'])
 try
     load([handles.OutputDir,'xy',num2str(i),filesep,...
-        'CellLabels',filesep,'CellLabel-',numseq(j,4),'.mat'])
+        'CellLabels',filesep,'CellLabel-',numseq(label_idx,4),'.mat'])
 catch me
     CellLabel = [];
 end

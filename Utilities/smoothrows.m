@@ -1,10 +1,12 @@
 function [out_array] = smoothrows(in_array, smooth_sz)
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% [out_array] = smoothrows(in_array, smooth_sz)
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % SMOOTHROWS provides fast smoothing across rows of an array.
 %
 % in_array    array to be smoothed
 % smooth_sz   size of smoothing window
-%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 if nargin<2
     smooth_sz = 3;
