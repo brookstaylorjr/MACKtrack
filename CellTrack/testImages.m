@@ -97,7 +97,7 @@ tocs.NucMasking = toc;
 
 % - - - - Check cells (misc check for binucleates, missed nuclei, etc.) - - - -
 tic
-[data_tmp,diag_tmp] = doubleCheck(data,images.cell,p);
+[data_tmp,diag_tmp] = doubleCheck(data,p);
 % Save information
 handles.diagnostics.check = diag_tmp;
 data = combinestructures(data_tmp,data);
