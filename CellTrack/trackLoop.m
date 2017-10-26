@@ -242,7 +242,10 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
                 tmp1 = modebalance(tmp1,0, bit_depth,'display');               
                 % Non-confluent case - set low saturation @ 3xS.D. below bg level
                 if parameters.Confluence ~= 1
-                    saturation_val = [-3 prctile(tmp1(:),95)];
+                    
+                    pct = 90:.5:99;
+                    hi_val = prctile(tmp1,pct);       
+                    saturation_val = [-3 hi_val(pct==findelbow(pct,hi_val))];
                     alpha = 0.4;
                 else % Confluent case: unimodal distribution is foreground - use a different lower limit.
                     saturation_val = [-4 prctile(tmp1(:),90)];

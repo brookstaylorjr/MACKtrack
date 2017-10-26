@@ -88,19 +88,8 @@ try
         for j = 1:length(threshes)
             tmp = bwconncomp(img>threshes(j),4);
             numobj(j) = tmp.NumObjects;
-        end
-        v1 = 3:length(threshes)-3;
-        tot_err = zeros(size(v1));
-        for j = 1:length(v1)
-            x1 = threshes(1:v1(j)); y1 = numobj(1:v1(j));
-            f1 = polyfit(x1,y1,1);
-            err1 = sum(abs(polyval(f1,x1)-y1));
-            x2 = threshes(v1(j):end); y2 = numobj(v1(j):end);
-            f2 = polyfit(x2,y2,1);
-            err2 = sum(abs(polyval(f2,x2)-y2));
-            tot_err(j) = err1+err2;
-        end        
-        diagnos.mask1 = img>threshes(v1(find(tot_err==min(tot_err),1,'last')));
+        end      
+        diagnos.mask1 = img>findelbow(threshes, numobj);
     else
         diagnos.mask1 = diagnos.mask0;
     end

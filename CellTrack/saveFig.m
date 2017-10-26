@@ -1,8 +1,8 @@
 function [] = saveFig(inputImg,CellLabel,NuclearLabel, X, bit_depth, saveName, alpha, outputRes, saturationVal)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% SAVEFIG Save high-quality display figure showing pseudocolor nuclei on top of outlined cells
-%
 % [] = saveFig(inputImg,CellLabel,NuclearLabel, X, bit_depth, saveName, alpha, outputRes, saturationVal)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+% SAVEFIG Save high-quality display figure showing pseudocolor nuclei on top of outlined cells
 %
 %
 % inputImg       base image (DIC/phase) to be saved

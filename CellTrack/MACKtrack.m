@@ -965,7 +965,7 @@ function edit5G_Callback(hObject, eventdata, handles)
 % EDIT5G: set nuclear smoothing size (nan is ok)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 try
-    newVal = round(eval(get(hObject,'String')));
+    newVal = (eval(get(hObject,'String')));
     % Parameter checking
     if ~isnumeric(newVal)
         warning('Resetting - value must be numeric')
