@@ -1,4 +1,4 @@
-e% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
+% Sample script to examine HCS experimental results. (It's probably best to make a copy of this file, modify it as 
 % required, and save it with your data).
 % Brooks Taylor, 7/21/2017
 
