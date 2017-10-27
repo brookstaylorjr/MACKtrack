@@ -92,7 +92,7 @@ erode1 = imerode(diagnos.label1a,ones(3));
 dilate1 = imdilate(diagnos.label1a,ones(3));
 get_unique = @(pixlist) unique([erode1(pixlist(:));dilate1(pixlist(:))]) ;
 uniquelist = cellfun(get_unique,cc_all.PixelIdxList,'UniformOutput',0);
-filter_obj = @(uniquelist) ~ismember(0,uniquelist) & length(uniquelist==2);
+filter_obj = @(uniquelist) ~ismember(0,uniquelist) & (length(uniquelist)==2);
 surroundeds = find(cellfun(filter_obj, uniquelist));
 for i = 1:length(surroundeds)
     tmp_list = uniquelist{surroundeds(i)};
