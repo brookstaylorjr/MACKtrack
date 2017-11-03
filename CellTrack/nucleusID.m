@@ -99,7 +99,6 @@ for i = 1:length(surroundeds)
     diagnos.label1a(diagnos.label1a==surroundeds(i)) = tmp_list(tmp_list~=surroundeds(i));
 end
 
-
 %% 2) Label1b: subdivide objects using concave points on perimeter (~ >225 degrees)
 tmp_label  =diagnos.label1a; tmp_label(diagnos.label1a==0) = max(diagnos.label1a(:))+1;
 diagnos.mask_split = diagnos.label1a>0;
