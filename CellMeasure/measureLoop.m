@@ -12,6 +12,9 @@ parameters.XYDir = namecheck([parameters.locations.data,filesep,parameters.SaveD
 CellMeasurements = struct;      
 ModuleData = struct;
 
+% Resort ModuleNames - make sure any "456" modules are run AFTER their corresponing module
+names_456 = ~cellfun(@isempty,strfind(parameters.ModuleNames,'456'));
+parameters.ModuleNames = [parameters.ModuleNames(~names_456),parameters.ModuleNames(names_456)];
 
 % Load and add CellData field to CellMeasurements
 if exist([parameters.XYDir,'CellData.mat'],'file')

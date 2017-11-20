@@ -12,7 +12,6 @@ function SE = diskstrel(radius)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-radius = round(radius);
 if radius<=0
 	error('diskstrel radius must be positive')
 end
@@ -50,9 +49,10 @@ if mod(radius,1) == 0
 
 % Supported non-integral value: radii btw 2 & 3
 elseif (radius>2) && (radius<3)
-   SE = disktrel('arbitrary', [0 0 1 1 0 0; 0 1 1 1 1 0; 1 1 1 1 1 1; 1 1 1 1 1 1; 0 1 1 1 1 0; 0 0 1 1 0 0]);
+   SE = strel('arbitrary', [0 0 1 1 0 0; 0 1 1 1 1 0; 1 1 1 1 1 1; 1 1 1 1 1 1; 0 1 1 1 1 0; 0 0 1 1 0 0]);
 
     
 else
-    error('Non-integral radius not supported for this value. See function for more details')
+    % Otherwise, round to nearest value.
+    SE = diskstrel(round(radius)); 
 end

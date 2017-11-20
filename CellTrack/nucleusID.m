@@ -49,7 +49,7 @@ diagnos.edge_mag = sqrt(horizontalEdge.^2 + verticalEdge.^2);
 diagnos.edge_mag(nucleus1==max(nucleus1(:))) = max(diagnos.edge_mag(:)); % Correct for saturated nuclear centers
 %%
 tmp1 = diagnos.edge_mag(cell_mask);
-edge_cutoffs = linspace(p.NucleusEdgeThreshold, prctile(tmp1(:),97),21);
+edge_cutoffs = exp(linspace(log(p.NucleusEdgeThreshold), log(prctile(tmp1(:),97)),15));
 cc_list = {};
 for i = 1:length(edge_cutoffs)
     % a) Threshold, drop already-found objects
@@ -179,16 +179,19 @@ if p.WeakObjectCutoff>0
     diagnos.label2a(diagnos.weak_objects>p.WeakObjectCutoff) = 0;
     diagnos.label2a(diagnos.weak_ranked2<=2) = 0; 
     diagnos.label2a = imclose(diagnos.label2a,diskstrel(2));
-    diagnos.label2a(~imopen(diagnos.label2a>0,diskstrel(p.NuclearSmooth))) = 0;
-    diagnos.label2a(~bwareaopen(diagnos.label2a,cutoff.Area(1))) = 0;
     
-    
-    % Fix bug where some edge pixels belong to another object
-    diagnos.label2a= imerode(imdilate(diagnos.label2a,ones(3)),ones(3));
-    diagnos.label2a= imdilate(imerode(diagnos.label2a,ones(3)),ones(3));
-    diagnos.label2a = labelmatrix(label2cc(diagnos.label2a));
+    % Filter out small objects (label2b)
+    diagnos.label2b = diagnos.label2a;
+    diagnos.label2b(~imopen(diagnos.label2a>0,diskstrel(p.NuclearSmooth))) = 0;
+    diagnos.label2b(~bwareaopen(diagnos.label2b,cutoff.Area(1))) = 0;
+    % (Fix bug where some edge pixels belong to another object)
+    diagnos.label2b= imerode(imdilate(diagnos.label2b,ones(3)),ones(3));
+    diagnos.label2b= imdilate(imerode(diagnos.label2b,ones(3)),ones(3));
+    diagnos.label2b = labelmatrix(label2cc(diagnos.label2b));
     cutoff.Area(1) = cutoff.Area(1)*0.5;
-    diagnos.label2 = bridgenuclei(diagnos.label2a,bwconncomp(diagnos.label2a>0,4),cutoff,p.ShapeDef, p.debug);
+    
+    % Do watershed + recombine using morphological properties
+    diagnos.label2 = bridgenuclei(diagnos.label2b,bwconncomp(diagnos.label2b>0,4),cutoff,p.ShapeDef, p.debug);
 else
     diagnos.label2 = zeros(size(diagnos.label1));
 end

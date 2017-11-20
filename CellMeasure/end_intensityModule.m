@@ -18,7 +18,7 @@ function [CellMeasurements, ModuleData] = end_intensityModule(CellMeasurements, 
 %% [Engage on last frame only]
 if ModuleData.iter == parameters.TotalImages
     
-    % If cells were not segmented, use 1st auxiliary image to identify cell boundaries
+    % If cells were not segmented, use 1st available aux image to identify cell boundaries
     if strcmpi(parameters.ImageType,'none')
         idx = 1;
         aux_image = AuxImages{idx};
@@ -31,6 +31,8 @@ if ModuleData.iter == parameters.TotalImages
         data.nuclei = labels.Nucleus;
         tmp_out = fluorescenceSegment(data, aux_image, parameters);
         labels.Cell = tmp_out.cells;
+        ModuleData.CellLabel_new = labels.Cell;
+        
         % Save a diagnostic output version of this image
         home_folder = mfilename('fullpath');
         slash_idx = strfind(home_folder,filesep);
@@ -40,16 +42,20 @@ if ModuleData.iter == parameters.TotalImages
         tmp1 = aux_image;
         tmp1(tmp1==min(tmp1(:))) = [];
         tmp1(tmp1==max(tmp1(:))) = [];
-        tmp1 = modebalance(tmp1,0, ModuleData.BitDepth,'display');   
+        tmp1 = modebalance(tmp1,0, ModuleData.BitDepth,'display');               
+        % Non-confluent case - set low saturation @ 3xS.D. below bg level
         if parameters.Confluence ~= 1
-            saturation_val = [-3 prctile(tmp1(:),95)];
+
+            pct = 90:.5:99;
+            hi_val = prctile(tmp1,pct);       
+            saturation_val = [-3 prctile(tmp1,1+findelbow(pct,hi_val))];
             alpha = 0.4;
         else % Confluent case: unimodal distribution is foreground - use a different lower limit.
             saturation_val = [-4 prctile(tmp1(:),90)];
             alpha = 0.55;
         end
         saveFig(aux_image,labels.Cell,labels.Nucleus,[],ModuleData.BitDepth,...
-            [save_dir,'Endpoint_pos',numseq(ModuleData.i,2),'.jpg'],alpha,[1024 1024], saturation_val);
+            [save_dir,'Endpoint-pos_',numseq(ModuleData.i,3),'.jpg'],alpha,[1024 1024], saturation_val);
     end
 
     % Make measurements (make sure to trigger whole-cell measurments as appropriate)

@@ -1,6 +1,6 @@
-function [] = spell(n,precision)
+function [str] = spell(n,precision)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% [] = spell(n,precision)
+% [str] = spell(n,precision)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % SPELL formats and displays a matrix in a clean, copyable format. SPELL uses precision of 3 by default; can pass as an 
 % additional (optional) argument (default precision = 4)
@@ -11,10 +11,10 @@ function [] = spell(n,precision)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin==1
-    precision = 4;
+    precision = 3;
 end
 
-tot_length = 6+precision;
+tot_length = 3+precision;
 
 if size(n,1)>1
     disp('[...')
@@ -33,6 +33,10 @@ else
         substr = num2str(n(1,j),precision);
         str = [str,substr,repmat(' ',1,tot_length-length(substr))];
     end
-    disp(['[ ', str,' ]'])
+    if nargout<1
+        disp(['[ ', str,' ]']);
+    else
+        str = ['[ ', str,' ]'];
+    end
     
 end

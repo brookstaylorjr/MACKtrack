@@ -48,7 +48,7 @@ valid_vect = @(x) assert(isnumeric(x) && numel(x)==size(data,2),'X vector must b
 addParameter(p,'XVector',1:size(data,2),valid_vect) 
 addParameter(p,'LineWidth', 1, @isnumeric);
 valid_legend = @(x) assert(ischar(x),'Specify either a valid location (e.g. ''northeast'') or ''none''');
-addParameter(p,'Legend', 'on', valid_legend);
+addParameter(p,'Legend', 'none', valid_legend);
 addParameter(p,'Axes',nan,@ishandle);
 
 % Parse inputs, save some to variables

@@ -260,7 +260,9 @@ if ~exist([handles.locations.scope,dir_path],'dir')
 end
 
 % Place remaining files in listbox and update edit1A (add filesep)
-handles.file_names = quickdir([handles.locations.scope,dir_path]);
+handles.file_names = quickdir([handles.locations.scope,dir_path],~handles.parameters.isScreen);
+% (If not in screen mode, will show a blank box)
+
 
 set(handles.listbox1A,'String',handles.file_names,...
  'Value',1)
