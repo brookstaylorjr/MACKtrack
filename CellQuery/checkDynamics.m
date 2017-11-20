@@ -140,6 +140,14 @@ end
             disp('- - - - ')
             disp(['Trying to use display function ', upper(fcn_name)])
             [graph, info] = eval([fcn_name,'(handles.AllMeasurements)']);
+            % (Make sure it's not just a bunch of nans)
+            if sum(~isnan(graph.var),2)<2
+                error('Invalid measurement - returned (nearly)  all NaN''s')
+            end
+            
+            if isempty(graph.var)
+                error('Invalid measurement - no valid cells found')
+            end
             set(handles.popupmenu2,'Value',newval);
             handles.FcnVal = newval;
             flag = 1;

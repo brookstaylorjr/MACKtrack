@@ -1,4 +1,4 @@
-function [measure, info, AllMeasurements] = loadID(id)
+function [measure, info, AllMeasurements] = loadID(id, verbose)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [measure, info, AllMeasurements] = loadID(id, options)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -13,6 +13,9 @@ function [measure, info, AllMeasurements] = loadID(id)
 % info             general information about experiment and tracking
 % AllMeasurements  originally-saved output file, augmented w/ measurement-specific information
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+if nargin<2
+    verbose =1 ;
+end
 
 
 tic
@@ -135,4 +138,6 @@ end
 info.parameters = p;
 
 toc1 = toc;
-disp(['Loaded "', info.savename, '" in ', num2str(round(toc1*100)/100),' sec']) 
+if verbose
+    disp(['Loaded "', info.savename, '" in ', num2str(round(toc1*100)/100),' sec']) 
+end

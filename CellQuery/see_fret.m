@@ -43,7 +43,7 @@ if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
 if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
 
 % Load data; set parameters
-[measure, info] = loadID(id);
+[measure, info] = loadID(id,0);
 t_max = (length(info.parameters.TimeRange)-1)/(info.parameters.FramesPerHour/60); % Number of hours to display in graphs
 
 
@@ -56,14 +56,16 @@ if sum(isnan(p.Results.GetImage)) == 0
         expr1 = info.parameters.fretModule.ImageExpr;
         expr2 = info.parameters.fretModule.ImageExpr2;
     end
+    
+    
     % Don't mess w/ flatfield correction - just bg subtract, mask, and divide.
     i = p.Results.GetImage(1);    j = round(100*p.Results.GetImage(2))/100;
     fret = checkread(namecheck([info.locations.scope,filesep,info.parameters.ImagePath,filesep,eval(expr1)]));
     fret = fret- prctile(fret(:),2);
-    fret(fret<1) = .1;
+    fret(fret<16) = 1.6;
     cfp = checkread(namecheck([info.locations.scope,filesep,info.parameters.ImagePath,filesep,eval(expr2)]));
     cfp = cfp - prctile(cfp(:),2);
-    cfp(cfp<1) = 1;
+    cfp(cfp<16) = 16;
     graph = fret./cfp;
     info = [];
     measure = [];
@@ -72,7 +74,12 @@ end
 
 
 %%
-all_fret = measure.MeanFRET_cell;
+if ~strcmpi(info.parameters.ImageType,'None')
+    all_fret = measure.MeanFRET_cell;
+else
+    all_fret = measure.MeanFRET_nuc;
+end
+
 info.graph_limits = prctile(all_fret(~isnan(all_fret)),[3 97]);
 
 info.ImageExpr = '';
