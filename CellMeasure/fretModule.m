@@ -37,7 +37,7 @@ try
     fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
     fret = fret-prctile(fret(:),2); % Background subtract
     fret(fret<16) = 1.6; % add floor to image 
-
+    
     cfp = AuxImages{2};
     cfp = cfp - double(parameters.Flatfield{end});
     cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
