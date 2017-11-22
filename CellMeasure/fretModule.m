@@ -24,7 +24,7 @@ if ~strcmpi(parameters.ImageType,'none')
 	cell_cc = label2cc(labels.Cell,0);
 
 else
-	cyto_cc = [];
+	cyto_cc = struct;
 end
 
 % Correct and get ratiometric measurement for the FRET/CFP image pair
@@ -39,6 +39,7 @@ try
     cfp = cfp - double(parameters.Flatfield{end});
     cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
     cfp = cfp-prctile(cfp(:),2); % Background subtract
+
     cfp(cfp<16) = 16; % add floor to image 
     fret_image = (fret)./(cfp);
 catch me
@@ -61,32 +62,34 @@ for n = 1:nuc_cc.NumObjects
     CellMeasurements.MedianFRET_nuc(n,iteration) = nanmedian(fret_image(nuc_cc.PixelIdxList{n}));
 end
 
-% - - - - CYTOPLASMIC/WHOLE-CELL measurements - - - -
-% A) Initialize fields
-if ~isfield(CellMeasurements,'MeanFRET_cyto')
-    CellMeasurements.MeanFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntegratedFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MedianFRET_cyto = nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MeanFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.IntegratedFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
-    CellMeasurements.MedianFRET_cell = nan(parameters.TotalCells,parameters.TotalImages);
+% - - - - CYTOPLASMIC/WHOLE-CELL measurements - - - -\
+if ~isempty(cyto_cc)
+    % A) Initialize fields
+    if ~isfield(CellMeasurements,'MeanFRET_cyto')
+        CellMeasurements.MeanFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.IntegratedFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.MedianFRET_cyto = nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.MeanFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.IntegratedFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages);
+        CellMeasurements.MedianFRET_cell = nan(parameters.TotalCells,parameters.TotalImages);
 
-    % Grab a "high" measurement - 90th percentile to acct for potential cell shrinkage
-    CellMeasurements.HighFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages,10);
-    CellMeasurements.HighFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages,10);
+        % Grab a "high" measurement - 90th percentile to acct for potential cell shrinkage
+        CellMeasurements.HighFRET_cell =  nan(parameters.TotalCells,parameters.TotalImages,10);
+        CellMeasurements.HighFRET_cyto =  nan(parameters.TotalCells,parameters.TotalImages,10);
 
-end
+    end
 
-% B) Assign measurements
-for n = 1:cyto_cc.NumObjects
-    CellMeasurements.MeanFRET_cyto(n,iteration) = nanmean(fret_image(cyto_cc.PixelIdxList{n}));
-    CellMeasurements.IntegratedFRET_cyto(n,iteration) = nansum(fret_image(cyto_cc.PixelIdxList{n}));
-    CellMeasurements.MedianFRET_cyto(n,iteration) = nanmedian(fret_image(cyto_cc.PixelIdxList{n}));
+    % B) Assign measurements
+    for n = 1:cyto_cc.NumObjects
+        CellMeasurements.MeanFRET_cyto(n,iteration) = nanmean(fret_image(cyto_cc.PixelIdxList{n}));
+        CellMeasurements.IntegratedFRET_cyto(n,iteration) = nansum(fret_image(cyto_cc.PixelIdxList{n}));
+        CellMeasurements.MedianFRET_cyto(n,iteration) = nanmedian(fret_image(cyto_cc.PixelIdxList{n}));
 
-    CellMeasurements.MeanFRET_cell(n,iteration) = nanmean(fret_image(cell_cc.PixelIdxList{n}));
-    CellMeasurements.IntegratedFRET_cell(n,iteration) = nansum(fret_image(cell_cc.PixelIdxList{n}));
-    CellMeasurements.MedianFRET_cell(n,iteration) = nanmedian(fret_image(cell_cc.PixelIdxList{n}));
+        CellMeasurements.MeanFRET_cell(n,iteration) = nanmean(fret_image(cell_cc.PixelIdxList{n}));
+        CellMeasurements.IntegratedFRET_cell(n,iteration) = nansum(fret_image(cell_cc.PixelIdxList{n}));
+        CellMeasurements.MedianFRET_cell(n,iteration) = nanmedian(fret_image(cell_cc.PixelIdxList{n}));
 
-    CellMeasurements.HighFRET_cell(n,iteration,:) =  prctile(fret_image(cell_cc.PixelIdxList{n}),linspace(80, 99, 10));
-    CellMeasurements.HighFRET_cyto(n,iteration,:) =  prctile(fret_image(cyto_cc.PixelIdxList{n}),linspace(80, 99, 10));
+        CellMeasurements.HighFRET_cell(n,iteration,:) =  prctile(fret_image(cell_cc.PixelIdxList{n}),linspace(80, 99, 10));
+        CellMeasurements.HighFRET_cyto(n,iteration,:) =  prctile(fret_image(cyto_cc.PixelIdxList{n}),linspace(80, 99, 10));
+    end
 end
