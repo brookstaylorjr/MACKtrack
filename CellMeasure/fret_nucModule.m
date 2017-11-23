@@ -27,7 +27,7 @@ drop_region = imdilate(labels.Nucleus>0,diskstrel(2*parameters.MinNucleusRadius)
 try
     fret = AuxImages{1};
     fret = fret - double(parameters.Flatfield{end});
-    fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}));
+    fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}),'subtract');
     % Fit unimodal normal distribution to image background. Subtract that mean from original image
     [~, d] = modebalance(fret(~drop_region),1,ModuleData.BitDepth,'measure');
     fret = fret-d(1);
@@ -36,7 +36,7 @@ try
     
     cfp = AuxImages{2};
     cfp = cfp - double(parameters.Flatfield{end});
-    cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}));
+    cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}),'subtract');
     % Fit unimodal normal distribution to image background. Subtract that mean from original image
     [~, d] = modebalance(cfp(~drop_region),1,ModuleData.BitDepth,'measure');
     cfp = cfp-d(1);
