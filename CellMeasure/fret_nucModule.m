@@ -43,24 +43,25 @@ try
     cfp(cfp<16) = 16; % add floor to image
     
     
-    % Ensure FRET and CFP images are aligned - use normal image alignment tool
+    % Ensure FRET and CFP images are aligned before point-by-point division
     n = [5 5];
     [~,r_jumps, c_jumps, maxes] = calculatejump(fret,cfp,n);
-    weights = maxes.^2; % Rescale maxes (force low-quality correlations to near-zero weight)
-    h = fspecial('average',[3 3]);
+    weights = maxes.^2; % Rescale maxes slightly (use exponent to force low-quality correlations to lower weight)
+    % Perform weighted smoothing for each block, then rescale to full image size
+    h = fspecial('average');
     c_scaled = imfilter(c_jumps.*weights,h)./imfilter(weights,h);
     r_scaled = imfilter(r_jumps.*weights,h)./imfilter(weights,h);
     c_scaled = round(imresize(c_scaled,size(fret)));
     r_scaled = round(imresize(r_scaled,size(fret)));
+    % Apply calculated transformation
     [X, Y] = meshgrid(1:size(fret,2),1:size(fret,1));
-    tmp_image = cfp;
+    tmp_image = fret;
     pad = max([abs(c_scaled(:)); abs(r_scaled(:))])+1;
     tmp_image = [zeros(pad,size(tmp_image,2)); tmp_image; zeros(pad,size(tmp_image,2))];
     tmp_image = [zeros(size(tmp_image,1),pad), tmp_image, zeros(size(tmp_image,1),pad)];
-    idx = sub2ind(size(tmp_image),Y+r_scaled+pad, X + c_scaled+pad);
-    a = tmp_image(idx);
+    fret_remap = tmp_image(sub2ind(size(tmp_image),Y-r_scaled+pad, X - c_scaled+pad));
     
-    fret_image = (fret)./(a);
+    fret_image = (fret_remap)./(cfp);
 catch me
     % Skip measurement if FRET images are invalid/not found - leave inputs intact
     return;
@@ -68,7 +69,7 @@ end
 
 % - - - - NUCLEAR measurements - - - -
 % A) Initialize fields
-if ~isfield(CellMeasurements,'MeanFRET_nuc')
+if ~isfield(CellMeasurements,'MeanFRET_nucAlt')
     CellMeasurements.MeanFRET_nucAlt =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.IntegratedFRET_nucAlt =  nan(parameters.TotalCells,parameters.TotalImages);
     CellMeasurements.MedianFRET_nucAlt = nan(parameters.TotalCells,parameters.TotalImages);

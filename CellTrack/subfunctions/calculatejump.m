@@ -28,13 +28,13 @@ end
 
 %% Correlate blocks of new image w/ blocks of old one.
 if nargin<3
-    n = 3;
+    n = 4;
 end
 
 if length(n)<2
     n = [n n];
 end
-
+%%
 blocksize = ceil(size(new_img)./[n(1) n(2)]);
 corr_fcn = @(block_struct) normxcorr2(block_struct.data(:,:,2),block_struct.data(:,:,1));
 corr_2D = blockproc(cat(3,new_img,old_img),blocksize,corr_fcn,'PadPartialBlocks',1);
@@ -48,19 +48,27 @@ locs = blockproc(corr_2D,blocksize2,max_loc);
 [r, c] = ind2sub(blocksize2,locs);
 
 
-% Subtract reference points to compute overall jump
+
+%% Subtract reference points to compute jump for each site
 r_jumps = (r - blocksize(1))*sz_down;
 c_jumps = (c - blocksize(2))*sz_down;
 
 
-all_jumps = [r_jumps(:) c_jumps(:)];
-all_jumps(maxes(:)<0.35,:) = nan;  
-image_jump = nanmedian(all_jumps);
+%% To estimate overall jump, average correlation function across all blocks
+divides_r = 1:blocksize2(1):size(corr_2D,1);
+divides_c = 1:blocksize2(2):size(corr_2D,2);
+all_corr = zeros(blocksize2);
+for i = 1:length(divides_r)-1
+    for j = 1:length(divides_c)-1
+        all_corr = all_corr + corr_2D(divides_r(i):divides_r(i+1)-1, divides_c(j):divides_c(j+1)-1);
+    end
+end
+all_corr = medfilt2(all_corr/prod(n),[3 3]);
+[r, c] = find(all_corr==max(all_corr(:)),1,'first');
+image_jump = [r - blocksize(1)*sz_down, c - blocksize(2)*sz_down];
 
-image_jump(isnan(image_jump)) = 0; % If we couldn't get an accurate fix, just assume no jump at all.
-
-
-
-
+% if max(all_corr(:)) < 0.35
+%     image_jump = [0  0]; % If we couldn't get an accurate fix, just assume no jump at all.
+% end
 
 
