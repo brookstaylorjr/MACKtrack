@@ -25,28 +25,24 @@ drop_region = imdilate(labels.Nucleus>0,diskstrel(2*parameters.MinNucleusRadius)
 
 % Correct and get ratiometric measurement for the FRET/CFP image pair
 try
-    fret = AuxImages{1};
-    fret = fret - double(parameters.Flatfield{end});
-    fret = flatfieldcorrect(fret,double(parameters.Flatfield{1}),'subtract');
-    % Fit unimodal normal distribution to image background. Subtract that mean from original image
-    [~, d] = modebalance(fret(~drop_region),1,ModuleData.BitDepth,'measure');
-    fret = fret-d(1);
-    fret(fret<16) = 1.6; % add floor to image 
+    thresh = 16;
+    fret  = AuxImages{1};   
+    fret = flatfieldcorrect(fret-double(ff{end}),double(ff{1}));
+    fret = fret- prctile(fret(:),2);
+    fret(fret<thresh) = thresh/10;
 
-    
-    cfp = AuxImages{2};
-    cfp = cfp - double(parameters.Flatfield{end});
-    cfp = flatfieldcorrect(cfp,double(parameters.Flatfield{1}),'subtract');
-    % Fit unimodal normal distribution to image background. Subtract that mean from original image
-    [~, d] = modebalance(cfp(~drop_region),1,ModuleData.BitDepth,'measure');
-    cfp = cfp-d(1);
-    cfp(cfp<16) = 16; % add floor to image
-    
+    cfp  = AuxImages{2};   
+    cfp = flatfieldcorrect(cfp-double(ff{end}),double(ff{1}));
+    cfp = cfp - prctile(cfp(:),2);
+    cfp(cfp<thresh) = thresh;
     
     % Ensure FRET and CFP images are aligned before point-by-point division
+    max_jump = 3;
     n = [5 5];
     [~,r_jumps, c_jumps, maxes] = calculatejump(fret,cfp,n);
-    weights = maxes.^2; % Rescale maxes slightly (use exponent to force low-quality correlations to lower weight)
+    r_jumps(abs(r_jumps)>max_jump) = 0;
+    c_jumps(abs(c_jumps)>max_jump) = 0;
+    weights = maxes.^2; % (Use exponent to force low-quality correlations to lower weight)
     % Perform weighted smoothing for each block, then rescale to full image size
     h = fspecial('average');
     c_scaled = imfilter(c_jumps.*weights,h)./imfilter(weights,h);
@@ -60,6 +56,7 @@ try
     tmp_image = [zeros(pad,size(tmp_image,2)); tmp_image; zeros(pad,size(tmp_image,2))];
     tmp_image = [zeros(size(tmp_image,1),pad), tmp_image, zeros(size(tmp_image,1),pad)];
     fret_remap = tmp_image(sub2ind(size(tmp_image),Y-r_scaled+pad, X - c_scaled+pad));
+
     
     fret_image = (fret_remap)./(cfp);
 catch me
