@@ -53,20 +53,28 @@ if sum(isnan(p.Results.GetImage)) == 0
         expr1 = info.parameters.fretModule.ImageExpr;
         expr2 = info.parameters.fretModule.ImageExpr2;
     elseif info.parameters.multi_fretModule.Use
-        expr1 = info.parameters.fretModule.ImageExpr;
-        expr2 = info.parameters.fretModule.ImageExpr2;
+        expr1 = info.parameters.multi_fretModule.ImageExpr;
+        expr2 = info.parameters.multi_fretModule.ImageExpr2;
+    elseif info.parameters.fret_lowModule.Use
+        expr1 = info.parameters.fret_lowModule.ImageExpr;
+        expr2 = info.parameters.fret_lowModule.ImageExpr2;
     end
     
     
-    % Don't mess w/ flatfield correction - just bg subtract, mask, and divide.
+    % Image correction: use rough version of flatfield correction (divide by raw FF image
     i = p.Results.GetImage(1);    j = round(100*p.Results.GetImage(2))/100;
     fret = checkread(namecheck([info.locations.scope,filesep,info.parameters.ImagePath,filesep,eval(expr1)]));
+    fret = flatfieldcorrect(fret,double(info.parameters.Flatfield{1}));    
     fret = fret- prctile(fret(:),2);
-    fret(fret<16) = 1.6;
+    
     cfp = checkread(namecheck([info.locations.scope,filesep,info.parameters.ImagePath,filesep,eval(expr2)]));
+    cfp = flatfieldcorrect(cfp,double(info.parameters.Flatfield{1}));  
     cfp = cfp - prctile(cfp(:),2);
-    cfp(cfp<16) = 16;
     graph = fret./cfp;
+    
+    graph(cfp<16) = 0.1;
+    graph(graph<0 | graph>10) = 0.1;
+    
     info = [];
     measure = [];
     return;
@@ -75,9 +83,9 @@ end
 
 %%
 if ~strcmpi(info.parameters.ImageType,'None')
-    all_fret = measure.MeanFRET_cell;
+    all_fret = measure.FRETpctile_cyto(:,:,7);
 else
-    all_fret = measure.MeanFRET_nuc;
+    all_fret = measure.MedianFRET_nuc;
 end
 
 info.graph_limits = prctile(all_fret(~isnan(all_fret)),[3 97]);

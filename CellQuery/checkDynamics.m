@@ -360,11 +360,11 @@ if ~isempty(handles.ImageExpr)
         j = handles.t_img(round(end/2));
         img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
         scale_img = checkread(img_path,handles.parameters.BitDepth);
-        rng1 = prctile(scale_img(:),[3 99]);
+        rng1 = prctile(scale_img(:),[3 97]);
         j = handles.t_img(1);
         img_path = namecheck([handles.locations.scope,'/', handles.parameters.ImagePath,'/',eval(handles.ImageExpr)]);
         scale_img = checkread(img_path,handles.parameters.BitDepth);
-        rng2 = prctile(scale_img(:),[3 99]);
+        rng2 = prctile(scale_img(:),[3 97]);
         handles.imgmax = max([rng1 rng2]);
         handles.imgmin = min([rng1 rng2]);  
     end
@@ -374,10 +374,10 @@ else
     if ~isfield(handles,'imgmax')
         j_aux = handles.t_img(round(end/2));
         scale_img = eval([handles.see_fcn,'(handles.AllMeasurements, ''GetImage'', [i j_aux]);']);
-        rng1 = prctile(scale_img(:),[3 99]);
+        rng1 = prctile(scale_img(:),[3 97]);
         j_aux = handles.t_img(1);
         scale_img = eval([handles.see_fcn,'(handles.AllMeasurements, ''GetImage'', [i j_aux]);']);
-        rng2 = prctile(scale_img(:),[3 99]);
+        rng2 = prctile(scale_img(:),[3 97]);
         handles.imgmax = max([rng1 rng2]);
         handles.imgmin = min([rng1 rng2]);
     end
