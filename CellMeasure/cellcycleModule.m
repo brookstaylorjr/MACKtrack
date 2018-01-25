@@ -1,7 +1,9 @@
 function [CellMeasurements, ModuleData] = cellcycleModule(CellMeasurements,parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % CELLCYCLE measures cellular intensity (nuclear, cell, and cytoplasmic) in specified AuxImages channels - 
-% written similarly to intensityModule, but with slightly altered background normalization & cell boundaries
+% written similarly to intensityModule, but with:
+%      - more aggressive background normalization (subtracts mean of unimodal distr. fitted to BG pixels)
+%      - stricter cell boundaries (thinner annulus)
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %

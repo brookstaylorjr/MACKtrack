@@ -20,6 +20,7 @@ function violin = violin(vects, places, varargin)
 % 'Smoothing'    Smoothing of violin shapes (such that histogram bars are evident, or smoothed out). Default = 'on'
 % 'Connect'      Add connecting line between shapes (default = 'on')
 % 'LineWidth'    Line width around shape - default = 0.5 (can be 0)
+% 'MarkerSize'   Size of median marker (if shown). Default = 7.
 %
 % OUTPUTS
 % violin        Axes handle of violin figure
@@ -49,13 +50,14 @@ addParameter(p,'ShowBins','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Area',0.01,@isnumeric);
 addParameter(p,'XSpace',0.1,@isnumeric);
 addParameter(p,'BinScale',1,@isnumeric);
-valid_width = @(x) assert(isnumeric(x)&&(x>=0),'Line width must be >= 0');
+valid_width = @(x) assert(isnumeric(x)&&(x>=0),'Line width/marker size must be >= 0');
 addParameter(p,'LineWidth',0.5,valid_width);
 valid_bins = @(x) assert((length(x)>1) && isnumeric(x) && issorted(x), 'Bins must be monotonically increasing vector');
 addParameter(p,'Bins',nan,valid_bins);
 addParameter(p,'Axes',nan,@ishandle);
 addParameter(p,'Smoothing','on', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Connect','on', @(x) any(validatestring(x,expectedFlags)));
+addParameter(p,'MarkerSize',7,valid_width);
 
 
 % Parse inputs, save some to variables
@@ -171,7 +173,7 @@ else
 end
 
 plot(violin, places,medians,lnstyl,'MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0 0 0],...
-    'Color', [0 0 0],'LineWidth',1.2,'MarkerSize',7)
+    'Color', [0 0 0],'LineWidth',1.2,'MarkerSize',p.Results.MarkerSize)
 hold(violin,'off')
 set(violin,'YLim',ylim,'XLim',x_lim);
 

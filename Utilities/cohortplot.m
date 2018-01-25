@@ -13,7 +13,7 @@ function varargout = cohortplot(data, rank_criteria, varargin)
 %
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
-% 'Colors'         [N x 3] matrix specifying line colors - cycles if N < number of cohorts
+% 'Color'         [N x 3] matrix specifying line colors - cycles if N < number of cohorts
 % 'NumCohorts'     Number of cohorts - e.g. 4 would group 0th-25th, 25th-50th, 50th-75th, and 75th-100th
 %                  percentile data. Default is 8.
 % 'SortDirection'  Direction to sort ranking - either 'ascend' or 'descend'. NaN values will be omitted.
@@ -76,11 +76,13 @@ data(isnan(rank_criteria),:) = [];
 rank_criteria(isnan(rank_criteria),:) = [];
 [rank_criteria, order] = sort(rank_criteria,'ascend');
 data = data(order,:);
-groups = floor(linspace(1,length(data),cohorts+1));
+groups = floor(linspace(1,size(data,1),cohorts+1));
 pctiles = floor(linspace(1,100,cohorts+1));
 
 cohort_trajectories = zeros(cohorts,size(data,2));
 legend_entries = cell(1,cohorts);
+
+%%
 for i = 1:cohorts
     cohort_trajectories(i,:) = nanmean(data(groups(i):groups(i+1),:));
     if i==1

@@ -25,6 +25,9 @@ if ModuleData.iter == parameters.TotalImages
         while isempty(aux_image)
             idx = idx+1;
             aux_image = AuxImages{idx};
+            if idx>10
+                break;
+            end
         end
         parameters.CellFF = idx; % Default to (corresponding) flatfield
         data = fluorescenceID(aux_image, parameters, []);

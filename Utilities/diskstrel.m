@@ -12,7 +12,7 @@ function SE = diskstrel(radius)
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-if radius<=0
+if radius<=0 || isnan(radius)
 	error('diskstrel radius must be positive')
 end
 

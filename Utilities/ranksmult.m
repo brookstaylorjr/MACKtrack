@@ -9,9 +9,11 @@ function [ha, plot_order] = ranksmult(graph_data, rankfactor, varargin)
 % graph_data    [n x m] matrix of n trajectories, each consisting of m dimensions/timepts
 % rankfactor    [n x 1] vector, where each value corresponds to its respective trajectory
 % xvect         (optional) time vector used in plotting
+%
 % INPUT (OPTIONAL)
 % 'x'           x vector used in plotting (i.e. horizontal axis)
-% 'YLim'        enforced Y limits of graph
+% 'YLim'        Enforced Y limits of graph
+% 'PlotSize'    Number of rows/columns in small multiples plot (Default = [15 8])
 %
 % OUTPUT:
 % ha            handles to tight_sublplot axes 
@@ -35,6 +37,7 @@ addRequired(p,'rankfactor',valid_rank);
 addParameter(p,'x',1:size(graph_data,2),@(x) assert(isvector(x)&&(length(x)==size(graph_data,2)),...
     'Length of X vector needs to match observations (columns) in graph_data'));
 addParameter(p,'YLim',prctile(graph_data(:),[5 99]), @(x) assert(numel(x)==2,'YLim must be in form [y_min y_max]'));
+addParameter(p,'PlotSize',[15 8], @(x) assert(numel(x)==2,'PlotSize must specify [rows cols]'));
 
 % Parse parameters, assign to variables
 parse(p,graph_data, rankfactor, varargin{:})
@@ -42,18 +45,16 @@ measure_bounds = p.Results.YLim;
 xvect = p.Results.x;
 %% Rank using rank factors; scale 0 to 100
 [rank_val,idx] = sort(rankfactor,'ascend');
-
 rank_val = floor((rank_val-min(rank_val))/(max(rank_val)-min(rank_val))*100);
 
 % Set maximum number of subplots, then order individuals (even spacing) if over maximum
-num_plots = 120;
+num_plots = prod(p.Results.PlotSize);
 if length(idx) <= num_plots
     plot_order = idx;
 else
     plot_order = idx(floor(linspace(1,length(idx),num_plots)));
     rank_val = rank_val(floor(linspace(1,length(idx),num_plots)));
 end
-
 
 % Set graph characteristics
 line_colors = cbrewer('div','Spectral',121);
@@ -63,7 +64,7 @@ ypos =  max(measure_bounds) - 0.26*diff(measure_bounds);
 
 fig = figure('name','smallmultiples');
 set(fig,'Position',[500, 350, 876, 1000]);
-ha = tight_subplot(15,8);
+ha = tight_subplot(p.Results.PlotSize(1),p.Results.PlotSize(2));
 
 
 for i =1:length(plot_order)

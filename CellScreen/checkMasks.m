@@ -45,16 +45,31 @@ if exist([track_folder,filesep,'CellLabels'],'dir')
    handles.labels_c = quickdir(namecheck([track_folder,filesep,'CellLabels']));
    handles.labels_c(cellfun(@isempty,regexp(handles.labels_c,'CellLabel.*.mat'))) = []; 
 end
-
+%%
 get_substr = @(str1) str1(14:end-4);
 handles.wells = cellfun(get_substr, handles.labels_n,'UniformOutput',0);
-conv_well = @(str1) ['_',str1(1:3),'_s',num2str(eval(str1(end-1:end)))];
-handles.wells = cellfun(conv_well,handles.wells,'UniformOutput',0);
 
-% Get list of images that correspond to each state (omit thumbnails)
+
 handles.image_dir = namecheck([locations.scope, filesep, parameters.ImagePath_full]);
 image_list = quickdir(handles.image_dir);
 image_list(cellfun(@isempty,strfind(image_list,'.tif'))) = []; % Drop non-tif images
+
+[~,scope] = wellmatch(image_list,'-----');
+%%
+if strcmpi(scope,'metaxpress')
+    conv_well = @(str1) ['_',str1(1:3),'_s',num2str(eval(str1(end-1:end)))];
+elseif strcmpi(scope,'slidebook')
+    conv_well = @(str1) ['- ',str1(1),num2str(eval(str1(2:3))),'_',numseq(-1+eval(str1(end-1:end)),3)];
+else
+    error('Unsupported naming type found for your images. See ''wellmatch'' function for more details')
+
+end
+handles.wells = cellfun(conv_well,handles.wells,'UniformOutput',0);
+
+
+
+%%
+% Get list of images that correspond to each state (omit thumbnails)
 handles.images = cell(size(handles.wells));
 for i = 1:length(handles.wells)
     handles.images{i} = image_list(~cellfun(@isempty,strfind(image_list,handles.wells{i})) & ...
@@ -219,7 +234,6 @@ base_img = uint8(base_img*255);
 disp_image = uint8(cat(3,reshape(handles.cmap(base_img+1,1),size(base_img)),...
     reshape(handles.cmap(base_img+1,2),size(base_img)),...
     reshape(handles.cmap(base_img+1,3),size(base_img)))*255);
-
 disp_image = maskoverlay(disp_image, boundaries, [248   152    29], 0.6);
 
 imshow(disp_image,'Parent',handles.axes1)
