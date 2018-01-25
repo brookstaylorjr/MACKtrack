@@ -2,10 +2,14 @@ function [CellMeasurements, ModuleData] = penult_intensityModule(CellMeasurement
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [CellMeasurements, ModuleData] = penult_intensityModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% PENULT_INTENSITYMODULE performs point expression measurement (e.g. post staining of the same cells being 
-% imaged). Module will try to identify cell boundaries (if not already identified in tracking) from AuxImages{1}, 
-% then calls intensityModule on this last frame. Functions as copy of end_intensityModule, but allows for re-alignment
-% if e.g. a restaining protocol was used
+% PENULT_INTENSITYMODULE performs expression measurement (e.g. on post staining of the same cells being 
+% imaged). These images are assumed to be in the PENULTIMATE timepoint, but cell mask will be found in FINAL
+% timepoint. (This allows tracking through a set of post-stained/re-stained images)
+%
+%
+% Though it refers to a timepoint previous, it triggers AFTER end_intensityModule, since it relies on a 
+% label matrix made by 
+% 
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %
@@ -16,53 +20,49 @@ function [CellMeasurements, ModuleData] = penult_intensityModule(CellMeasurement
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
 
-%% [Engage on SECOND TO LAST frame only]
-if ModuleData.iter == (parameters.TotalImages-1)
+%% [Engage on last frame only]
+if ModuleData.iter == parameters.TotalImages
     
-    % If cells were not segmented, use 1st available aux image to identify cell boundaries
-    if strcmpi(parameters.ImageType,'none')
-        idx = 1;
-        aux_image = AuxImages{idx};
-        while isempty(aux_image)
-            idx = idx+1;
-            aux_image = AuxImages{idx};
+    % This module assumes cells were not segmented in tracking, use the cell label matrix from end_intensityModule
+    labels.Cell = ModuleData.CellLabel_new;
+    
+    % (Likewise, the Nuclear label matrix will be the one corresponding to the final/ground-truth measurement
+    
+    % Load offsets. Apply to masks existing cell/nuclear label matricies
+    load([parameters.XYDir,filesep,'ImageJumps.mat'])
+    offset_post = image_jumps(image_jumps(:,1)== parameters.TimeRange(ModuleData.iter),2:3);
+    offset_pre = image_jumps(image_jumps(:,1)== parameters.TimeRange(ModuleData.iter-1),2:3);
+    if isempty(offset_post) || isempty(offset_pre)
+        error('Image jumps weren''t calculated for post-stain points - retracking is required')
+    end 
+    adj = (offset_pre-offset_post);
+    
+    adj_labels = {labels.Nucleus,labels.Cell};
+    for idx = 1:length(adj_labels)
+        tmp_label = adj_labels{idx};
+        % Adjust rows
+        if adj(1) > 0
+            tmp_label = [zeros(adj(1),size(tmp_label,2)); tmp_label(1:end-adj(1),:) ];    
+        elseif adj(1) < 0
+            tmp_label = [tmp_label(-adj(1)+1:end,:), zeros(adj(1),size(tmp_label,2))];
         end
-        parameters.CellFF = idx; % Default to (corresponding) flatfield
-        data = fluorescenceID(aux_image, parameters, []);
-        data.nuclei = labels.Nucleus;
-        tmp_out = fluorescenceSegment(data, aux_image, parameters);
-        labels.Cell = tmp_out.cells;
-        ModuleData.CellLabel_new = labels.Cell;
-        
-        % Save a diagnostic output version of this image
-        home_folder = mfilename('fullpath');
-        slash_idx = strfind(home_folder,filesep);
-        load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
-        save_dir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'PenultSegmentation',filesep]);
-        if ~exist(save_dir,'dir');  mkdir(save_dir); end
-        tmp1 = aux_image;
-        tmp1(tmp1==min(tmp1(:))) = [];
-        tmp1(tmp1==max(tmp1(:))) = [];
-        tmp1 = modebalance(tmp1,0, ModuleData.BitDepth,'display');               
-        % Non-confluent case - set low saturation @ 3xS.D. below bg level
-        if parameters.Confluence ~= 1
-            pct = 90:.5:99;
-            hi_val = prctile(tmp1,pct);       
-            saturation_val = [-3 prctile(tmp1,1+findelbow(pct,hi_val))];
-            alpha = 0.4;
-        else % Confluent case: unimodal distribution is foreground - use a different lower limit.
-            saturation_val = [-4 prctile(tmp1(:),90)];
-            alpha = 0.55;
+        % Adjust cols
+        if adj(2) > 0
+            tmp_label = [zeros(size(tmp_label,1),adj(2)), tmp_label(:,1:end-adj(2)) ];    
+        elseif adj(2) < 0
+            tmp_label = [tmp_label(:,-adj(2)+1:end), zeros(size(tmp_label,1),-adj(2))];
         end
-        saveFig(aux_image,labels.Cell,labels.Nucleus,[],ModuleData.BitDepth,...
-            [save_dir,'Endpoint-pos_',numseq(ModuleData.i,3),'.jpg'],alpha,[1024 1024], saturation_val);
+        adj_labels{idx} = tmp_label;
     end
-
-    % Make measurements (make sure to trigger whole-cell measurments as appropriate)
+    
+    labels_new.Nucleus = adj_labels{1};
+    labels_new.Cell = adj_labels{2};
+    
+    % Make measurements (make sure to trigger whole-cell measurements as appropriate)
     tmp_measurements = struct; 
     tmp_params = parameters; tmp_params.TotalImages = 1; tmp_params.ImageType = 'fluorescence';
     tmp_data = ModuleData; tmp_data.iter = 1;
-    tmp_measurements = intensityModule(tmp_measurements,tmp_params, labels, AuxImages, tmp_data);  
+    tmp_measurements = intensityModule(tmp_measurements,tmp_params, labels_new, AuxImages, tmp_data);  
     names = fieldnames(tmp_measurements); 
     
     for m = 1:length(names)

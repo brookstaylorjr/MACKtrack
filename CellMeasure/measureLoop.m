@@ -12,9 +12,14 @@ parameters.XYDir = namecheck([parameters.locations.data,filesep,parameters.SaveD
 CellMeasurements = struct;      
 ModuleData = struct;
 
-% Resort ModuleNames - make sure any "456" modules are run AFTER their corresponing module
+% Resort ModuleNames 
+% - make sure any "456" modules are run AFTER their corresponding module.
+% - move penultimate modules to the end.
 names_456 = ~cellfun(@isempty,strfind(parameters.ModuleNames,'456'));
 parameters.ModuleNames = [parameters.ModuleNames(~names_456),parameters.ModuleNames(names_456)];
+names_penult = ~cellfun(@isempty,strfind(parameters.ModuleNames,'penult'));
+parameters.ModuleNames = [parameters.ModuleNames(~names_penult),parameters.ModuleNames(names_penult)];
+
 
 % Load and add CellData field to CellMeasurements
 if exist([parameters.XYDir,'CellData.mat'],'file')
@@ -69,6 +74,12 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
             ModuleData.iter = iter;
             ModuleData.i = i;
             ModuleData.j = j;
+            
+            % Tweak for "penultimate" modules - we want these to run @ end, but use previous (penultimate) timepoint.
+            if ~isempty(strfind(ModuleData.name, 'penult_')) && (iter>1)
+                j = parameters.TimeRange(iter-1);
+            end
+            
             ModuleData.AuxName = cell(1,3);
             AuxImages = cell(size(ModuleData.AuxName));
             if  parameters.(ModuleData.name).Use == 1;                
@@ -103,8 +114,10 @@ if exist([parameters.XYDir,'CellData.mat'],'file')
                 
                 % Call measurement function
                 currentfn = str2func(ModuleData.name);
-                [CellMeasurements, ModuleData] = currentfn(CellMeasurements,parameters,labels, AuxImages, ModuleData);            
+                [CellMeasurements, ModuleData] = currentfn(CellMeasurements,parameters,labels, AuxImages, ModuleData);   
             end
+            % Reset j (if changed)
+            j = parameters.TimeRange(iter);
         end
         %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
         % Display status on every 10th run

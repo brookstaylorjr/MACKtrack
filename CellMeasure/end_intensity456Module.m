@@ -21,7 +21,6 @@ if ModuleData.iter == parameters.TotalImages
     % If cells were not segmented, use the new cell label matrix identified in end_intensityModule
     if strcmpi(parameters.ImageType,'none')
         labels.Cell = ModuleData.CellLabel_new;
-      
     end
 
     % Make measurements (make sure to trigger whole-cell measurments as appropriate)

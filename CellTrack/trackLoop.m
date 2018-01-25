@@ -14,6 +14,7 @@ parameters.debug = 0;
 home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
+image_jumps = [1 0 0];
 
 images = struct;
 tocs = struct;
@@ -107,7 +108,10 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
             end
             prev_img = checkread(namecheck([locations.scope,parameters.ImagePath,prev_name]),bit_depth,1,parameters.debug);
             new_offset = parameters.ImageOffset{end}+calculatejump(prev_img,images.cell);
-            disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(new_offset),']'])       
+            disp(['Jump @ frame ',num2str(parameters.TimeRange(cycle)),'. Curr. offset: [',num2str(new_offset),']'])
+            image_jumps = cat(1,image_jumps,[parameters.TimeRange(cycle) new_offset]);
+            
+            
         else
             new_offset = parameters.ImageOffset{end};
         end
@@ -292,8 +296,6 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
 end
 
 
-
-image_jumps = parameters.ImageOffset;
 
 % Save CellData and accessory data
 save([outputDirectory,'CellData.mat'],'CellData')
