@@ -85,7 +85,7 @@ for i= 1: measure_cc.NumObjects
     % Score object; record score
     score = (max(n) - median(n))/sqrt(length(measure_cc.PixelIdxList{i}));
     CellMeasurements.ActinScore(i,iteration) = score;
-    CellMeasurements.ActinDist{i,iteration} = n;
+    CellMeasurements.ActinDist{i,iteration} = n/sqrt(length(measure_cc.PixelIdxList{i}));
 end
 
 
