@@ -44,7 +44,7 @@ if ModuleData.iter == parameters.TotalImages
     home_folder = mfilename('fullpath');
     slash_idx = strfind(home_folder,filesep);
     load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
-    save_dir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'ActinID',filesep]);
+    save_dir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'End_ActinID',filesep]);
     if ~exist(save_dir,'dir');  mkdir(save_dir); end
 
     
