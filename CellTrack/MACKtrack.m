@@ -159,7 +159,6 @@ function listbox1A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 handles  = guidata(handles.figure1);
 % Determine user input
-get(handles.figure1,'SelectionType');
 % If user input is a double click, proceed
 if strcmp(get(handles.figure1,'SelectionType'),'open')
     index_selected = get(handles.listbox1A,'Value');
@@ -379,8 +378,8 @@ if ~strcmpi(handles.parameters.ImageType,'none')
         if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
             if exist('id','var') && ~isempty(id)
                 id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
-                if length(id)>1
-                    id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
+                if handles.parameters.isScreen
+                    id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb'))); % Drop thumbnails (microXL-specific)
                     id = id(1);
                     sampleFile = [handles.file_names{id}];
                     partial_match = 1;

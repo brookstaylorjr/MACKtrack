@@ -10,26 +10,36 @@ function [CellMeasurements, ModuleDataOut] = nfkbdimModule(CellMeasurements,para
 % ModuleData          extra information (current ModuleData.iter, etc.) used in measurement 
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-% Get NFkB image and background-correct
-nfkb = AuxImages{1};
-if ~isfield(ModuleData,'X')
-    ModuleData.X = backgroundcalculate(size(nfkb));
+% IMAGE CORRECTION
+% Background correct, method 1: use flatfield image.
+if length(AuxImages)>1
+    if isequal(size(AuxImages{1}),size(parameters.Flatfield{1}))
+        AuxImages{1} = double(AuxImages{1}) - double(parameters.Flatfield{end});
+        nfkb = flatfieldcorrect(AuxImages{1},double(parameters.Flatfield{1}));
+    else
+        error(['Size mismatch between provided flatfield (#', num2str(img), ' and AuxImage'])
+    end
+else
+% Flatfield correct, method 2: apply quadratic model to image
+    if ~isfield(ModuleData,'X')
+        ModuleData.X = backgroundcalculate(size(AuxImages{1}));
+    end
+    warning off MATLAB:nearlySingularMatrix
+    pStar = (ModuleData.X'*ModuleData.X)\(ModuleData.X')*double(AuxImages{1}(:));
+    warning on MATLAB:nearlySingularMatrix
+    % Apply background correction
+    nfkb = reshape((double(AuxImages{1}(:) - ModuleData.X*pStar)),size(AuxImages{1}));
+    nfkb = nfkb-min(nfkb(:)); % Set minimum to zero
 end
 
-warning off MATLAB:nearlySingularMatrix
-pStar = (ModuleData.X'*ModuleData.X)\(ModuleData.X')*double(nfkb(:));
-warning on MATLAB:nearlySingularMatrix
-
-% Apply background correction
-nfkb = reshape((double(nfkb(:) - ModuleData.X*pStar)),size(nfkb));
-nfkb = nfkb-min(nfkb(:)); % Set minimum to zero
-
+% Background correct (use unimodal model)
 if ~isfield(ModuleData,'distr')
     [~, ModuleData.distr] = modebalance(nfkb,1,ModuleData.BitDepth,'measure');
 else
     nfkb = modebalance(nfkb,1,ModuleData.BitDepth,'correct',ModuleData.distr);
 end
 
+% MEASUREMENT
 % On first call, initialize all new CellMeasurements fields 
 if ~isfield(CellMeasurements,'NFkBdimNuclear')
     % Intensity-based measurement initialization
