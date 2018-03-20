@@ -168,6 +168,7 @@ for i = 1:length(wells)
 
         % 4) DISPLAY status
         tmp1 = namecheck(image_dir);
+        tmp1(strcmp(tmp1,'\')) = '/'; % STUPID WINDOWS BACK SLASHES!
         str = ['- - - - [',tmp1,'] - - - - - -'];
         str = sprintf([str,'\n', 'Segmentation (', nuc_images{j}, ') - ',  num2str(t1),' sec ']);     
         str = sprintf([str,'\n', 'Saving (', 'NuclearLabel-',wells{i},'_',numseq(j,2),'.mat', ') - ',  ...

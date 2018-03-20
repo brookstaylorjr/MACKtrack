@@ -26,7 +26,7 @@ iteration  = ModuleData.iter;
 nuc_cc = label2cc(labels.Nucleus,0);
 cell_cc = label2cc(labels.Cell,0);
 cyto_cc = cell_cc;
-for i = 1:cyto_cc.NumObjects
+for i = 1:min([length(cyto_cc.PixelIdxList),length(nuc_cc.PixelIdxList)])
     if ~isempty(cyto_cc.PixelIdxList{i})
         cyto_cc.PixelIdxList{i}(ismember(cyto_cc.PixelIdxList{i},nuc_cc.PixelIdxList{i})) = [];
     end
