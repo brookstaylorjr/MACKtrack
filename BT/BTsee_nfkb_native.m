@@ -1,4 +1,4 @@
-    function [graph, info, measure] = see_nfkb_native(id,varargin)
+    function [graph, info, measure] = BTsee_nfkb_native(id,varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [graph, info, measure] = see_nfkb_native(id,graph_flag, verbose_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -13,11 +13,7 @@
 % 'Verbose'         'on' or 'off' - show verbose output
 % 'MinLifetime'     final frame used to filter for long-lived cells (default = 100)
 % 'ConvectionShift'  Maximum allowable time-shift between different XYs (to correct for poor mixing)
-% 'graph_limits'     
-% 'area_thresh'
-% 'start_thresh'
-% 'baseline'
-
+%
 % OUTPUTS:  
 % graph          primary output structure; must specify
 %                   1) filtered/processed data (graph.var) 
@@ -32,7 +28,7 @@
 %% Create input parser object, add required params from function input
 p = inputParser;
 % Required: ID input
-valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||isstruct(x)||exist(x,'file'),...
+valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
     'ID input must be spreadsheet ID or full file path');
 addRequired(p,'id',valid_id);
 
@@ -44,11 +40,6 @@ valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
     'Convection correction parameter must be single integer >= 0');
 addParameter(p,'ConvectionShift',1, valid_conv);
 addParameter(p,'MinLifetime',100, @isnumeric);
-addParameter (p,'start_thresh', 2, @isnumeric);
-
-addParameter (p, 'baseline', 0.75, @isnumeric);
-addParameter (p, 'graph_limits',[-0.25 5.5],@isnumeric);
-addParameter (p, 'area_thresh', 90, @isnumeric);
 
 % Parse parameters, assign to variables
 parse(p,id, varargin{:})
@@ -56,31 +47,28 @@ if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
 if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
 MinLifetime = p.Results.MinLifetime;
 max_shift = p.Results.ConvectionShift; % Max allowable frame shift in XY-specific correction
-area_thresh = p.Results.area_thresh;
-
-start_thresh= p.Results.start_thresh;
 
 %% Load data
-[measure, info] = load_id(id);
-info.ImageExpr = info.parameters.nfkbdimModule.ImageExpr;
-info.Module ='nfkbdimModule';
-info.graph_limits = p.Results.graph_limits;
-info.baseline = p.Results.baseline;
+[measure, info] = BTloadID(id);
+info.Module = 'nfkbdimModule';
+
 % Set display/filtering parameters
-% start_thresh = 2; % Maximal allowable start level above baseline
-% info.graph_limits = [-0.25 8]; % Min/max used in graphing-
-% area_thresh = 90;
+start_thresh = 2; % Maximal allowable start level above baseline
+info.graph_limits = [-0.25 8]; % Min/max used in graphing-
 dendro = 0;
 colors = setcolors;
 
 % Experiment-specific visualization settings/tweaks (load spreadsheet URL)
-baseline_length = size(measure.NFkBdimNuclear,2); % Endframe for baseline calculation (default: use entire vector)
-paths =loadpaths; 
-
-% Experiment-specific visualization settings/tweaks (set by spreadsheet URL)
+home_folder = mfilename('fullpath');
+slash_idx = strfind(home_folder,filesep);
+home_folder = home_folder(1:slash_idx(end-1));
+load([home_folder, 'locations.mat'],'-mat')
+locations.spreadsheet ='https://docs.google.com/spreadsheets/d/10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY/pubhtml';
+locations.scope ='\\BIGGIE\data\';
+locations.data = 'E:\BT\Tracking\';
 % BT's experiments
 if isnumeric(id)
-    if  contains(paths.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY')
+    if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
         % a) Heterozygous cell experiments
         if (id <= 270) || ismember(id,[370:379, 384:391, 395, 396])
             start_thresh = 1.5;
@@ -92,23 +80,21 @@ if isnumeric(id)
             info.graph_limits = [-0.2 4];
         end
 
-        % c) 0.33ng TNF - delayed stimulation
+        % c) 0.33ng TNF - delayed activation from slow mixing
         if id==290
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-            baseline_length = size(measure.NFkBdimNuclear,2);
             disp('Adjusted start point for this TNF expmt')
         end
-        % d) 100uM CpG - delayed stimulation
+        % d) 100uM CpG - delayed activation from slow mixing
         if id==283
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-            baseline_length = size(measure.NFkBdimNuclear,2);
             disp('Adjusted start point for this CpG expmt')
         end
 
         % e) prestimulated sets; don't filter pre-activated cells
-        if ismember(id,[267:270, 323:324, 337:339,342:343, 356:360])
+        if ismember(id,[267:270, 323:324, 337:339,342:343, 356:360]); 
             start_thresh = 10;
         end
 
@@ -122,103 +108,35 @@ if isnumeric(id)
             disp('(Using eroded nuclei)')
         end
     % AA's experiments    
-    elseif contains(paths.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39m4tHa9nJ7ok')
+    elseif ~isempty(strfind(locations.spreadsheet,'1s51cOI7NvLIOEpEhZWjJKsPkCOE5Qz39m4tHa9nJ7ok'))
         % a) early experiments; heterozygous cells
         
         if ismember (id, [1:60, 364:379])
-             disp ('Using custom params')
             start_thresh = 1.5;
             info.graph_limits = [-0.25 5.5];
             info.baseline = 1;
         else            
-%             start_thresh = 1.8;
-%             info.graph_limits = [-0.25 5.5];
-%             info.baseline = 0.75;
+            start_thresh = 1.8;
+            info.graph_limits = [-0.25 5.5];
+            info.baseline = 0.75;
         end
         %pre-stimulated cells 
-        if ismember(id,[164:169, 171:178, 179:186, 188:190, 192:194,196:198, 200:205, 271, 296:297, 434:439, 464:471])
-             disp ('Using custom params')
+        if ismember(id,[164:169, 171:178, 179:186, 188:190, 192:194,196:198, 200:205, 271, 296:297, 434:439, 464:471]);
             start_thresh = 10;
         end
-        
-        %LCCM differentiated macrophages--smaller
- 
-        %weak nuclei
-        %3T3s
-        if ismember (id, 557:560)
-            info.graph_limits = [-0.1 4];
-            info.baseline = 1.0;
-            start_thresh = 0.5;
+        %weak nuclei 
+        if ismember(id, 0)
             measure.NFkBdimNuclear = measure.NFkBdimNuclear_erode;
-             disp ('Using custom params')
+            disp('(Using eroded nuclei)')
         end
-        
-        
-        if ismember (id, [243:255, 284: 291,316:339,458:463, 484, 485])
-           area_thresh = 10;
-           disp ('Using custom params')
-        end      
-            %TNF KO Data set
-%          if ismember (id, 472:473)
-%               disp ('Using custom params')
-%              start_thresh = 4;
-%              MinLifetime = 80;     
-             
-%          end
-         if ismember (id, 394:401)
-              disp ('Using custom params')
-             start_thresh = 4;
-             MinLifetime = 80;   
-             
-         end
-        
-        %Small cells
-            %Immature BMDMs
-        if ismember (id, 464:471)
-             disp ('Using custom params')
-           area_thresh = 10;
-           
-        end 
-    %BMDMs differentiated in non ES FBS 
-       if ismember (id, 513:518)
-            disp ('Using custom params')
-          %area_thresh = 90;
-          area_thresh = 10;
-         % info.baseline = 1.80;
-       end
-       
-       %DMSO macrophages
-        if ismember (id, [539:543, 552:553])
-          %area_thresh = 90;
-           disp ('Using custom params')
-          area_thresh = 10;
-          disp ('Area Threshold dropped to 37');
-          MinLifetime = 100;    
-          start_thresh = 4;
-          
-        end     
-        
-        if ismember(id,564:569)
-              disp ('Using custom params')
-              start_thresh = 2;
-             info.baseline = 1.8;
-%           %area_thresh = 10;
-         end
-         
-         %imaged with 0.63 x cmount left scope
-         if ismember (id, 613:616)
-            area_thresh = 50;
-            
-        if ismember (id, 607:612)
-            MinLifetime = 80;
-           start_thresh = 1;
-            
-        end
-                  
-         end
-
     end
 end
+
+%Standardize my BT sets to AA
+start_thresh = 1.8;
+info.graph_limits = [-0.25 5.5];
+info.baseline = 0.75;
+
 
 %% Filtering
 robuststd = @(distr, cutoff) nanstd(distr(distr < (nanmedian(distr)+cutoff*nanstd(distr))));
@@ -236,12 +154,12 @@ nfkb_smooth = nan(size(nfkb));
 for i = 1:size(nfkb,1)
     nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
 end
-
-
-
-% If default end frame is specified, use entire vector for baseline calculation. Otherwise, use specified vector.
-nfkb_min = prctile(nfkb_smooth(:,1:baseline_length),2,2);
-
+% If default end frame is specified, use entire vector for baseline calculation. Otherwise use specified baseline.
+if ismember('MinLifetime',p.UsingDefaults)
+    nfkb_min = prctile(nfkb_smooth,2,2);
+else
+    nfkb_min = prctile(nfkb_smooth(:,1:MinLifetime),4,2);
+end
 
 nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),nfkb_min],[],2);
 nfkb = nfkb - repmat(nfkb_baseline,1,size(nfkb,2));
@@ -261,13 +179,24 @@ keep = max(droprows,[],2) == 0;
 start_lvl = nanmin(nfkb(keep,1:3),[],2);
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2.5*robuststd(nuc_lvl(:),2);
+area_thresh = 90;
 
-
-
+%Drop area threshold for peritoneal macrophages 
+    %AA's experiments
+if isnumeric(id)
+    if ismember (id, [243:255, 284: 291,316:339,458:463, 484, 485])
+           area_thresh = 10;
+    end    
+    %BMDMs  not fully grown
+    if ismember (id, [464:471])
+           area_thresh = 10;
+    end 
+end
 droprows =  [droprows, prctile(nfkb(:,1:8),18.75,2) > start_thresh];
 droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thresh];
+
 droprows =  [droprows, nanmedian(measure.Area,2) < area_thresh];
-info.dropped = droprows;
+
 % Show some filter information
 if verbose_flag
     filter_str = {'didn''t exist @ start', 'short-lived cells', 'NFkB<background',...
@@ -309,11 +238,11 @@ graph.celldata = info.CellData(info.keep,:);
 
 % Correct for XY positions that activate late
 [graph.var, shift_xy] = alignTrajectories(nfkb, graph.celldata, 60, max_shift);
-% if dendro
-%     [graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
-% else
-%     [~,graph.order] = sort(nansum(graph.var(:,1:min([size(graph.var,2),150])),2),'descend');
-% end
+if dendro
+    [graph.order, graph.dendro.links] = hierarchial(graph.var(:,1:min([size(graph.var,2),150])),0);
+else
+    [~,graph.order] = sort(nansum(graph.var(:,1:min([size(graph.var,2),150])),2),'descend');
+end
 if verbose_flag 
     for i = 1:length(shift_xy)
         disp(['xy ',num2str(i),' shift : ',num2str(shift_xy(i))])
@@ -324,7 +253,7 @@ graph.shift = shift_xy;
 graph.t = 0:(1/info.parameters.FramesPerHour):48;
 graph.t = graph.t(1:min([length(graph.t),size(graph.var,2)]));
 graph.opt = maketicks(graph.t,info.graph_limits,0);
-graph.opt.Name = 'NF\kappaB Activation'; 
+graph.opt.Name = 'NFkB Activation'; 
 
 
 %% Graphing

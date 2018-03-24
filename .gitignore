@@ -1,6 +1,4 @@
 # Exclude parameter files (except default)
 /Parameters/Other/*
-
-# Exclude OSX pref files
-.DS_Store
-*/.DS_Store
+Parameters/2016-01-23_BMDM_Permissive.mat
+locations.mat
