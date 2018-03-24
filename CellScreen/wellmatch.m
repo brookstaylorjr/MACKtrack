@@ -17,6 +17,11 @@ function [names_out, scope_type] = wellmatch(contents, well_in, channel_in, scop
 % 1) .tif only (NOT compatible w/ old versions of Slidebook!!)
 % 2) wells are NOT zero-padded, are preceded by a space, and succeeed by an underscore (e.g. " H5_" 
 % 3) omit '.log' and '.xml' files (if there)
+%
+% Schema3: Steve Cappell's naming script
+% 1) .tif only
+% 2) wells are specified by (non-zero-padded) numbers - e.g. 5_03_01_DAPI.tif is E03, site 5.
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -34,6 +39,9 @@ if nargin < 4
     % b) Slidebook: last characters of image names should be '_C[0-9].tif'
     elseif ~isempty(regexp(imglist{1}, '_C[0-9].tif','ONCE'))
         scope_type = 'slidebook';
+    % c) Steve Cappell's script: image names should begin with single number-underscore-number
+    elseif ~isempty(regexp(imglist{1}(1:3), '[1-8]_[1-9]','ONCE'))
+        scope_type = 'cappell';
     else
         error('No valid image names found in your specified directory')
     end
@@ -56,6 +64,15 @@ switch scope_type
         names_out = contents(cellfun(@isempty,strfind(contents,'.xml'))...
             & cellfun(@isempty,strfind(contents,'.log'))...
             &~cellfun(@isempty,strfind(contents,[' ',well_in,'_'])));
+    case 'cappell'
+        % Convert well_in to numerical value
+        row = double(well_in(1))-64;
+        col = eval(well_in(2:end));
+        well_in = [num2str(row),'_',num2str(col)];
+        firstfour = @(str) str(1:4);
+        contents_tmp = cellfun(firstfour,contents,'UniformOutput',0);        
+        names_out = contents(~cellfun(@isempty,strfind(contents_tmp,well_in)));   
+        
 end
 
 % If input channel is defined, filter further
