@@ -1,14 +1,16 @@
-function [graph, info, filtered_cells, measure] = see_paprg_EBM(id,Mt_window,alpha_percentile,varargin)
+function [graph, info, filtered_cells, measure] = see_paprg_EBM(id,Mt_window,alpha_percentile,alpha_cutoff,varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [graph, info, measure] = see_paprg_EBM(id,Mt_window,graph_flag, verbose_flag)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % SEE_PPARG is a basic visualization function to plot single-cell expression levels of PPARg (or similar) over time
 %
 % INPUTS (required):
-% id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
-% Mt_window      number of frames analyzed together by MACKtrack
-% alpha_percentile        percentile to cutoff probable mistraces
-%
+% id                filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
+% Mt_window         number of frames analyzed together by MACKtrack
+% alpha_percentile  percentile to cut-off probable mistraces, otherwise
+%                   enter 100
+% alpha_cutoff      value for alpha cutoff based on the whole population,
+%                   otherwise enter 0
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
 % 'Measurement'     name of measurement field that will be read as PPARg - defaults to 'MeanNuc1'
@@ -38,13 +40,18 @@ valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||isstruct(x)||exist(x,'file'
 addRequired(p,'id',valid_id);
 
 % Required: Mt_window
-if exist('Mt_window') == 0
+if ~exist('Mt_window')
     Mt_window = 13;
 end
 
 % Required: alpha_percentile
-if exist('alpha_percentile') == 0
-    alpha_percentile = 95;
+if ~exist('alpha_percentile')
+    alpha_percentile = 100;
+end
+
+% Required: alpha_cutoff
+if ~exist('alpha_cutoff')
+    alpha_cutoff = 0;
 end
 
 % Optional parameters
@@ -55,7 +62,7 @@ addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'MinLifetime',100, @isnumeric);
 
 % Parse parameters, assign to variables
-parse(p,id, varargin{:})
+parse(p,id,varargin{:})
 if strcmpi(p.Results.Verbose,'on'); verbose_flag = 1; else verbose_flag = 0; end
 if strcmpi(p.Results.Display,'on'); graph_flag = 1; else graph_flag = 0; end
 measure_field = p.Results.Measurement;
@@ -110,10 +117,14 @@ alpha = prctile(max_integral,alpha_percentile);
 droprows = [];
 droprows = [droprows, sum(isnan(all_pparg(:,end-3:end)),2)>2]; % Cells existing @ expt end
 droprows = [droprows, sum(isnan(all_pparg),2)>10]; % Long-lived cells
-droprows = [droprows, (max_integral>alpha)>0]; %PPARg jumps
+if alpha_cutoff == 0
+    droprows = [droprows, (max_integral>alpha)>0]; %PPARg jumps based on alpha_percentile
+    else
+        droprows = [droprows, (max_integral>alpha_cutoff)>0]; %PPARg jumps based on alpha_cutoff
+end
 info.keep = max(droprows,[],2) == 0;
-% Show some filter information
 
+% Show some filter information
 if verbose_flag
     filter_str = {'didn''t exist @ experiment end', 'short-lived cells','mistraces based on PPARg jumps'};
     disp(['INITIAL: ', num2str(size(droprows,1)),' cells'])
@@ -133,6 +144,7 @@ end
 
 %% Outputs -> drop filtered cells 
 graph.var = all_pparg(info.keep,:);
+
 graph.lineage = graph.lineage(info.keep,:);
 graph.celldata = info.CellData(info.keep,:);
 graph.t = 0:(60/info.parameters.FramesPerHour):t_max;
