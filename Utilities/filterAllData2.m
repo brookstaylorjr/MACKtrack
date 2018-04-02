@@ -1,10 +1,10 @@
 function AllData_out = filterAllData2(AllData, filter_field, filter_field2, filter_function, verbose)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% AllData_out = filterAllData(AllData_in, filter_field,filter_field2, filter_function, verbose)
+% AllData_out = filterAllData2(AllData_in, filter_field,filter_field2, filter_function, verbose)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% FILTERALLDATA2 applies a supplied filtering function (e.g. @(x) x>0) to 2 input filter fields (strings, e.g.
-% 'MeanNuc1', 'MeanNuc2'). Any cells that meet this criteria (in above example, with negative values) will be 
-% filtered out.
+% FILTERALLDATA2 applies a supplied filtering function (e.g. @(x,y) (x<0)&(y<0)) to 2 input filter fields (strings, 
+% e.g. 'MeanNuc1', 'MeanNuc2'). Any cells that meet this criteria (in above example, with negative values for x/y) 
+% will be filtered out (i.e. REMOVED).
 %
 %
 % INPUTS
