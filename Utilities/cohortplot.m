@@ -107,7 +107,6 @@ end
 
 hold(cohort_axes,'on')
 set(cohort_axes,'ColorOrder',clr)
-
 plot(t(:), cohort_trajectories', 'LineWidth', p.Results.LineWidth)
 hold(cohort_axes,'off')
 
