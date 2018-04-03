@@ -17,14 +17,11 @@ if nargin<2
     verbose =1 ;
 end
 
-paths = loadpaths; 
-locations.data = paths.tracking.cache;
-locations.spreadsheet = paths.spreadsheet; 
-locations.scope=paths.image.remote;
+
 tic;
-% home_folder = mfilename('fullpath'); % Load locations (for images and output data)
-% slash_idx = strfind(home_folder,filesep);
-% load([home_folder(1:slash_idx(end-2)), 'locations.mat'],'-mat')
+home_folder = mfilename('fullpath'); % Load locations (for images and output data)
+slash_idx = strfind(home_folder,filesep);
+load([home_folder(1:slash_idx(end-2)), 'locations.mat'],'-mat')
 
 if ischar(id) || isnumeric(id) % Load file if a location or row index of a spreadsheet entry 
     % Find/load AllMeasurements.mat - a full file path can be specfied, or an
