@@ -1,26 +1,25 @@
-function varargout = checkDynamics(varargin)
+function varargout = checknfkb(varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [] = checkDynamics(id)
+% [] = checknfkb(id)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% CHECKDYNAMICS creates a figure showing tracked/outlined cells that corrrespond to a 
-% dynamic measurement, graphed below. Measurements are first processed by specific 
-% functions called (e.g.) see_nfkb or see_nfkb_dim.
+% CHECKNFKB creates a figure showing tracked/outlined cells that corrrespond to a 
+% dynamic measurement, graphed below. Measurements are first processed by 'see_nfkb_dim'
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-%  MATLAB code generated for checkDynamics.fig:
-%      checkDynamics, by itself, creates a new checkDynamics or raises the existing
+%  MATLAB code generated for chec.fig:
+%      checknfkb, by itself, creates a new checknfkb or raises the existing
 %      singleton*.
 %
-%      H = checkDynamics returns the handle to a new checkDynamics or the handle to
+%      H = checknfkb returns the handle to a new checknfkb or the handle to
 %      the existing singleton*.
 %
-%      checkDynamics('CALLBACK',hObject,eventData,handles,...) calls the local
-%      function named CALLBACK in checkDynamics.M with the given input arguments.
+%      checknfkb('CALLBACK',hObject,eventData,handles,...) calls the local
+%      function named CALLBACK in checknfkb.M with the given input arguments.
 %
-%      checkDynamics('Property','Value',...) creates a new checkDynamics or raises the
+%      checknfkb('Property','Value',...) creates a new checknfkb or raises the
 %      existing singleton*.  Starting from the left, property value pairs are
-%      applied to the GUI before checkDynamics_OpeningFcn gets called.  An
+%      applied to the GUI before checknfkb_OpeningFcn gets called.  An
 %      unrecognized property name or invalid value makes property application
-%      stop.  All inputs are passed to checkDynamics_OpeningFcn via varargin.
+%      stop.  All inputs are passed to checknfkb_OpeningFcn via varargin.
 %
 %      *See GUI Options on GUIDE's Tools menu.  Choose "GUI allows only one
 %      instance to run (singleton)".
@@ -29,7 +28,7 @@ function varargout = checkDynamics(varargin)
 %
 % See also: GUIDE, GUIDATA, GUIHANDLES
 
-% Edit the above text to modify the response to help checkDynamics
+% Edit the above text to modify the response to help checknfkb
 
 % Last Modified by GUIDE v2.5 17-Feb-2015 11:57:00
 
@@ -37,8 +36,8 @@ function varargout = checkDynamics(varargin)
 gui_Singleton = 1;
 gui_State = struct('gui_Name',       mfilename, ...
                    'gui_Singleton',  gui_Singleton, ...
-                   'gui_OpeningFcn', @checkDynamics_OpeningFcn, ...
-                   'gui_OutputFcn',  @checkDynamics_OutputFcn, ...
+                   'gui_OpeningFcn', @checknfkb_OpeningFcn, ...
+                   'gui_OutputFcn',  @checknfkb_OutputFcn, ...
                    'gui_LayoutFcn',  [] , ...
                    'gui_Callback',   []);
                
@@ -57,15 +56,15 @@ end
 % End initialization code - DO NOT EDIT
 
 
-% --- Executes just before checkDynamics is made visible.
-function checkDynamics_OpeningFcn(hObject, eventdata, handles, varargin)
+% --- Executes just before checknfkb is made visible.
+function checknfkb_OpeningFcn(hObject, eventdata, handles, varargin)
 % This function has no output args, see OutputFcn.
 % hObject    handle to figure
 % eventdata  reserved - to be defined in a future version of MATLAB
 % handles    structure with handles and user data (see GUIDATA)
-% varargin   command line arguments to checkDynamics (see VARARGIN)
+% varargin   command line arguments to checknfkb (see VARARGIN)
 
-% Choose default command line output for checkDynamics
+% Choose default command line output for checknfkb
 handles.output = hObject;
 
 % Initialize dropdown menu with visualization scripts; chose translocation by default
@@ -113,7 +112,7 @@ set(hZoom,'ActionPostCallback',{@customZoom,handles});
 
 
 % Set output function
-function varargout = checkDynamics_OutputFcn(hObject, eventdata, handles) 
+function varargout = checknfkb_OutputFcn(hObject, eventdata, handles) 
 varargout{1} = handles.output;
 
 

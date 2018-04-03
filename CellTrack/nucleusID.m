@@ -20,7 +20,7 @@ function [output, diagnos] =  nucleusID(nuc_orig,p,data)
 % Set cutoffs for nuclear shape
 cutoff.Area = [floor(pi*(p.MinNucleusRadius)^2) ceil(pi*(p.MaxNucleusRadius)^2)];
 cutoff.Compactness = p.Compactness;
-pcutoff.Solidity = p.Solidity;
+cutoff.Solidity = p.Solidity;
 
 if max(data.mask_cell)==0 % No cells found- break out of this
     output.label_nuc = zeros(size(data.mask_cell));
