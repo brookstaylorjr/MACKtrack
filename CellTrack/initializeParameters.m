@@ -39,7 +39,7 @@ else
     set(handles.edit2A,'String',handles.parameters.NucleusMatch)
     set(handles.edit2B,'String',handles.parameters.CellMatch)
 end
-
+% 
 set(handles.popupmenu0B,'value',1+handles.parameters.isScreen);
 if handles.parameters.isScreen
     set(handles.edit2C,'ForegroundColor',handles.gray)

@@ -21,8 +21,13 @@ else
 end
 
 % Create the figure and axes
-clf('reset')
-handles.figure1 = gcf;
+%clf('reset')
+%handles.figure1 = gcf;
+split_dir = strsplit(handles.dir, '\\');
+
+%dir name should be penultimate element
+fig_title = split_dir {end-1};
+handles.figure1 = figure ('Name', fig_title, 'NumberTitle', 'off');%instead of reseting current figure, make new one
 handles.axes1 = axes('Parent',handles.figure1,'YTick',[],'XTick',[]);
 % Create status text
 handles.text1 = uicontrol('Style','text','String','','BackgroundColor',[1 1 1],...

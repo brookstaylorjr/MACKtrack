@@ -24,6 +24,7 @@ getclosest = @(idx,vect) vect(find(abs(vect-idx)==min(abs(vect-idx)),1,'first'))
 peaks = [];
 locs  = [];
 heights = [];
+
 while length(peaks) < num_peaks
     % Eliminate peaks that have been found already
     tmp_peaks = all_peaks;
