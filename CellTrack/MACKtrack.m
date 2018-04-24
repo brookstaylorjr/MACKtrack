@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 08-Feb-2017 18:22:41
+% Last Modified by GUIDE v2.5 16-Apr-2018 19:34:39
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -1422,6 +1422,17 @@ end
 % ========================================================================================
 
 
+function checkbox7B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX7B: use/don't use nuclear intensity data in guiding tracking decisions
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.UseIntensity = get(hObject,'Value');
+guidata(handles.figure1,handles)
+
+% ========================================================================================
+
+
+
 function edit7D_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % EDIT7D: square median filter size (MedianFilterSize)
@@ -1792,3 +1803,5 @@ set(handles.popupmenu6B,'Value',handles.parameters.CellFF+1);
 
 
 guidata(handles.figure1,handles)
+
+

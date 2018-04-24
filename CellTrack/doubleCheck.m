@@ -1,4 +1,4 @@
-function [output, diagnos] = doubleCheck(data, p, queue_data)
+function [output, diagnos] = doubleCheck(data, images, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [output, diagnos] = doubleCheck(data,cell_image,p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -7,12 +7,13 @@ function [output, diagnos] = doubleCheck(data, p, queue_data)
 %
 % INPUTS:
 % data         structure with other output info (label_nuc and mask_cell)
+% images       structure with nuclear/cell images (if present) - images.nuc and images.cell
 % p            parameters struture
+% 
 % queue_data   full stack of segmentations, etc - allows some rough history checking
 %
 % OUTPUTS:
-% label_out    modified nuclear label
-% data         output structure
+% data         output structure (with modified labelmats and added info)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -27,7 +28,16 @@ if strcmpi(p.ImageType,'none')
     output.mask_cell = data.label_nuc>0;
 end
 
-% CHECK 2 (if selected): look for gross errors in nuclear segmentation (e.g. newest image is out of focus).
+
+% Measure nuclear intensity data, if using.
+if p.UseIntensity 
+    tmpcc = label2cc(data.label_nuc,0);
+    measurefunc = @(pix) nansum(images.nuc(pix));
+    output.intensity = cellfun(measurefunc,tmpcc.PixelIdxList,'UniformOutput',1);    
+end
+
+
+% POSSIBLE FUTURE CHECK: look for gross errors in nuclear segmentation (e.g. newest image is out of focus).
 % Discard if really far out of range defined by prior stack.
 
 

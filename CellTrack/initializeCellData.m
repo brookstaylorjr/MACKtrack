@@ -21,7 +21,7 @@ labeldata = struct;
 blocks = [];
 
 for frm = 1:length(queue_in)
-    % Get regionprops
+    % Get regionprops for starting queue
     props = regionprops(queue_in(frm).nuclei,'Area', 'Centroid', 'Perimeter');
     tmpcell = struct2cell(props);
     vect_area = cell2mat(tmpcell(1,:));
@@ -30,13 +30,17 @@ for frm = 1:length(queue_in)
     vect_centroidy = tmpmat(2:2:end);
     vect_perimeter = cell2mat(tmpcell(3,:));
 
-    % Make 1st entry in labeldata
+    % Make intitial position/morphology entries in labeldata
     labeldata(frm).obj = (1:length(props))';
     labeldata(frm).centroidx = vect_centroidx' - p.ImageOffset{frm}(2);
     labeldata(frm).centroidy = vect_centroidy'-p.ImageOffset{frm}(1);
     labeldata(frm).area = vect_area';
-    labeldata(frm).perimeter = vect_perimeter';    
+    labeldata(frm).perimeter = vect_perimeter';
+    if isfield(queue_in,'intensity') % Add in intensity data, if selected.
+       labeldata(frm).intensity = queue_in(frm).intensity(:);       
+    end
     labeldata(frm).obj(labeldata(frm).area==0) = 0;
+
     
     % Make starting set of blocks
     frmblocks = zeros(length(labeldata(frm).obj),length(queue_in));

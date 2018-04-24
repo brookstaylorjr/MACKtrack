@@ -72,13 +72,19 @@ for col = col_vect
     newlinks = repmat([block1(ref_col), ref_col, 0, 0, 0, 0],sum(rows1),1);
     newlinks(:,3) = blocks(rows1,col);
     newlinks(:,4) = col;
-    % Calculate distances and changes in area+perimeter
+    % Calculate distances
     newlinks(:,5) = sqrt( (labeldata(col).centroidx(blocks(rows1,col)) - labeldata(ref_col).centroidx(block1(ref_col))).^2 + ...
         (labeldata(col).centroidy(blocks(rows1,col)) - labeldata(ref_col).centroidy(block1(ref_col))).^2 );
-    delta_area = (labeldata(col).area(blocks(rows1,col)) - labeldata(ref_col).area(block1(ref_col)) ) /...
-        labeldata(ref_col).area(block1(ref_col));
-    delta_perim = (labeldata(col).perimeter(blocks(rows1,col)) - labeldata(ref_col).perimeter(block1(ref_col)) ) /...
-        labeldata(ref_col).perimeter(block1(ref_col));
-    newlinks(:,6) = sqrt((delta_area.^2)+(delta_perim.^2));
+    % Calculate pct change in area+perimeter (or intensity)
+    if ~isfield(labeldata,'intensity')
+        delta_area = (labeldata(col).area(blocks(rows1,col)) - labeldata(ref_col).area(block1(ref_col)) ) /...
+            labeldata(ref_col).area(block1(ref_col));
+        delta_perim = (labeldata(col).perimeter(blocks(rows1,col)) - labeldata(ref_col).perimeter(block1(ref_col)) ) /...
+            labeldata(ref_col).perimeter(block1(ref_col));
+        newlinks(:,6) = sqrt((delta_area.^2)+(delta_perim.^2));
+    else % (or, if selected, use changes in intensity)
+        newlinks(:,6) = abs((labeldata(col).intensity(blocks(rows1,col)) - labeldata(ref_col).intensity(block1(ref_col)) ) /...
+            (1+labeldata(ref_col).intensity(block1(ref_col))));
+    end
     links = cat(1,links,newlinks);
 end

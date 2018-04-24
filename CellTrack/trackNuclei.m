@@ -25,7 +25,7 @@ col_hi = floor(min([size(imgedge,2),size(imgedge,2)-p.MinNucleusRadius+offset(2)
 imgedge([1:row_low,row_hi:end],:) = 1; % Edge rows
 imgedge(:,[1:col_low,col_hi:end]) = 1; % Edge cols
 
-% Get regionprops of new frame (top of queue)
+% Get regionprops of new frame (top of queue)    
 props = regionprops(queue_in(end).nuclei,'Area', 'Centroid', 'Perimeter');
 tmpcell = struct2cell(props);
 vect_area = cell2mat(tmpcell(1,:));
@@ -41,12 +41,17 @@ tmp.centroidy = vect_centroidy' - p.ImageOffset{end}(1);
 tmp.area = vect_area';
 tmp.perimeter = vect_perimeter';    
 tmp.obj(tmp.area==0) = 0;
+if isfield(queue_in,'intensity') % Add in intensity data, if selected.
+    tmp.intensity = queue_in(end).intensity(:);
+end
+
 labeldata = [CellData.labeldata, tmp]; % Add in new frame
 blocks = [CellData.blocks, zeros(size(CellData.blocks,1),1)]; % Add empty column to blocks
 
 % Get rid of empty blocks
 blocks(sum(blocks,2)==0,:) = [];
 old_blocks = blocks;
+
 
 % Get all unattached objects and add to current list of blocks
 for frm = 2:length(queue_in)+1
@@ -103,18 +108,38 @@ for i = 1:size(CellData.blocks,1)
 end
 blocks(isnan(blocks(:,1)),:) = [];
 blocks = blocks(:,2:end); % Drop the old frame
+
+
+% if curr_frame==50
+%     disp('stop')
+% end
+
+% Error checking, stage 1: look for paired false positive/false negative events
+[blocks_pre, blocks, CellData] = robberhandling(blocks_pre, blocks, labeldata, CellData,p);
+
+
 labeldata(1) = []; 
 
 % Decision-making on PRE-EXISTING blocks
-for i = 1:size(blocks_pre,1)
-    if blocks_pre(i,1) == 0
-        if sum(blocks_pre(i,:))==0 % If object doesn't ever reappear in stack again, let it die off
-            % [Make sure we didn't kill the cell off already]
-            if CellData.FrameOut(i) > curr_frame
-                CellData.FrameOut(i) = curr_frame-1;
-                disp(['Set cell #',num2str(i),'''s frame out: ',num2str(curr_frame-1)])
-            end
-        else % False negative; get last known object position and interpolate
+out_blocks = find(blocks_pre(:,1)==0);
+
+
+while ~isempty(out_blocks)
+    i = out_blocks(1);
+    if blocks_pre(i,1) ~= 0
+        out_blocks(1) = [];
+        continue;
+    end
+    
+    % - - - - - - - True negative - - - - - - - - - - - - - - - - - - - - - - 
+    if sum(blocks_pre(i,:))==0 % If object doesn't ever reappear in stack again, let it die off
+        % [Make sure we didn't kill the cell off already]
+        if CellData.FrameOut(i) > curr_frame
+            CellData.FrameOut(i) = curr_frame-1;
+            disp(['Set cell #',num2str(i),'''s frame out: ',num2str(curr_frame-1)])
+        end
+        out_blocks(1) = [];
+    else % False negative - get last known object position and interpolate
             disp(['False negative: adding #',num2str(i), ' into frame'])
             tmp_mask = false(size(queue_in(1).nuclei));
             frm0obj = CellData.blocks(i,1);
@@ -143,10 +168,11 @@ for i = 1:size(blocks_pre,1)
             labeldata(1).centroidy = [labeldata(1).centroidy; ypt1];
             labeldata(1).area = [labeldata(1).area; pi*rad1.^2];
             labeldata(1).perimeter = [labeldata(1).perimeter; 2*pi*rad1];
-        end 
-    end
+            labeldata(1).intensity = [labeldata(1).intensity; median(labeldata(1).intensity)];
+            out_blocks(1) = [];
+    end 
 end
-
+%%
 % Decision-making on NEW blocks
 blocks(blocks(:,1)==0,:) = []; % Don't classify blocks until cell shows in present frame
 newblocks = [];
@@ -201,10 +227,20 @@ for i = 1:size(blocks,1)
         
         % Compute ideal "landing spot" for sister -> assume symmetrically-opposed division
         if ~isempty(p_idx)
-            x_coord = 2*CellData.labeldata(1).centroidx(CellData.blocks(p_idx,1)) - labeldata(1).centroidx(blocks_pre(p_idx,1));
-            y_coord = 2*CellData.labeldata(1).centroidy(CellData.blocks(p_idx,1)) - labeldata(1).centroidy(blocks_pre(p_idx,1));
-            test1 = hypot(x_coord - labeldata(1).centroidx(blocks(i,1)),y_coord - labeldata(1).centroidy(blocks(i,1)));
-            p_idx = p_idx(find(test1==min(test1),1,'first'));
+            % (if applicable) eliminate any potential sisters that are v. different in intensity.
+            if isfield(labeldata,'intensity')
+                max_diff = prctile(abs(labeldata(1).intensity(blocks(i,1))-labeldata(1).intensity),50);
+                elim = abs(labeldata(1).intensity(blocks(i,1))-labeldata(1).intensity(blocks_pre(p_idx,1))) > max_diff;
+                if sum(elim)<numel(p_idx) % Make sure we don't eliminate all candidates...
+                    p_idx(elim) = [];
+                end
+            end
+            if length(p_idx)>1
+                x_coord = 2*CellData.labeldata(1).centroidx(CellData.blocks(p_idx,1)) - labeldata(1).centroidx(blocks_pre(p_idx,1));
+                y_coord = 2*CellData.labeldata(1).centroidy(CellData.blocks(p_idx,1)) - labeldata(1).centroidy(blocks_pre(p_idx,1));
+                test1 = hypot(x_coord - labeldata(1).centroidx(blocks(i,1)),y_coord - labeldata(1).centroidy(blocks(i,1)));
+                p_idx = p_idx(find(test1==min(test1),1,'first'));
+            end
 
             % Create new lineages
             newblocks = cat(1,newblocks, blocks(i,:), blocks_pre(p_idx,:));
@@ -249,6 +285,84 @@ for i = 1:size(CellDataOut.blocks,1)
         label_bottom(queue_in(1).nuclei == CellDataOut.blocks(i,1)) = i;
     end
 end
+
 queue_out = queue_in;
 queue_out(1).nuclei = label_bottom;
 disp('- - - - - - - - - -')
+
+
+function [blocks_pre, blocks, CellData] = robberhandling(blocks_pre, blocks, labeldata, CellData,p)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% blocks_pre, blocks, labeldata, CellData] = robberhandling(blocks_pre, blocks, labeldata, CellData)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% ROBBERHANDLING looks for paired/nearby phenomena: a false positive, and a well-defined 
+% "new" cell. If it seems likely that the mistakes are related, it will try to correct
+% these trajectories.
+%
+% labeldata needs to have full information (i.e. prev frame hasn't been discarded yet)
+%
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+%%
+fn_idx = find(blocks_pre(:,1)==0 & sum(blocks_pre,2)>0);
+old_block = [CellData.blocks(:,1), blocks_pre];
+
+
+new_block = [blocks_pre; blocks];
+new_block = [zeros(size(new_block,1),1), new_block];
+
+
+for i = fn_idx(:)'
+    % Re-match our f.p. block to new blocks / preexisting blocks
+    block_tmp = [old_block(i,1), zeros(1,size(blocks_pre,2))]; 
+    allblock_tmp = new_block;
+    allblock_tmp(i,:) = 0; % Keep block from re-matching to itself.
+    links = linkblock(block_tmp, allblock_tmp, 1, labeldata, p);
+    if isempty(links); continue; end
+    [~,~,rnk1] = unique(links(:,5));
+    [~,~,rnk2] = unique(links(:,6));
+    [~,resolve_order] = sort((rnk1*2)+rnk2,'ascend');
+    robber_idx = find(allblock_tmp(:,links(resolve_order(1),4))==links(resolve_order(1),3),1,'first');
+    
+     % Possibility 1: the f.p. matches to a new block - reassign for the next frame, then flag for resegmentation
+     if robber_idx > size(blocks_pre,1)
+        % (Ensure that matched object is extremely high quality!)
+        if sum(new_block(robber_idx,:)==0)<3
+            blocks_pre(i,1) = allblock_tmp(robber_idx,2);
+            blocks_pre(i,2:end) = 0;
+            blocks(robber_idx-size(blocks_pre,1),:) = 0;
+            CellData.blocks(i,2:end) = 0;
+            disp(['Reassigned F.N. cell #',num2str(i),' with a false positive obj that appeared'])            
+        end
+     % Possibility 2: the f.p. had its true trajectory "robbed" - see if robber matches to a new object.
+     else
+        robber_block = old_block(robber_idx,:);
+        robber_block(2:end) = 0;
+        allblock_tmp = new_block;
+        allblock_tmp(robber_idx,:) = 0; % Keep block from re-matching to itself.
+        links = linkblock(robber_block, allblock_tmp, 1, labeldata, p);
+        if isempty(links); continue; end
+        links(links(:,4)>2,:) = []; % Restrict this search to present frame
+        if isempty(links); continue; end
+        [~,~,rnk1] = unique(links(:,5));
+        [~,~,rnk2] = unique(links(:,6));
+        [~,resolve_order] = sort((rnk1*2)+rnk2,'ascend');
+        newguy_idx = find(allblock_tmp(:,links(resolve_order(1),4))==links(resolve_order(1),3),1,'first');
+        newguy_idx = newguy_idx - size(blocks_pre,1);
+
+        % Step 3: perform resolution (if applicable)
+        if newguy_idx > 0
+            if sum(new_block(newguy_idx,:)==0)<3 % ensure new obj is H.Q.
+            % All checks passed. Perform switcheroo - empty out remainder of block so it's rematched
+            CellData.blocks(i,2:end) = [blocks_pre(robber_idx,1), zeros(1,p.StackSize-2)];
+            CellData.blocks(robber_idx,2:end) = [blocks(newguy_idx,1), zeros(1,p.StackSize-2)];
+            blocks_pre(i,:) = [blocks_pre(robber_idx,1), zeros(1,p.StackSize-1)];
+            blocks_pre(robber_idx,:) = [blocks(newguy_idx,1), zeros(1,p.StackSize-1)];
+            blocks(newguy_idx,:) = 0;
+            disp(['Block ', num2str(robber_idx),' stole block ', num2str(i),'''s trajectory! Reverting.'])
+            continue; % Skip the rest of the loop
+            end
+        end
+     end
+end
+
+
