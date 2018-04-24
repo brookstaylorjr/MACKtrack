@@ -14,7 +14,6 @@ function [metrics,aux, graph, info, measure] = nfkbmetrics(id,varargin)
 % id             filename or experiment ID (from Google Spreadsheet specified in "locations.mat")
 %
 % INPUT PARAMETERS (optional; specify with name-value pairs)
-% 'Baseline' 
 % 'Display'         'on' or 'off' - show graphs (default: process data only; no graphs)
 % 'Verbose'          'on' or 'off' - show verbose output
 % 'MinLifetime'      final frame used to filter for long-lived cells (default = 100)
@@ -34,15 +33,12 @@ valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
     'ID input must be spreadsheet ID or full file path');
 addRequired(p,'id',valid_id);
 % Optional parameters
-%addParameter(p,'Baseline', 1.85, @isnumeric);
-addParameter(p,'Baseline', 1.0, @isnumeric);
-addParameter(p, 'start_thresh', 2, @isnumeric); 
-addParameter(p, 'area_thresh', 90, @isnumeric); 
-addParameter(p,'MinLifetime',97, @isnumeric);
-addParameter(p,'TrimFrame',139, @isnumeric);
+addParameter(p,'Baseline', 1.8, @isnumeric);
+addParameter(p,'MinLifetime',100, @isnumeric);
+addParameter(p,'TrimFrame',255, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
     'Convection correction parameter must be single integer >= 0');
-addParameter(p,'ConvectionShift',1, valid_conv);
+addParameter(p,'ConvectionShift',0, valid_conv);
 parse(p,id, varargin{:})
 
 %% PARAMETETERS for finding off times - chosen using 'scan_off_params.m'
@@ -53,32 +49,17 @@ cutoff_time = 4; % time to look for cell activity before declaring it "off" (hrs
 off_pad = 12; % Signal time added to trajectory in  FFT calculation (keeps transients from being recorded as osc.)
 
 %% INITIALIZATION. Load and process data. Interpolate time series, calculate deriv/integral approximations
-start_thresh = p.Results.start_thresh; 
-area_thresh = p.Results.area_thresh; 
-min_lifetime = p.Results.MinLifetime; 
-convection_shift = p.Results.ConvectionShift; 
-
-
 if ~ismember('MinLifetime',p.UsingDefaults)
-   [graph, info, measure] = see_nfkb_native(id,'MinLifetime',min_lifetime,...
-                            'ConvectionShift',convection_shift, 'baseline',baseline,...
-                            'area_thresh', area_thresh,'start_thresh', start_thresh);
-   
+   [graph, info, measure] = see_nfkb_native(id,'MinLifetime',p.Results.MinLifetime,...
+                            'ConvectionShift',p.Results.ConvectionShift);
+   graph.var = graph.var(:,1:p.Results.MinLifetime);
+   graph.t = graph.t(1:size(graph.var,2));
 else
-   [graph, info, measure] = see_nfkb_native(id, 'ConvectionShift',convection_shift,...
-       'baseline', baseline,'start_thresh', start_thresh, 'area_thresh', area_thresh);
+   [graph, info, measure] = see_nfkb_native(id, 'ConvectionShift',p.Results.ConvectionShift);
 end
 
-graph.var = graph.var(:,1:min(p.Results.TrimFrame, size(graph.var,2)));
-graph.t = graph.t(1:size(graph.var,2));
-graph.opt = maketicks(graph.t,info.graph_limits,0);
-graph.opt.Name= 'NF\kappaB Activation';
 
-if ~ismember ('baseline',p.UsingDefaults)
-    baseline = info.baseline;
-end
-
-%%
+%% BASIC METRICS: TIME SERIES, DERIVATIVE, INTEGRAL
 % 1) basic time series. Interpolate over "normal" interval (12 frames per hr) if required
 t = min(graph.t):1/12:max(graph.t);
 if length(t)~=length(graph.t)
@@ -97,7 +78,7 @@ for i = 1:size(metrics.integrals,1)
 end
 
 % 3) differentiated activity - use central finite difference
-smoothed = medfilt1(metrics.time_series,3,[],2);
+smoothed = smoothrows(metrics.time_series,3);
 metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
 
@@ -127,14 +108,13 @@ for i = 1:(max_hr)
     end
 end
 
-% 5) amplitude/peak/on-vs-off metrics
 % MAX/MIN metrics
 metrics.max_amplitude = nanmax(metrics.time_series,[],2);
 metrics.max_integral = nanmax(metrics.integrals,[],2);
 metrics.max_derivative = nanmax(metrics.derivatives,[],2);
 metrics.min_derivative = nanmin(metrics.derivatives,[],2);
 
-% ACTIVITY Compute an off-time for all cells
+% ACTIVITY metrics: compute an off-time for all cells
 metrics.off_times = zeros(size(smoothed,1),1);
 inactive = [repmat(nanmin(smoothed(:,1:7),[],2),1,window_sz*2+1),smoothed(:,:),...
     repmat(nanmedian(smoothed(:,(end-window_sz:end)),2),1,window_sz*2)];
@@ -156,7 +136,7 @@ end
 metrics.off_times = (metrics.off_times-1)/12;
 metrics.off_times(metrics.off_times<0) = 0;
 
-%% METRICS OF OSCILLATION
+%% OSCILLATION METRICS
 % Calculate fourier distribution (via FFT) & power
 Fs = 1/300;
 depth = max(metrics.off_times)*12;
@@ -257,8 +237,8 @@ metrics.pk2_time = (metrics.pk2_time-1)/12;
 
 %% METRICS OF DURATION
 % Envelope width: maximum consecutive time above a threshold (envelope must begin within 1st 6 hrs)
-smoothed2 = medfilt1(metrics.time_series,5,[],2);
-aux.thresholds = linspace(0,baseline*3,25);
+smoothed2 = smoothrows(metrics.time_series,5);
+aux.thresholds = linspace(0, baseline*3, 25);
 metrics.envelope = zeros(size(metrics.time_series,1),length(aux.thresholds));
 for j = 1:length(aux.thresholds)
     thresholded = smoothed2>aux.thresholds(j);
@@ -290,6 +270,3 @@ metrics.duration = zeros(size(metrics.time_series,1),length(aux.thresholds));
 for i = 1:length(aux.thresholds)
     metrics.duration(:,i) = nansum(smoothed>aux.thresholds(i),2)/12;
 end
-
-
-
