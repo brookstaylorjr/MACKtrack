@@ -15,6 +15,8 @@ function  [CellDataOut, queue_out] =  trackNuclei(queue_in,CellData,curr_frame, 
 %%
 
 disp('Tracking decisions:')
+
+
 % Define edge image for use later in decision-making
 imgedge = false(size(queue_in(1).nuclei));
 offset = p.ImageOffset{end}-p.ImageOffset{end-1};
@@ -46,11 +48,13 @@ if isfield(queue_in,'intensity') % Add in intensity data, if selected.
 end
 
 labeldata = [CellData.labeldata, tmp]; % Add in new frame
+CellData.blocks(CellData.FrameOut<curr_frame,:) = 0; % consistency check - make sure dead blocks are emptied.
 blocks = [CellData.blocks, zeros(size(CellData.blocks,1),1)]; % Add empty column to blocks
 
 % Get rid of empty blocks
 blocks(sum(blocks,2)==0,:) = [];
 old_blocks = blocks;
+
 
 
 % Get all unattached objects and add to current list of blocks
@@ -87,20 +91,18 @@ while ~isempty(links)
         links(1,:) = [];
     end
 end
-
+%%
 % Pull pre-existing blocks (in numerically consistent order) 
 blocks_pre = zeros(size(CellData.blocks));
 for i = 1:size(CellData.blocks,1)
     col1 = find(CellData.blocks(i,:)>0,1,'first'); % Find 1st point where old block was defined
     if ~isempty(col1)
         obj = CellData.blocks(i,col1); % Get the object at that point 
-        block1 = blocks(blocks(:,col1)==obj,2:end); % Find the (updated) block with that object 
+        block1 = blocks(blocks(:,col1)==obj,2:end); % Find the (updated) block with that object
         blocks(blocks(:,col1)==obj,:) = nan; % Move updated block from blocks to blocks_old
         try
             blocks_pre(i,:) = block1;
         catch ME
-            disp(['Error in measurement:' , ME.message])
-            disp('[',num2str(block1),']')   
             disp(['Error: couldn''t match (old) block #',num2str(i),'[', num2str(CellData.blocks(i,:)),']'])
         end
         
@@ -221,7 +223,7 @@ for i = 1:size(blocks,1)
         end
         p_idx(p_ages<10) = [];
         % Filter 2: sister/parent candidates cannot be short-lived
-        p_idx(sum(blocks_pre(p_idx,:)==0,2)>=round(size(blocks_pre,2)*0.66)) = [];
+        p_idx(sum(blocks_pre(p_idx,:)==0,2)>=round(size(blocks_pre,2)*0.75)) = [];
         % Filter 3: sister + parent must be present (to compute "landing")
         p_idx(blocks_pre(p_idx,1)==0) = [];
         
@@ -331,6 +333,7 @@ for i = fn_idx(:)'
             blocks_pre(i,2:end) = 0;
             blocks(robber_idx-size(blocks_pre,1),:) = 0;
             CellData.blocks(i,2:end) = 0;
+            new_block(robber_idx,:) = 0;
             disp(['Reassigned F.N. cell #',num2str(i),' with a false positive obj that appeared'])            
         end
      % Possibility 2: the f.p. had its true trajectory "robbed" - see if robber matches to a new object.

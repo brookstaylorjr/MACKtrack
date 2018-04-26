@@ -1,6 +1,6 @@
-function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbose)
+function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbose)
+% [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % RESOLVELINKS takes top link, and decides whether to combine two objects (which may exist in a set
 % of frames). If a link is made, the function modifies remaining blocks, links, and property arrays
@@ -17,11 +17,17 @@ function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbos
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Find the blocks we're potentially linking.
 link = links(1,:);
-rows = [find(blocks(:,link(2))==link(1)), find(blocks(:,link(4))==link(3))];
-if length(rows)>2
-    disp(num2str(blocks(rows,:)))
-    error('Error: more than 2 blocks match link!')
+
+match1 = find(blocks(:,link(2))==link(1));
+if length(match1)>1
+    blocks(match1(2:end),link(2)) = 0; % error check: if obj is found multiple times, let earlier obj take precedence
 end
+match2 = find(blocks(:,link(4))==link(3));
+if length(match2)>1
+    blocks(match2(2:end),link(4)) = 0;
+end
+rows = [match1(1), match2(1)];
+
 merge_flag = 1;
 
 

@@ -22,6 +22,8 @@ function [CellData_out, queue_out] = memoryCheck(CellData, queue, cell_img, curr
 disp('Memory checking:')
 lambda = 0.02; 
 
+
+
 % Data structures: bwconncomp, cell list
 cc_old = label2cc(queue(2).cells,0);
 cc_new = label2cc(queue(1).cells,0);
@@ -31,7 +33,7 @@ cells_new = unique(queue(1).cells(queue(1).cells>0));
 cells_old = unique(queue(2).cells(queue(2).cells>0));
 shift_old = queue(2).ImageOffset;
 shift_new = queue(1).ImageOffset;
-shift_tot = shift_new(2)-shift_old(2);
+shift_tot = shift_new-shift_old;
 image_size = cc_old.ImageSize;
 
 % Data structures: masks/labels for resegmentation
@@ -55,31 +57,30 @@ swap_cells = [];
 swap_partners = [];
 swap_displacement = [];
 for n = reshape(checklist,1,length(checklist))
-    % Get objects's X/Y pos in old/new frames (in new frame's coordinates)
-    [x0, y0] = getcentroid(n, props_old, shift_tot, image_size);
-    [x1, y1] = getcentroid(n, props_new, shift_tot, image_size);
-   
-    % Generate its displacement line (convert to linear indicies)
-    steps = max([abs(x0-x1), abs(y0-y1)])+1;
-    displace_line = sub2ind(cc_all.ImageSize,round(linspace(y0,y1,steps)),round(linspace(x0,x1,steps)));
-    displace_line(ismember(displace_line,cc_new.PixelIdxList{n})) = []; % Drop anything in same cell
-    % See if most of displacement line runs through another cell/nucleus    
-    displace_line2 = displace_line(ismember(displace_line,cc_all.PixelIdxList{1}));
-    if ~isempty(displace_line2)
-        disp(num2str(n))
-    end
-    if ~strcmp(p.ImageType,'none') && (numel(displace_line2)/numel(displace_line) > 0.5) % Cell images - use rel. measure
-        jump_flag = 1;
-    elseif strcmp(p.ImageType,'none') && (numel(displace_line2)>(1.5*p.MinNucleusRadius)) % Nuc images - use abs. measure
-        jump_flag = 1;
-    else
-        jump_flag = 0;
-    end
-    if jump_flag
-        swap_cells = cat(1,swap_cells,n);
-        partner = mode(queue(1).cells(displace_line2));       
-        swap_partners = cat(1,swap_partners(:),partner);
-        swap_displacement = cat(1,swap_displacement(:),sum(ismember(displace_line2,cc_new.PixelIdxList{partner})));
+    if ~ismember(n,swap_partners)
+        % Get objects's X/Y pos in old/new frames (in new frame's coordinates)
+        [x0, y0] = getcentroid(n, props_old, shift_tot, image_size);
+        [x1, y1] = getcentroid(n, props_new, [0 0], image_size);
+
+        % Generate its displacement line (convert to linear indicies)
+        steps = max([abs(x0-x1), abs(y0-y1)])+1;
+        displace_line = sub2ind(cc_all.ImageSize,round(linspace(y0,y1,steps)),round(linspace(x0,x1,steps)));
+        displace_line(ismember(displace_line,cc_new.PixelIdxList{n})) = []; % Drop anything in same cell
+        % See if most of displacement line runs through another cell/nucleus    
+        displace_line2 = displace_line(ismember(displace_line,cc_all.PixelIdxList{1}));
+        if ~strcmp(p.ImageType,'none') && (numel(displace_line2)/numel(displace_line) > 0.5) % Cell images - use rel. measure
+            jump_flag = 1;
+        elseif strcmp(p.ImageType,'none') && (numel(displace_line2)>(1.5*p.MinNucleusRadius)) % Nuc images - use abs. measure
+            jump_flag = 1;
+        else
+            jump_flag = 0;
+        end
+        if jump_flag
+            swap_cells = cat(1,swap_cells,n);
+            partner = mode(queue(1).cells(displace_line2));       
+            swap_partners = cat(1,swap_partners(:),partner);
+            swap_displacement = cat(1,swap_displacement(:),sum(ismember(displace_line2,cc_new.PixelIdxList{partner})));
+        end
     end
 end
 %% SWAP/JUMP resolution: classify error as either swap or jump, and fix appropriately
@@ -132,7 +133,7 @@ if ~isempty(swap_cells)
             if swap_idx ~= swap_cells(i); continue; end
             swap_flag(i) = 1;
         else
-            % Check 2: is swap_cell's highest preference its partner?
+            % Check 2 (alt): is swap_cell's highest preference its partner?
             block_tmp = [swap_cells(i), zeros(1,size(CellData.blocks,2))];
             links = linkblock(block_tmp, allblock, 1, [tmp,labeldata_new], p); 
             if isempty(links); continue; end
@@ -147,7 +148,7 @@ if ~isempty(swap_cells)
 
     for i = 1:length(swap_cells)      
         if swap_flag(i)
-            % A swap is more likeley - switch trajectories of swapped cell and its partner
+            % A swap is more likely - switch trajectories of swapped cell and its partner
             queue(1).cells(cc_new.PixelIdxList{swap_cells(i)}) = swap_partners(i);
             queue(1).cells(cc_new.PixelIdxList{swap_partners(i)}) = swap_cells(i);
             queue(1).nuclei(cc_nucs.PixelIdxList{swap_partners(i)}) = swap_cells(i);
@@ -353,26 +354,22 @@ if ~isempty(addlist)
     end
     % Loop addlist - make sure that nucleus is valid, add it as a new seed.
     for i = 1:length(addlist)
-        r = addlist(i);
-        
+        r = addlist(i);     
         if ~strcmpi(p.ImageType,'none')
             nuc_mask1 = (queue(2).nuclei==r) & (mask_reseg);
         else
-            nuc_mask1 = (queue(2).nuclei==r) | (mask_reseg); % need to make exception for nuclear segmentation
+            nuc_mask1 = (queue(2).nuclei==r) | (mask_reseg); % need to make exception for nuclear-only segmentation
         end
         if sum(nuc_mask1(:))>0 % Old nucleus must overlap with cells 
-            nuc_mask = nuc_mask|nuc_mask1;
-            ctr_r = round(nprops_old(r).Centroid(2))-shift_old(1)+shift_new(1);
-            ctr_r(ctr_r<1) = 1; ctr_r(ctr_r>cc_new.ImageSize(1)) = cc_new.ImageSize(1);
-            ctr_c = round(nprops_old(r).Centroid(1))-shift_old(2)+shift_new(2);
-            ctr_c(ctr_c<1) = 1; ctr_c(ctr_c>cc_new.ImageSize(2)) = cc_new.ImageSize(2);
+            nuc_mask = nuc_mask|nuc_mask1;           
+            [ctr_c, ctr_r] = getcentroid(r,nprops_old, shift_tot, cc_old.ImageSize); % needs to be in cc_new's coords.
             nuc_seed(ctr_r,ctr_c) = r;
             % Keep blocks consistent: create new dummy obj
             new_ind = length(CellData.labeldata(1).obj)+1;
             CellData.labeldata(1).obj = [CellData.labeldata(1).obj; new_ind];
             CellData.blocks(r,1) = new_ind;
             CellData.FrameOut(r) = max(CellData.FrameOut);
-            disp(['cell #', num2str(r),' passed - added back'])
+            disp(['Cell #', num2str(r),' passed - added back'])
         else
             disp(['No room to add add cell #', num2str(r), ' - deleting'])
             CellData.FrameOut(r) = curr_frame-1;
@@ -476,8 +473,8 @@ queue_out = queue;
 
 function [x_pos, y_pos] = getcentroid(n,rprops, shift_tot, image_size)
 
-x_pos=round(rprops(n).Centroid(1))+shift_tot;
-y_pos=round(rprops(n).Centroid(2))+shift_tot;
+x_pos=round(rprops(n).Centroid(1))+shift_tot(2);
+y_pos=round(rprops(n).Centroid(2))+shift_tot(1);
 x_pos(x_pos<1)=1; x_pos(x_pos>image_size(2)) = image_size(2);
 y_pos(y_pos<1)=1; y_pos(y_pos>image_size(1)) = image_size(1);
 

@@ -66,7 +66,7 @@ if ~isempty(links)
 end
 % Resolve links until list is empty
 while ~isempty(links)
-    [links,blocks] = resolvelink(blocks,links,labeldata,p,verbose);   
+    [links,blocks] = resolvelink(blocks,links,labeldata,p);   
 end
 
 % Of remainder, look for errors in list
