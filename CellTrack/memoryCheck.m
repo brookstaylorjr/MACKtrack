@@ -360,9 +360,10 @@ if ~isempty(addlist)
         else
             nuc_mask1 = (queue(2).nuclei==r) | (mask_reseg); % need to make exception for nuclear-only segmentation
         end
-        if sum(nuc_mask1(:))>0 % Old nucleus must overlap with cells 
+        [ctr_c, ctr_r] = getcentroid(r,nprops_old, shift_tot, cc_old.ImageSize); % needs to be in cc_new's coords.
+        
+        if (sum(nuc_mask1(:))>0) && ~isnan(ctr_c) % Old nucleus must overlap with cells, and must be present in old frame
             nuc_mask = nuc_mask|nuc_mask1;           
-            [ctr_c, ctr_r] = getcentroid(r,nprops_old, shift_tot, cc_old.ImageSize); % needs to be in cc_new's coords.
             nuc_seed(ctr_r,ctr_c) = r;
             % Keep blocks consistent: create new dummy obj
             new_ind = length(CellData.labeldata(1).obj)+1;

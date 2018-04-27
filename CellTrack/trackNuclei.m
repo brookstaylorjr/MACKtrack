@@ -229,7 +229,7 @@ for i = 1:size(blocks,1)
         
         % Compute ideal "landing spot" for sister -> assume symmetrically-opposed division
         if ~isempty(p_idx)
-            % (if applicable) eliminate any potential sisters that are v. different in intensity.
+            % (if applicable) Filter 4: eliminate any potential sisters that are v. different in intensity.
             if isfield(labeldata,'intensity')
                 max_diff = prctile(abs(labeldata(1).intensity(blocks(i,1))-labeldata(1).intensity),50);
                 elim = abs(labeldata(1).intensity(blocks(i,1))-labeldata(1).intensity(blocks_pre(p_idx,1))) > max_diff;
