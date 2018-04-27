@@ -22,7 +22,7 @@ function varargout = MACKtrack(varargin)
 
 % Edit the above text to modify the response to help MACKtrack
 
-% Last Modified by GUIDE v2.5 08-Feb-2017 18:22:41
+% Last Modified by GUIDE v2.5 16-Apr-2018 19:34:39
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % Begin initialization code - DO NOT EDIT
@@ -159,7 +159,6 @@ function listbox1A_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 handles  = guidata(handles.figure1);
 % Determine user input
-get(handles.figure1,'SelectionType');
 % If user input is a double click, proceed
 if strcmp(get(handles.figure1,'SelectionType'),'open')
     index_selected = get(handles.listbox1A,'Value');
@@ -329,12 +328,12 @@ try
     if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
         id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)),1,'first');
         if ~isempty(id)
-            id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
-            if (length(id)>=1) && ~strcmp(handles.file_names{id(1)},sampleFile)
+            namelist = wellmatch(handles.file_names,'',sampleFile);       
+            id = find(~cellfun(@isempty,strfind(namelist,sampleFile)));
+            if (length(id)>=1) && ~strcmp(namelist{id(1)},sampleFile)
                 partial_match = 1;
-                id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
                 id = id(1);
-                sampleFile = [handles.file_names{id}];
+                sampleFile = [namelist{id}];
             end
             handles.parameters.NucleusMatch = filestring;
             filestring = ['''',sampleFile,''''];
@@ -378,12 +377,12 @@ if ~strcmpi(handles.parameters.ImageType,'none')
         pass = 1;
         if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
             if exist('id','var') && ~isempty(id)
-                id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)));
-                if length(id)>1
-                    id = id(cellfun(@isempty,strfind(handles.file_names(id),'thumb')));
-                    id = id(1);
-                    sampleFile = [handles.file_names{id}];
+                namelist = wellmatch(handles.file_names,'',sampleFile);       
+                id = find(~cellfun(@isempty,strfind(namelist,sampleFile)));
+                if (length(id)>=1) && ~strcmp(namelist{id(1)},sampleFile)
                     partial_match = 1;
+                    id = id(1);
+                    sampleFile = [namelist{id}];
                 end
                 handles.parameters.CellMatch = filestring;
                 filestring = ['''',sampleFile,''''];
@@ -1423,6 +1422,17 @@ end
 % ========================================================================================
 
 
+function checkbox7B_Callback(hObject, eventdata, handles)
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
+% CHECKBOX7B: use/don't use nuclear intensity data in guiding tracking decisions
+%- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+handles.parameters.UseIntensity = get(hObject,'Value');
+guidata(handles.figure1,handles)
+
+% ========================================================================================
+
+
+
 function edit7D_Callback(hObject, eventdata, handles)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % EDIT7D: square median filter size (MedianFilterSize)
@@ -1793,3 +1803,5 @@ set(handles.popupmenu6B,'Value',handles.parameters.CellFF+1);
 
 
 guidata(handles.figure1,handles)
+
+

@@ -24,8 +24,10 @@ function [CellMeasurements, ModuleData] = penult_actinModule(CellMeasurements, p
 %% [Engage on last frame only]
 if ModuleData.iter == parameters.TotalImages
     
-    % This module assumes cells were NOT segmented in tracking, use the cell label matrix from end_intensityModule
-    labels.Cell = ModuleData.CellLabel_new;
+    % If cells were not segmented, use the new cell label matrix identified in end_intensityModule
+    if strcmpi(parameters.ImageType,'none')
+        labels.Cell = ModuleData.CellLabel_new;
+    end
     
     % (Likewise, the Nuclear label matrix will be the one corresponding to the final/ground-truth measurement
     

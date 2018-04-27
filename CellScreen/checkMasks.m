@@ -51,10 +51,13 @@ handles.wells = cellfun(get_substr, handles.labels_n,'UniformOutput',0);
 
 
 handles.image_dir = namecheck([locations.scope, filesep, parameters.ImagePath_full]);
+
+
+
 image_list = quickdir(handles.image_dir);
 image_list(cellfun(@isempty,strfind(image_list,'.tif'))) = []; % Drop non-tif images
 
-[~,scope] = wellmatch(image_list,'-----');
+[image_list,scope] = wellmatch(image_list,'');
 %%
 if strcmpi(scope,'metaxpress')
     conv_well = @(str1) ['_',str1(1:3),'_s',num2str(eval(str1(end-1:end)))];
@@ -214,7 +217,6 @@ switch boundaryVal
     case 2 % Cell boundaries
         load(namecheck([handles.data_dir,filesep,'CellLabels',filesep,handles.labels_c{wellVal}]))
         boundaries = CellLabel;
-
     case 3 % Annulus boundaries
         load(namecheck([handles.data_dir,filesep,'NuclearLabels',filesep,handles.labels_n{wellVal}]))
         % Create annulus to estimate cytoplasmic area.

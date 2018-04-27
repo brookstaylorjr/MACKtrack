@@ -13,6 +13,8 @@ function [graph, info, measure] = see_nfkb_native(id,varargin)
 % 'Verbose'         'on' or 'off' - show verbose output
 % 'MinLifetime'     final frame used to filter for long-lived cells (default = 100)
 % 'ConvectionShift'  Maximum allowable time-shift between different XYs (to correct for poor mixing)
+% 'MinSize'          Minimum nuclear size required for inclusion (default = 90 pixels)
+
 %
 % OUTPUTS:  
 % graph          primary output structure; must specify
@@ -37,9 +39,10 @@ expectedFlags = {'on','off'};
 addParameter(p,'Display','off', @(x) any(validatestring(x,expectedFlags)));
 addParameter(p,'Verbose','off', @(x) any(validatestring(x,expectedFlags)));
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
-    'Convection correction parameter must be single integer >= 0');
+    'Parameter must be single integer >= 0');
 addParameter(p,'ConvectionShift',1, valid_conv);
 addParameter(p,'MinLifetime',100, @isnumeric);
+addParameter(p,'MinSize',90, valid_conv);
 
 % Parse parameters, assign to variables
 parse(p,id, varargin{:})
@@ -54,10 +57,12 @@ info.ImageExpr = info.parameters.nfkbdimModule.ImageExpr;
 
 % Set display/filtering parameters
 start_thresh = 2; % Maximal allowable start level above baseline
+area_thresh = p.Results.MinSize; % Minimum nuclear area (keeps from including small/junk objects)
+
 info.graph_limits = [-0.25 8]; % Min/max used in graphing
 dendro = 0;
 colors = setcolors;
-baseline_length = size(measure.NFkBdimNuclear,2); % Endframe for baseline calculation (default: use entire vector)
+baseline_length = size(measure.NFkBdimNuclear,2); % Endframe for baseline calculation (use entire vector)
 
 home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
@@ -83,14 +88,12 @@ if isnumeric(id)
         if id==290
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-            baseline_length = size(measure.NFkBdimNuclear,2);
             disp('Adjusted start point for this TNF expmt')
         end
         % d) 100uM CpG - delayed stimulation
         if id==283
             measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
             measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
-            baseline_length = size(measure.NFkBdimNuclear,2);
             disp('Adjusted start point for this CpG expmt')
         end
 
@@ -134,12 +137,8 @@ droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim c
 
 % NFkB normalization - subtract baseline for each cell (either starting value or 4th percentile of smoothed trajectory)
 nfkb = measure.NFkBdimNuclear(:,:);
-nfkb_smooth = nan(size(nfkb));
-for i = 1:size(nfkb,1)
-    nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
-end
-% If default end frame is specified, use entire vector for baseline calculation. Otherwise, use specified vector.
-nfkb_min = prctile(nfkb_smooth(:,1:baseline_length),2,2);
+nfkb_smooth = smoothrows(nfkb,4);
+nfkb_min = prctile(nfkb_smooth(:,1:baseline_length),4,2);
 
 nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),nfkb_min],[],2);
 nfkb = nfkb - repmat(nfkb_baseline,1,size(nfkb,2));
@@ -159,7 +158,6 @@ keep = max(droprows,[],2) == 0;
 start_lvl = nanmin(nfkb(keep,1:3),[],2);
 nuc_lvl = nanmedian(measure.MeanIntensityNuc(keep,1:31),2);
 nuc_thresh = nanmedian(nuc_lvl)+2.5*robuststd(nuc_lvl(:),2);
-area_thresh = 90;
 
 droprows =  [droprows, prctile(nfkb(:,1:8),18.75,2) > start_thresh];
 droprows =  [droprows, nanmedian(measure.MeanIntensityNuc(:,1:31),2) > nuc_thresh];

@@ -2,8 +2,9 @@ function AllData_out = filterAllData(AllData, filter_field, filter_function, ver
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % AllData_out = filterAllData(AllData_in, filter_function, verbose)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% FILTERALLDATA applies a supplied filtering function (e.g. @(x) x>0) to an input filter field (string, e.g.
-% 'MeanNuc1'). Any cells that meet this criteria (in above example, with negative values) will be filtered out.
+% FILTERALLDATA applies a supplied filtering function (e.g. @(x) x<0) to an input filter field (string, e.g.
+% 'MeanNuc1'). Any cells that meet this criteria (in above example, with negative values for x) will be filtered 
+% out (i.e. REMOVED)
 %
 %
 % INPUTS
@@ -17,7 +18,6 @@ if nargin<4
 end
 
 assert(islogical(filter_function(1)),'Filter function must be a MATLAB function that returns a logical value')
-
 
 all_cond = fieldnames(AllData);
 for i = 1:length(all_cond)

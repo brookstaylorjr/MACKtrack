@@ -21,11 +21,11 @@ imfo = imfinfo(namecheck([locations.scope,p.ImagePath,filesep,eval(p.NucleusExpr
 bit_depth = imfo.BitDepth;
 
 images = struct;
-images.nucleus = checkread(namecheck([locations.scope,p.ImagePath,filesep,eval(p.NucleusExpr)]),bit_depth);
+images.nuc = checkread(namecheck([locations.scope,p.ImagePath,filesep,eval(p.NucleusExpr)]),bit_depth);
 if ~strcmpi(p.ImageType,'none')
     images.cell = checkread(namecheck([locations.scope,p.ImagePath,filesep,eval(p.CellExpr)]),bit_depth);
 else
-    images.cell = images.nucleus;
+    images.cell = images.nuc;
 end
 
 % Add measurement images
@@ -71,7 +71,7 @@ switch lower(p.ImageType)
         X = [];
     case 'fluorescence'
         fnstem = 'fluorescence';
-        X = images.nucleus; 
+        X = images.nuc; 
         
 end
 
@@ -88,7 +88,7 @@ tocs.CellMasking = toc;
 
 % - - - - 1st label: make label matrix from nuclear image - - - -
 tic
-[data_tmp, diag_tmp] = nucleusID(images.nucleus,p,data);
+[data_tmp, diag_tmp] = nucleusID(images.nuc,p,data);
 % Save information
 handles.diagnostics.nuclei = diag_tmp;
 data = combinestructures(data_tmp,data);
@@ -97,7 +97,7 @@ tocs.NucMasking = toc;
 
 % - - - - Check cells (misc check for binucleates, missed nuclei, etc.) - - - -
 tic
-[data_tmp,diag_tmp] = doubleCheck(data,p);
+[data_tmp,diag_tmp] = doubleCheck(data,images,p);
 % Save information
 handles.diagnostics.check = diag_tmp;
 data = combinestructures(data_tmp,data);
@@ -167,7 +167,7 @@ for m = 1:length(infoFields)
    dataFields = fieldnames(handles.diagnostics.(infoFields{m}));
    for n = 1:length(dataFields)
        dataSize = size(handles.diagnostics.(infoFields{m}).(dataFields{n}));
-       if (dataSize(1) == size(images.nucleus,1)) && (dataSize(2) == size(images.nucleus,2))
+       if (dataSize(1) == size(images.nuc,1)) && (dataSize(2) == size(images.nuc,2))
            display_list = cat(2,display_list,[infoFields{m},'-',dataFields{n}]);
        end
    end

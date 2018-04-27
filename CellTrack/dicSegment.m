@@ -111,6 +111,8 @@ try
     lambda = .02;
     diagnos.seeds1 = IdentifySecPropagateSubfunction(double(data.nuclei),double(output.img_straight),cell_mask,lambda);
 catch me
+    warning (['error in ' ,me.stack.name(1),', line: ',me.stack.line(1)])
+    disp(me.message);
     diagnos.seeds1 = data.nuclei;
     output.img_straight = abs((image_in-prctile(image_in(:),0.02))/diff(prctile(image_in(:),[0.02 98])));
 end

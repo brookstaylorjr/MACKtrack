@@ -33,7 +33,7 @@ valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
     'ID input must be spreadsheet ID or full file path');
 addRequired(p,'id',valid_id);
 % Optional parameters
-addParameter(p,'Baseline', 1.85, @isnumeric);
+addParameter(p,'Baseline', 1.8, @isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
 addParameter(p,'TrimFrame',255, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
@@ -57,7 +57,9 @@ if ~ismember('MinLifetime',p.UsingDefaults)
 else
    [graph, info, measure] = see_nfkb_native(id, 'ConvectionShift',p.Results.ConvectionShift);
 end
-%%
+
+
+%% BASIC METRICS: TIME SERIES, DERIVATIVE, INTEGRAL
 % 1) basic time series. Interpolate over "normal" interval (12 frames per hr) if required
 t = min(graph.t):1/12:max(graph.t);
 if length(t)~=length(graph.t)
@@ -76,7 +78,7 @@ for i = 1:size(metrics.integrals,1)
 end
 
 % 3) differentiated activity - use central finite difference
-smoothed = medfilt1(metrics.time_series,3,[],2);
+smoothed = smoothrows(metrics.time_series,3);
 metrics.derivatives = (smoothed(:,3:end) - smoothed(:,1:end-2))/(1/6);
 
 
@@ -106,14 +108,13 @@ for i = 1:(max_hr)
     end
 end
 
-% 5) amplitude/peak/on-vs-off metrics
 % MAX/MIN metrics
 metrics.max_amplitude = nanmax(metrics.time_series,[],2);
 metrics.max_integral = nanmax(metrics.integrals,[],2);
 metrics.max_derivative = nanmax(metrics.derivatives,[],2);
 metrics.min_derivative = nanmin(metrics.derivatives,[],2);
 
-% ACTIVITY Compute an off-time for all cells
+% ACTIVITY metrics: compute an off-time for all cells
 metrics.off_times = zeros(size(smoothed,1),1);
 inactive = [repmat(nanmin(smoothed(:,1:7),[],2),1,window_sz*2+1),smoothed(:,:),...
     repmat(nanmedian(smoothed(:,(end-window_sz:end)),2),1,window_sz*2)];
@@ -135,7 +136,7 @@ end
 metrics.off_times = (metrics.off_times-1)/12;
 metrics.off_times(metrics.off_times<0) = 0;
 
-%% METRICS OF OSCILLATION
+%% OSCILLATION METRICS
 % Calculate fourier distribution (via FFT) & power
 Fs = 1/300;
 depth = max(metrics.off_times)*12;
@@ -236,8 +237,8 @@ metrics.pk2_time = (metrics.pk2_time-1)/12;
 
 %% METRICS OF DURATION
 % Envelope width: maximum consecutive time above a threshold (envelope must begin within 1st 6 hrs)
-smoothed2 = medfilt1(metrics.time_series,5,[],2);
-aux.thresholds = linspace(0,baseline*3,25);
+smoothed2 = smoothrows(metrics.time_series,5);
+aux.thresholds = linspace(0, baseline*3, 25);
 metrics.envelope = zeros(size(metrics.time_series,1),length(aux.thresholds));
 for j = 1:length(aux.thresholds)
     thresholded = smoothed2>aux.thresholds(j);
@@ -269,6 +270,3 @@ metrics.duration = zeros(size(metrics.time_series,1),length(aux.thresholds));
 for i = 1:length(aux.thresholds)
     metrics.duration(:,i) = nansum(smoothed>aux.thresholds(i),2)/12;
 end
-
-
-

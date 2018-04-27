@@ -39,7 +39,7 @@ else
     set(handles.edit2A,'String',handles.parameters.NucleusMatch)
     set(handles.edit2B,'String',handles.parameters.CellMatch)
 end
-
+% 
 set(handles.popupmenu0B,'value',1+handles.parameters.isScreen);
 if handles.parameters.isScreen
     set(handles.edit2C,'ForegroundColor',handles.gray)
@@ -143,6 +143,7 @@ set(handles.popupmenu6C,'Value',handles.parameters.Confluence+1)
 %% - - - - - - - - - - Other parameters - - - - - - - - - - - - - -
 set(handles.edit7A,'String',handles.parameters.StackSize)
 set(handles.edit7B,'String',handles.parameters.DriftDistance)
+set(handles.checkbox7B,'Value',handles.parameters.UseIntensity)
 set(handles.edit7D,'String',handles.parameters.MedianFilterSize)
 set(handles.edit7E,'String',handles.parameters.NoiseSize)
 set(handles.edit7G,'String',handles.parameters.MinCellWidth)

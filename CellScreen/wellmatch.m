@@ -5,18 +5,23 @@ function [names_out, scope_type] = wellmatch(contents, well_in, channel_in, scop
 % WELLMATCH performs partial name matching on a (cell matrix) list of file contents, returning the files that match
 % the provided well and channel.
 %
-% Valid schema, current as of 9/13/2017:
+% Valid naming schema:
 % 
-% Schema 1: MetaXpress (Molecular Devices)
-% 1) .tif only
-% 2) anything with the word "thumb" in the title will be ignored
-% 3) wells are zero-padded and surrounded by underscores (e.g. "_H08_")
+% (1): MetaXpress (Molecular Devices) ('metaexpress')
+%   A) .tif only
+%   B) anything with the word "thumb" in the title will be ignored
+%   C) wells are zero-padded and surrounded by underscores (e.g. "_H08_")
+%   D) filenames include a database ID - a set of 8,4,4,4, and 12 hex characters, separated by dashes
 %
+% (2): Slidebook (3i) ('slidebook')
+%   A) .tif or .tiff
+%   B) wells are NOT zero-padded, are preceded by a space, and succeeed by an underscore (e.g. " H5_" 
+%   C) omit '.log' and '.xml' files (if there)
 %
-% Schema 2: Slidebook (3i)
-% 1) .tif only (NOT compatible w/ old versions of Slidebook!!)
-% 2) wells are NOT zero-padded, are preceded by a space, and succeeed by an underscore (e.g. " H5_" 
-% 3) omit '.log' and '.xml' files (if there)
+% (3): Steve Cappell's naming script ('cappell')
+%   A) .tif only
+%   B) wells are specified by (non-zero-padded) numbers @ the beginning - e.g. 5_03_01_DAPI.tif is E03, site 5.
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -34,29 +39,55 @@ if nargin < 4
     % b) Slidebook: last characters of image names should be '_C[0-9].tif'
     elseif ~isempty(regexp(imglist{1}, '_C[0-9].tif','ONCE'))
         scope_type = 'slidebook';
+    % c) Steve Cappell's script: image names should begin with single number-underscore-number
+    elseif ~isempty(regexp(imglist{1}(1:3), '[1-8]_[1-9]','ONCE'))
+        scope_type = 'cappell';
     else
         error('No valid image names found in your specified directory')
     end
-
-
 end
 
 
 %% 2) Based on scope_type, filter images appropriately
-switch scope_type
-    case 'metaxpress'
-        names_out = contents(cellfun(@isempty,strfind(contents,'_thumb'))...
-            &~cellfun(@isempty,strfind(contents,['_',well_in,'_'])));     
-    case 'slidebook'
-        % Strip zero padding from well
-        if strcmp(well_in(2),'0')
-            well_in = well_in([1 3]);
-        end
-        
-        names_out = contents(cellfun(@isempty,strfind(contents,'.xml'))...
-            & cellfun(@isempty,strfind(contents,'.log'))...
-            &~cellfun(@isempty,strfind(contents,[' ',well_in,'_'])));
+
+if ~isempty(well_in)
+    switch scope_type
+        case 'metaxpress'
+            names_out = contents(cellfun(@isempty,strfind(contents,'_thumb'))...
+                &~cellfun(@isempty,strfind(contents,['_',well_in,'_'])));     
+        case 'slidebook'
+            % Strip zero padding from well
+            if strcmp(well_in(2),'0')
+                well_in = well_in([1 3]);
+            end
+
+            names_out = contents(cellfun(@isempty,strfind(contents,'.xml'))...
+                & cellfun(@isempty,strfind(contents,'.log'))...
+                &~cellfun(@isempty,strfind(contents,[' ',well_in,'_'])));
+        case 'cappell'
+            % Convert well_in to numerical value
+            row = double(well_in(1))-64;
+            col = eval(well_in(2:end));
+            well_in = [num2str(row),'_',num2str(col)];
+            firstfour = @(str) str(1:4);
+            contents_tmp = cellfun(firstfour,contents,'UniformOutput',0);        
+            names_out = contents(~cellfun(@isempty,strfind(contents_tmp,well_in)));   
+
+    end
+else % No well specified - just filter out 'bad' files
+    switch scope_type
+        case 'metaxpress'
+            names_out = contents(cellfun(@isempty,strfind(contents,'_thumb')));     
+        case 'slidebook'
+            names_out = contents(cellfun(@isempty,strfind(contents,'.xml'))...
+                & cellfun(@isempty,strfind(contents,'.log')));
+        case 'cappell'     
+            names_out = contents;   
+    end
+    
+
 end
+
 
 % If input channel is defined, filter further
 if nargin>2

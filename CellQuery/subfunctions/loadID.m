@@ -14,7 +14,7 @@ function [measure, info, AllMeasurements] = loadID(id, verbose)
 % AllMeasurements  originally-saved output file, augmented w/ measurement-specific information
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 if nargin<2
-    verbose =1 ;
+    verbose=1;
 end
 
 
@@ -64,7 +64,7 @@ info.fields = fieldnames(measure);
 % Add measurement-specific information and add to AllParameters:
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % - for see_nfkb calculate base image distributions and threshold for positive NFkB expression
-% - for see_nfkb_native, calculate (adjusted) nfkb & nuclear image distributions
+% - for see_nfkb_native, calculate (adjusted) nfkb image background levels
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 %
 % Read in 1st image from each XY position, calculate background mean/std (resave AllParameters)

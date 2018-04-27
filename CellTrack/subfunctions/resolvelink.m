@@ -1,6 +1,6 @@
-function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbose)
+function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbose)
+% [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % RESOLVELINKS takes top link, and decides whether to combine two objects (which may exist in a set
 % of frames). If a link is made, the function modifies remaining blocks, links, and property arrays
@@ -9,19 +9,25 @@ function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p, verbos
 % e.g. object blocks [0 1 0 2 0] and [4 0 0 0 0] could be combined into a single block [4 1 0 2 0]
 %
 % blocks      array showing linked objects across frames
-% links       potentially-linked objects -> [obj1 obj1frame obj2 obj2frame dist delta_area/perim].
-% ranking     ranking of links -> aggregate of positional/shape changes
+% links       potentially-linked objects -> [obj1 obj1frame obj2 obj2frame dist delta_area/perim]
+%             (or, if provided, last column is replaced with intensity)
 % labeldata  structure with centroid,perimeter, and area information
 % p           parameters structure
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % Find the blocks we're potentially linking.
 link = links(1,:);
-rows = [find(blocks(:,link(2))==link(1)), find(blocks(:,link(4))==link(3))];
-if length(rows)>2
-    disp(num2str(blocks(rows,:)))
-    error('Error: more than 2 blocks match link!')
+
+match1 = find(blocks(:,link(2))==link(1));
+if length(match1)>1
+    blocks(match1(2:end),link(2)) = 0; % error check: if obj is found multiple times, let earlier obj take precedence
 end
+match2 = find(blocks(:,link(4))==link(3));
+if length(match2)>1
+    blocks(match2(2:end),link(4)) = 0;
+end
+rows = [match1(1), match2(1)];
+
 merge_flag = 1;
 
 
@@ -69,7 +75,7 @@ if p.debug
     disp('. . .')
 end
 
-if merge_flag % Link accepted- update links and blocks 
+if merge_flag % Link accepted - update links and blocks 
     % Make new block, delete old ones
     new_block = blocks(rows(1),:) + blocks(rows(2),:);
     blocks(rows,:) = [];
@@ -85,11 +91,9 @@ if merge_flag % Link accepted- update links and blocks
 
     if ~isempty(new_links)
         links = cat(1,links, new_links);
-        % Rank links on distance travelled and similarity (average of perimeter/area changes)
-        [~, idx] = sort(links(:,5),'ascend');
-        rnk1(idx) = 1:numel(idx);
-        [~, idx] = sort(links(:,6),'ascend');
-        rnk2(idx) = 1:numel(idx);
+        % Rank links on distance travelled and morphological (or intensity) similarity
+        [~,~,rnk1] = unique(links(:,5));
+        [~,~,rnk2] = unique(links(:,6));
         [~,resolve_order] = sort((rnk1*2)+rnk2,'ascend');
         links = links(resolve_order,:);
     end

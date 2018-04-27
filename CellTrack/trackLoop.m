@@ -135,11 +135,7 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
 
         % NUCLEUS/CELL CHECKS (preliminary)
         tic
-        if exist('future','var')
-            present = doubleCheck(data, parameters, future);
-        else
-            present = doubleCheck(data,parameters);
-        end
+        present = doubleCheck(data, images, parameters);
         data = combinestructures(present,data);
         tocs.CheckCells = toc;
 

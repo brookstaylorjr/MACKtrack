@@ -65,7 +65,7 @@ for i = 1:length(divides_r)-1
 end
 all_corr = medfilt2(all_corr/prod(n),[3 3]);
 [r, c] = find(all_corr==max(all_corr(:)),1,'first');
-image_jump = [r - blocksize(1)*sz_down, c - blocksize(2)*sz_down];
+image_jump = [(r - blocksize(1))*sz_down, (c - blocksize(2))*sz_down];
 
 % if max(all_corr(:)) < 0.35
 %     image_jump = [0  0]; % If we couldn't get an accurate fix, just assume no jump at all.
