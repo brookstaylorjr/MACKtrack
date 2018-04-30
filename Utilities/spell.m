@@ -14,29 +14,36 @@ if nargin==1
     precision = 3;
 end
 
-tot_length = 3+precision;
+if isempty(n)
+    str = '';
+   
+else
+    tot_length = 3+precision;
 
-if size(n,1)>1
-    disp('[...')
-    for i=1:size(n,1)
+    if size(n,1)>1
+        disp('[...')
+        for i=1:size(n,1)
+            str = [];
+            for j = 1:size(n,2)
+                substr = num2str(n(i,j),precision);
+                str = [str,substr,repmat(' ',1,tot_length-length(substr))];
+            end
+            disp(str)
+        end
+        disp('];')
+    else
         str = [];
         for j = 1:size(n,2)
-            substr = num2str(n(i,j),precision);
+            substr = num2str(n(1,j),precision);
             str = [str,substr,repmat(' ',1,tot_length-length(substr))];
         end
-        disp(str)
+
+
     end
-    disp('];')
-else
-    str = [];
-    for j = 1:size(n,2)
-        substr = num2str(n(1,j),precision);
-        str = [str,substr,repmat(' ',1,tot_length-length(substr))];
-    end
-    if nargout<1
-        disp(['[ ', str,' ]']);
-    else
-        str = ['[ ', str,' ]'];
-    end
-    
 end
+
+        if nargout<1
+            disp(['[ ', str,' ]']);
+        else
+            str = ['[ ', str,' ]'];
+        end

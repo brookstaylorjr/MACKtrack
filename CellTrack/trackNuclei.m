@@ -68,6 +68,11 @@ for frm = 2:length(queue_in)+1
     end
 end
 
+% Error checker: drop out any block element that's out of bounds.
+for i = 1:numel(labeldata)
+    blocks(blocks(:,i)>numel(labeldata(i).obj),i) = 0;
+end
+
 % Get initial set of links- don't link pre-existing objects together
 links = [];
 for i = 1:(size(blocks,1)-1)
