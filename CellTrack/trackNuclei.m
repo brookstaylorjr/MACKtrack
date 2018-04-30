@@ -56,7 +56,6 @@ blocks(sum(blocks,2)==0,:) = [];
 old_blocks = blocks;
 
 
-
 % Get all unattached objects and add to current list of blocks
 for frm = 2:length(queue_in)+1
     unattached = labeldata(frm).obj(~ismember(labeldata(frm).obj,blocks(:,frm)));
@@ -279,7 +278,7 @@ end
 
 % Wrap-up: add in blocks and CellData fields
 CellDataOut.FrameIn = [CellData.FrameIn; curr_frame*ones(size(blockedge))];
-CellDataOut.FrameOut = [CellData.FrameOut; (max(p.TimeRange))*ones(size(blockedge))];
+CellDataOut.FrameOut = [CellData.FrameOut; (numel(p.TimeRange))*ones(size(blockedge))];
 CellDataOut.Parent = [CellData.Parent; blockparent];
 CellDataOut.Edge = [CellData.Edge; blockedge];
 CellDataOut.labeldata = labeldata;

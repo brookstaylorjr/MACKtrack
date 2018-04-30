@@ -87,7 +87,7 @@ blocks(isnan(blocks(:,1)),:) = [];
 CellData.blocks = blocks;
 CellData.labeldata = labeldata;
 CellData.FrameIn = ones(size(CellData.blocks,1),1);
-CellData.FrameOut = ones(size(CellData.blocks,1),1)*(max(p.TimeRange));
+CellData.FrameOut = ones(size(CellData.blocks,1),1)*(numel(p.TimeRange));
 CellData.Parent = zeros(size(CellData.blocks,1),1);
 CellData.Edge = false(size(CellData.blocks,1),1);
 
