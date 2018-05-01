@@ -27,7 +27,10 @@ for i = 1:length(oldfields)
 end
 
 % Loading/saving expressions and directories
-set(handles.edit1A,'String',namecheck(handles.parameters.ImagePath))
+handles.parameters.ImagePath = namecheck(handles.parameters.ImagePath);
+handles.parameters.SaveDirectory = namecheck(handles.parameters.SaveDirectory);
+
+set(handles.edit1A,'String',handles.parameters.ImagePath)
 set(handles.edit2C,'String',handles.parameters.XYExpr)
 set(handles.edit2D,'String',handles.parameters.TimeExpr)
 set(handles.edit3A,'String',handles.parameters.SaveDirectory)
@@ -226,7 +229,7 @@ catch ME
 end
 
 try
-    filePath = [handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr2)];
+    filePath = namecheck([handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr2)]);
     if exist(filePath,'file')
         set(handles.text7L_2,'ForegroundColor',handles.blue)    
     else
@@ -236,7 +239,7 @@ catch ME
     set(handles.text7L_2,'ForegroundColor',handles.gray)
 end
 try
-    filePath = [handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr3)];
+    filePath = namecheck([handles.locations.scope, handles.parameters.ImagePath,eval(handles.parameters.(contents(1).name).ImageExpr3)]);
     if exist(filePath,'file')
         set(handles.text7M_2,'ForegroundColor',handles.blue)    
     else

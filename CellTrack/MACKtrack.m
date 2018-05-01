@@ -546,9 +546,6 @@ if (FileName~=0)
     handles = initializeParameters([PathName,FileName], handles);
     % Load from parent directory and update handles structure
     load_listbox(handles.parameters.ImagePath, handles)
-    % Resave parameters
-    parameters = handles.parameters;
-    save([PathName,FileName],'parameters');
 end
 % ========================================================================================
 

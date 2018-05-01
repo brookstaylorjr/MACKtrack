@@ -75,7 +75,7 @@ if isnumeric(varargin{1})
                 try
                  trackLoop(parameters,xyPos)
                 catch ME
-                    disp(['Error in tracking position ', num2str(xyPos),':' , ME.message])
+                    disp(['Error in tracking position ', num2str(xyPos),': ' , ME.message])
                     for err = 1:length(ME.stack)
                         disp(['-> ', ME.stack(err).name,', line ', num2str(ME.stack(err).line)])
                     end
