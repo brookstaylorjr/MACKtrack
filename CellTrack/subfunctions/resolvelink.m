@@ -1,4 +1,4 @@
-function [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p)
+function [links, blocks] = resolvelink(blocks, links, labeldata, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % [newlinks, newblocks] = resolvelink(blocks, links, labeldata, p)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -27,6 +27,13 @@ if length(match2)>1
     blocks(match2(2:end),link(4)) = 0;
 end
 rows = [match1(1), match2(1)];
+
+% Error check: double check that we aren't linking blocks with overlapping frames
+if max((blocks(rows(1),:)~=0)+ (blocks(rows(2),:)~=0))>1
+    links(1,:) = []; % Drop link
+    return;
+end
+
 
 merge_flag = 1;
 
@@ -102,7 +109,3 @@ else % Link was rejected, so just delete top link (and its duplicates)
     links((links(:,1)==link(1)) & (links(:,2)==link(2)) & (links(:,3)==link(3)) & (links(:,4)==link(4)),:) = [];
     links((links(:,1)==link(3)) & (links(:,2)==link(4)) & (links(:,3)==link(1)) & (links(:,4)==link(2)),:) = [];
 end
-
-% Output updated links and blocks.
-newlinks = links;
-newblocks = blocks;

@@ -26,7 +26,7 @@ end
 
 % Make sure we're not trying to match an empty block (or a full one)
 if (sum(block1>0)==0) ||  (sum(block1>0)==length(block1))
-    comp_blocks(:) = 0;
+    return
 end
 
 if max(comp_blocks) > 0

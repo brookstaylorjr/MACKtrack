@@ -89,23 +89,7 @@ end
 % Rank/resolve links on distance travelled and similarity (average of perimeter/area changes)
 while ~isempty(links)
     % Resolve link (unless it tries to link together two old blocks)
-    if (~ismember(links(1,1),old_blocks(:,links(1,2)))) || (~ismember(links(1,3),old_blocks(:,links(1,4))))
-        % Temporary - see if we're resolving non totally-complementary blocks
-    link = links(1,:);
-    match1 = find(blocks(:,link(2))==link(1));
-    if length(match1)>1
-        blocks(match1(2:end),link(2)) = 0; % error check: if obj is found multiple times, let earlier obj take precedence
-    end
-    match2 = find(blocks(:,link(4))==link(3));
-    if length(match2)>1
-        blocks(match2(2:end),link(4)) = 0;
-    end
-    rows = [match1(1), match2(1)];
-    if sum((blocks(rows(1),:)~=0)+ (blocks(rows(2),:)~=0))>1
-        error('stop here because we did something bad.')
-    end
-        
-        
+    if (~ismember(links(1,1),old_blocks(:,links(1,2)))) || (~ismember(links(1,3),old_blocks(:,links(1,4))))    
         [links,blocks] = resolvelink(blocks,links,labeldata,p);
     else
         links(1,:) = [];
