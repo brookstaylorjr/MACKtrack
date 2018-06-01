@@ -165,55 +165,59 @@ colormap(cbrewer('seq','PuBu',256))
 % (Calculate these on a per well basis, including standard error)
 
 % ~~~~~~~~~~~~~~  Parameters for bar plot  ~~~~~~~~~~~~~
-well_data = xdata_by_well;
-subset = 5:6; % Conditions you want to plot
-name1 = 'Mean PPARg Expression';
-name2 = 'Expressing cells';
 
-threshold = 500; % Threshold to determine "percent expressing"
-% ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-% Initialize some things.
-colors = setcolors;
-color_theme = colors.theme1(end:-1:1); % This is 4 colors: dark gray, dark blue, light blue, then red.
-color_theme = repmat(color_theme,[1 ceil(length(condition_names)/length(color_theme))]); % Repeat colors if there are >4 subsets
-xlabels = condition_names(subset);
+for idx1 = 1:length(pparg)
+    well_data = pparg{idx1};
+    subset = 5:6; % Conditions you want to plot
+    name1 = 'Mean PPARg Expression';
+    name2 = 'Expressing cells';
 
-% Initialize structures to hold data
-all_means = zeros(1, length(subset));
-all_err =  zeros(1, length(subset));
-pct_means = zeros(1, length(subset));
-pct_err = zeros(1,length(subset));
+    threshold = 500; % Threshold to determine "percent expressing"
+    % ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-% Fill in data
-thresh_func = @(vect) sum(vect>threshold)/numel(vect);
-for i = 1:length(subset)
-    m = cellfun(@nanmean,well_data{subset(i)});
-    all_means(i) = mean(m);
-    all_err(i) = std(m)/sqrt(length(m));
-    m = cellfun(thresh_func,well_data{subset(i)});
-    pct_means(i) = mean(m);
-    pct_err(i) = std(m)/sqrt(length(m));
+    % Initialize some things.
+    colors = setcolors;
+    color_theme = colors.theme1(end:-1:1); % This is 4 colors: dark gray, dark blue, light blue, then red.
+    color_theme = repmat(color_theme,[1 ceil(length(condition_names)/length(color_theme))]); % Repeat colors if there are >4 subsets
+    xlabels = condition_names(subset);
+
+    % Initialize structures to hold data
+    all_means = zeros(1, length(subset));
+    all_err =  zeros(1, length(subset));
+    pct_means = zeros(1, length(subset));
+    pct_err = zeros(1,length(subset));
+
+    % Fill in data
+    thresh_func = @(vect) sum(vect>threshold)/numel(vect);
+    for i = 1:length(subset)
+        m = cellfun(@nanmean,well_data{subset(i)});
+        all_means(i) = mean(m);
+        all_err(i) = std(m)/sqrt(length(m));
+        m = cellfun(thresh_func,well_data{subset(i)});
+        pct_means(i) = mean(m);
+        pct_err(i) = std(m)/sqrt(length(m));
+    end
+
+    % 1st figure: mean expression levels (w/ standard error, by well)
+    figure('Position',positionfig(400,200),'Name', 'Mean Values')
+    hold(gca,'on')
+    for i = 1:length(all_means)
+        bar(i,all_means(i),'FaceColor',color_theme{i},'EdgeColor','none')
+    end
+    set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1],'TickLabelInterpreter','None')
+    h = terrorbar(1:length(all_means),all_means,all_err,0.4);
+    set(h,'Color',colors.grays{3},'LineWidth',2);
+    ylabel(name1,'FontWeight','bold')
+
+    % 2nd figure: mean percentage above threshold (w/ standard error, by well)
+    figure('Position',positionfig(400,200),'Name','Percentage above threshold')
+    hold(gca,'on')
+    for i = 1:length(pct_means)
+        bar(i,pct_means(i),'FaceColor',color_theme{i},'EdgeColor','none')
+    end
+    set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1],'TickLabelInterpreter','None')
+    h = terrorbar(1:length(pct_means),pct_means,pct_err,0.4);
+    set(h,'Color',colors.grays{3},'LineWidth',2);
+    ylabel(name2,'FontWeight','bold')
 end
-
-% 1st figure: mean expression levels (w/ standard error, by well)
-figure('Position',positionfig(400,200),'Name', 'Mean Values')
-hold(gca,'on')
-for i = 1:length(all_means)
-    bar(i,all_means(i),'FaceColor',color_theme{i},'EdgeColor','none')
-end
-set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1],'TickLabelInterpreter','None')
-h = terrorbar(1:length(all_means),all_means,all_err,0.4);
-set(h,'Color',colors.grays{3},'LineWidth',2);
-ylabel(name1,'FontWeight','bold')
-
-% 2nd figure: mean percentage above threshold (w/ standard error, by well)
-figure('Position',positionfig(400,200),'Name','Percentage above threshold')
-hold(gca,'on')
-for i = 1:length(pct_means)
-    bar(i,pct_means(i),'FaceColor',color_theme{i},'EdgeColor','none')
-end
-set(gca,'XTick',1:length(subset),'XTickLabel',xlabels,'XLim',[0 length(subset)+1],'TickLabelInterpreter','None')
-h = terrorbar(1:length(pct_means),pct_means,pct_err,0.4);
-set(h,'Color',colors.grays{3},'LineWidth',2);
-ylabel(name2,'FontWeight','bold')

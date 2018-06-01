@@ -2,12 +2,12 @@ function [str] = spell(n,precision)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 % [str] = spell(n,precision)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
-% SPELL formats and displays a matrix in a clean, copyable format. SPELL uses precision of 3 by default; can pass as an 
-% additional (optional) argument (default precision = 4)
+% SPELL formats and displays a matrix in a clean, copyable format. SPELL uses precision of 3 by default; it can be 
+% passed as an additional (optional) argument.
 %
 % INPUTS:
 % n           2D matrix of numerical values
-% precision   (optional) numerical precision of output values (default=4)
+% precision   (optional) numerical precision of output values (default=3)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 if nargin==1
