@@ -162,7 +162,8 @@ for cycle = 1:(length(parameters.TimeRange)+parameters.StackSize-1)
             end
         end
         future = cat(1,future,data);   
-        tocs.ImageLoading = 0; tocs.CellMasking = 0; tocs.NucMasking = 0; tocs.CheckCells = 0; % zero out unused tics   
+        tocs.ImageLoading = 0; tocs.CellMasking = 0; tocs.NucMasking = 0; tocs.CheckCells = 0; % zero out unused tics
+        parameters.ImageOffset = [parameters.ImageOffset(2:end),{[0 0]}];
     end
    
     

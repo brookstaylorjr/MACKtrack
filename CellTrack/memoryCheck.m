@@ -53,6 +53,7 @@ props_old= regionprops(queue(2).cells, 'Centroid','Area','Perimeter');
 
 
 %% SWAP/JUMP check - make sure no cell leaps across another.
+
 swap_cells = [];
 swap_partners = [];
 swap_displacement = [];

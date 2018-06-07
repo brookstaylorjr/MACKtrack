@@ -1,4 +1,4 @@
-function [ha, plot_order] = ranksmult(graph_data, rankfactor, varargin)
+function [ha, plotted_idx] = ranksmult(graph_data, rankfactor, varargin)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % ha = ranksmult(graph_data, rankfactor)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
@@ -44,7 +44,13 @@ parse(p,graph_data, rankfactor, varargin{:})
 measure_bounds = p.Results.YLim;
 xvect = p.Results.x;
 %% Rank using rank factors; scale 0 to 100
+
+% Strip out NaNs
+drops = isnan(rankfactor);
+graph_no_nan = graph_data(~drops,:);
+rankfactor(drops) = [];
 [rank_val,idx] = sort(rankfactor,'ascend');
+
 rank_val = floor((rank_val-min(rank_val))/(max(rank_val)-min(rank_val))*100);
 
 % Set maximum number of subplots, then order individuals (even spacing) if over maximum
@@ -55,6 +61,7 @@ else
     plot_order = idx(floor(linspace(1,length(idx),num_plots)));
     rank_val = rank_val(floor(linspace(1,length(idx),num_plots)));
 end
+
 
 % Set graph characteristics
 line_colors = cbrewer('div','Spectral',121);
@@ -68,8 +75,9 @@ ha = tight_subplot(p.Results.PlotSize(1),p.Results.PlotSize(2));
 
 
 for i =1:length(plot_order)
-    plot(ha(i),xvect,graph_data(plot_order(i),1:length(xvect)),...
+    plot(ha(i),xvect,graph_no_nan(plot_order(i),1:length(xvect)),...
         'Color',line_colors(rank_val(i)+1,:), 'LineWidth',2)
+
     set(ha(i),'XLim',[min(xvect) max(xvect)],'YLim',measure_bounds)
     set(ha(i),'XTickLabel',{[]}) 
     set(ha(i),'YTickLabel',{[]})
@@ -83,4 +91,17 @@ for i =1:length(plot_order)
     end
     
     text(xpos,ypos,['#',num2str(i),': x = ',num2str(disp_str)],'Parent',ha(i),'HorizontalAlignment','right')
+end
+
+
+% In case NaNs were dropped, match each plot_order idx into the original
+plotted_idx = plot_order;
+
+if size(graph_data,1)>size(graph_no_nan,1)
+    for i = 1:length(plotted_idx)
+        plotted_idx(i) = find(max(graph_data - repmat(graph_no_nan(plot_order(i),:),[size(graph_data,1),1]),[],2)==0,1, 'first');
+    
+    end
+
+
 end
