@@ -33,7 +33,7 @@ valid_id = @(x) assert((isnumeric(x)&&length(x)==1)||exist(x,'file'),...
     'ID input must be spreadsheet ID or full file path');
 addRequired(p,'id',valid_id);
 % Optional parameters
-addParameter(p,'Baseline', 1.8, @isnumeric);
+addParameter(p,'Baseline', 1.75, @isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
 addParameter(p,'TrimFrame',255, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...

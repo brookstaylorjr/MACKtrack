@@ -84,7 +84,7 @@ legend_entries = cell(1,cohorts);
 
 %%
 for i = 1:cohorts
-    cohort_trajectories(i,:) = nanmean(data(groups(i):groups(i+1),:));
+    cohort_trajectories(i,:) = nanmedian(data(groups(i):groups(i+1),:));
     if i==1
         legend_entries{i} = ['1st - ',num2ordinal(pctiles(i+1),0), ' pctile'];
     else

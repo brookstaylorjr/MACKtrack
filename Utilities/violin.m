@@ -171,9 +171,10 @@ if strcmpi(p.Results.Connect,'on')
 else
     lnstyl = 'o';
 end
-
+if p.Results.MarkerSize>0
 plot(violin, places,medians,lnstyl,'MarkerFaceColor',[1 1 1],'MarkerEdgeColor',[0 0 0],...
     'Color', [0 0 0],'LineWidth',1.2,'MarkerSize',p.Results.MarkerSize)
+end
 hold(violin,'off')
 set(violin,'YLim',ylim,'XLim',x_lim);
 

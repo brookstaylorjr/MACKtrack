@@ -86,8 +86,8 @@ if isnumeric(id)
 
         % c) 0.33ng TNF - delayed stimulation
         if id==290
-            measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,4:end);
-            measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,4:end);
+            measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,2:end);
+            measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,2:end);
             disp('Adjusted start point for this TNF expmt')
         end
         % d) 100uM CpG - delayed stimulation
@@ -137,8 +137,11 @@ droprows = [droprows, sum(measure.NFkBdimCytoplasm(:,1:4)==0,2)>0]; % Very dim c
 
 % NFkB normalization - subtract baseline for each cell (either starting value or 4th percentile of smoothed trajectory)
 nfkb = measure.NFkBdimNuclear(:,:);
-nfkb_smooth = smoothrows(nfkb,4);
-nfkb_min = prctile(nfkb_smooth(:,1:baseline_length),4,2);
+nfkb_smooth = nan(size(nfkb));
+for i = 1:size(nfkb,1)
+    nfkb_smooth(i,~isnan(nfkb(i,:))) = medfilt1(nfkb(i,~isnan(nfkb(i,:))),3);
+end
+nfkb_min = prctile(nfkb_smooth(:,1:baseline_length),5,2);
 
 nfkb_baseline = nanmin([nanmin(nfkb(:,1:4),[],2),nfkb_min],[],2);
 nfkb = nfkb - repmat(nfkb_baseline,1,size(nfkb,2));
