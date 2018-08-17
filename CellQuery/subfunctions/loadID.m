@@ -17,7 +17,6 @@ if nargin<2
     verbose=1;
 end
 
-
 tic
 home_folder = mfilename('fullpath'); % Load locations (for images and output data)
 slash_idx = strfind(home_folder,filesep);

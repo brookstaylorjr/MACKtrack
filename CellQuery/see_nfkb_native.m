@@ -64,15 +64,19 @@ dendro = 0;
 colors = setcolors;
 baseline_length = size(measure.NFkBdimNuclear,2); % Endframe for baseline calculation (use entire vector)
 
+% Look for locations .mat in default MACKtrack directory, or in current directory
 home_folder = mfilename('fullpath');
 slash_idx = strfind(home_folder,filesep);
-home_folder = home_folder(1:slash_idx(end-1));
-load([home_folder, 'locations.mat'],'-mat')
+if exist([home_folder(1:slash_idx(end-1)),'locations.mat'],'file')
+    load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
+elseif exist([home_folder(1:slash_idx(end)),'locations.mat'],'file')
+    load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
+end
 
 % Experiment-specific visualization settings/tweaks (set by spreadsheet URL)
 % BT's experiments
 if isnumeric(id)
-    if  ~isempty(strfind(locations.spreadsheet,'10o_d9HN8dhw8bX4tbGxFBJ63ju7tODVImZWNrnewmwY'))
+    if  ~isempty(strfind(locations.spreadsheet,'2PACX-1vSmFCMOlGYOUzq'))
         % a) Heterozygous cell experiments
         if (id <= 270) || ismember(id,[370:379, 384:391, 395, 396])
             start_thresh = 1.5;
@@ -82,13 +86,6 @@ if isnumeric(id)
         % b) bad light guide (4 experiments from same day)
         if ismember(id,315:318)
             info.graph_limits = [-0.2 4];
-        end
-
-        % c) 0.33ng TNF - delayed stimulation
-        if id==290
-            measure.NFkBdimNuclear = measure.NFkBdimNuclear(:,2:end);
-            measure.NFkBdimCytoplasm = measure.NFkBdimNuclear(:,2:end);
-            disp('Adjusted start point for this TNF expmt')
         end
         % d) 100uM CpG - delayed stimulation
         if id==283

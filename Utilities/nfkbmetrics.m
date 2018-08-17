@@ -35,7 +35,7 @@ addRequired(p,'id',valid_id);
 % Optional parameters
 addParameter(p,'Baseline', 1.75, @isnumeric);
 addParameter(p,'MinLifetime',100, @isnumeric);
-addParameter(p,'TrimFrame',255, @isnumeric);
+addParameter(p,'TrimFrame',254, @isnumeric);
 valid_conv = @(x) assert(isnumeric(x)&&(x>=0)&&(length(x)==1),...
     'Convection correction parameter must be single integer >= 0');
 addParameter(p,'ConvectionShift',0, valid_conv);
@@ -238,7 +238,7 @@ metrics.pk2_time = (metrics.pk2_time-1)/12;
 %% METRICS OF DURATION
 % Envelope width: maximum consecutive time above a threshold (envelope must begin within 1st 6 hrs)
 smoothed2 = smoothrows(metrics.time_series,5);
-aux.thresholds = linspace(0, baseline*3, 25);
+aux.thresholds = linspace(0, baseline*3, 40);
 metrics.envelope = zeros(size(metrics.time_series,1),length(aux.thresholds));
 for j = 1:length(aux.thresholds)
     thresholded = smoothed2>aux.thresholds(j);

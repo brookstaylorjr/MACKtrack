@@ -8,7 +8,7 @@ load('/Volumes/labdata/brooks/Tracked/2016-10-24_physio-screen/Day 4/AllData.mat
 %load('Z:\brooks\Tracked\2016-10-24_physio-screen\Day 4\AllData.mat') % For Windows
 
 
-% Summarize data contents
+%% Summarize data contents
 condition_names = fieldnames(AllData);
 measurement_names = fieldnames(AllData.(condition_names{1}).Measurements);
 disp('Conditions in this dataset:')
@@ -18,7 +18,7 @@ disp(measurement_names)
 disp('- - - - - - - - ')
 
 %% - - - - - - - - SECTION 1: QUICKLY SUMMARIZING A FIXED CELL DATA EXPERIMENT - - - - - - - - - - - - - - - - 
-summarizeMeasurement(AllData,'MeanNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
+summarizeMeasurement(AllData,'IntegratedNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 
 %%
 summarizeMeasurement2D(AllData,'MeanNuc2','MeanNuc3') % Summary 2: scatter plots of 2 variables of interest

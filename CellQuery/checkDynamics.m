@@ -71,19 +71,19 @@ handles.output = hObject;
 % Initialize dropdown menu with visualization scripts; chose translocation by default
 home_folder = mfilename('fullpath');
 home_folder = home_folder(1:max(strfind(home_folder,filesep)));
-%fcnlist = dir(home_folder);
-%viz_fcns = cell(0);
+fcnlist = dir(home_folder);
+viz_fcns = cell(0);
 %no need to go through list of see functions, I'll just pick the one that I
 %want directly
-viz_fcns ={'see_nfkb_native'};
+%viz_fcns ={'see_nfkb_native'};
 
 %%looks though the "see" functions in the directory of this script
 %%the  for loop collects the names of the see function
-% for i = 1:length(fcnlist)
-%     if strcmp(fcnlist(i).name(1:min(end,4)),'see_')
-%         viz_fcns = cat(1,viz_fcns,fcnlist(i).name(1:end-2));
-%     end
-% end
+for i = 1:length(fcnlist)
+    if strcmp(fcnlist(i).name(1:min(end,4)),'see_')
+        viz_fcns = cat(1,viz_fcns,fcnlist(i).name(1:end-2));
+    end
+end
 
 set(handles.popupmenu2,'String',viz_fcns,'Value',1)
 %%viz_fcns contains the a list of all see functions
@@ -121,6 +121,7 @@ varargout{1} = handles.output;
 function handles_out = load_vizdata(handles)
 fcn_names = get(handles.popupmenu2,'String');
 start_val = get(handles.popupmenu2,'Value');
+%%
 max_val = length(fcn_names);
 id = handles.id;
 % Read in function from dropdown menu, and process data appropriately
@@ -144,7 +145,7 @@ while flag == 0
         flag = 0;
     end
 end
-
+%%
 handles.times = info.parameters.TimeRange;
 handles.xys = unique(graph.celldata(:,1));
 handles.celldata = graph.celldata;

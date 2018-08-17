@@ -7,7 +7,7 @@
 % constructs targeted Cebpb or Pparg2 (3 variants for each gene)
 
 % First, load in some data - change this file path to use a different "AllData" file.
-load('/Volumes/labdata2/brooks/Tracked/2018-03-19_dCas9/AllData.mat')
+load('/Volumes/labdata/zahra/2018 Fixed data/20180112-ZB-LIN/Tracked/Lin-First/AllData.mat')
 %load('Z:\brooks\Tracked\2016-10-24_physio-screen\Day 4\AllData.mat') % For Windows
 
 %%

@@ -76,6 +76,7 @@ else
             eval([names{i}, '= AllMeasurements.(names{i});'])
         end
         save([savedir, filesep, names{i}, '.mat'],names{i},'-v7.3')
+        clear(names{i});
     end
 end
 
