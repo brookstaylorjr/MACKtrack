@@ -22,6 +22,10 @@ function [names_out, scope_type] = wellmatch(contents, well_in, channel_in, scop
 %   A) .tif only
 %   B) wells are specified by (non-zero-padded) numbers @ the beginning - e.g. 5_03_01_DAPI.tif is E03, site 5.
 %
+% (4): Nikon NIS elements 
+%   A) tif only
+%   B) wells are zero-padded
+%
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
 
@@ -42,6 +46,9 @@ if nargin < 4
     % c) Steve Cappell's script: image names should begin with single number-underscore-number
     elseif ~isempty(regexp(imglist{1}(1:3), '[1-8]_[1-9]','ONCE'))
         scope_type = 'cappell';
+    % d) NIS elements: image name should begin with 'Well'
+    elseif  strcmp(imglist{1}(1:4),'Well')
+        scope_type = 'nikon';
     else
         error('No valid image names found in your specified directory')
     end
@@ -49,7 +56,6 @@ end
 
 
 %% 2) Based on scope_type, filter images appropriately
-
 if ~isempty(well_in)
     switch scope_type
         case 'metaxpress'
@@ -60,7 +66,6 @@ if ~isempty(well_in)
             if strcmp(well_in(2),'0')
                 well_in = well_in([1 3]);
             end
-
             names_out = contents(cellfun(@isempty,strfind(contents,'.xml'))...
                 & cellfun(@isempty,strfind(contents,'.log'))...
                 &~cellfun(@isempty,strfind(contents,[' ',well_in,'_'])));
@@ -71,8 +76,9 @@ if ~isempty(well_in)
             well_in = [num2str(row),'_',num2str(col)];
             firstfour = @(str) str(1:4);
             contents_tmp = cellfun(firstfour,contents,'UniformOutput',0);        
-            names_out = contents(~cellfun(@isempty,strfind(contents_tmp,well_in)));   
-
+            names_out = contents(~cellfun(@isempty,strfind(contents_tmp,well_in)));
+        case 'nikon'
+            names_out = contents(~cellfun(@isempty,strfind(contents,['Well',well_in,'_'])));
     end
 else % No well specified - just filter out 'bad' files
     switch scope_type
@@ -81,7 +87,7 @@ else % No well specified - just filter out 'bad' files
         case 'slidebook'
             names_out = contents(cellfun(@isempty,strfind(contents,'.xml'))...
                 & cellfun(@isempty,strfind(contents,'.log')));
-        case 'cappell'     
+        otherwise     
             names_out = contents;   
     end
     
