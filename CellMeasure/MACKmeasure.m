@@ -22,7 +22,7 @@ slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 parameters.locations = locations;
 parameters.TotalImages = length(parameters.TimeRange);
-
+orig_params = parameters; % Save params before they're flatfield-modified
 
 % Convert any parameter flatfield images to functions; add background image
 if isfield(parameters,'Flatfield')
@@ -66,6 +66,8 @@ tot_cells = numel(parameters.XYRange)*size(CellData.FrameIn,1);
 
 % Option 1: smaller experiment (50K cells) -> load ALL data and combine
 if (poolsize==0) || (tot_cells<5e4)
+    AllMeasurements = struct;
+    AllMeasurements.parameters = orig_params;
     for i = parameters.XYRange
         parameters.XYDir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(i),filesep]);
         if exist([parameters.XYDir,'CellMeasurements.mat'],'file')
@@ -132,6 +134,8 @@ else
             end
         end
     end
+    parameters = orig_params;
+    save([savedir,filesep,'parameters.mat'],'parameters')
     
 end
             
