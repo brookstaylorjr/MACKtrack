@@ -40,7 +40,7 @@ handles.histbutton = uicontrol('Style','pushbutton', 'BackgroundColor',[1 1 1],.
 set(handles.figure1,'ResizeFcn',{@fig_resize,handles},'Toolbar','figure');
 set(handles.figure1,'CloseRequestFcn',{@close_fig,handles},'Toolbar','figure');
 
-% Get first image (jpg, tif) in the full list of files, and determine ranges of channel/position/time
+% Get first image (tif) in the full list of files, and determine ranges of channel/position/time
 ok_go = 0;
 while ~ok_go
     try
@@ -49,7 +49,7 @@ while ~ok_go
         loadtoc = toc;
         ok_go = 1;
     catch ME
-        handles.dir = uigetdir(start_dir,'Invalid fMACKolder - choose another one');
+        handles.dir = uigetdir(start_dir,'Invalid images folder - choose another one');
         if handles.dir==0
             error('No folder selected - exiting.')
         else
@@ -63,7 +63,7 @@ end
 disp(['Loaded contents of ',handles.dir ,' in ',num2str(round(loadtoc*100)/100),' sec'])
 
 
-% Need some kind of way to gracefully handle "extra" data points (e.g. 000.01) -> for now, filter them out.
+% Eventually I need some kind of way to gracefully handle "extra" data points (e.g. 000.01) -> for now, filter them out.
 filter_str = @(str) (length(str)>10) && length(strfind(str,'.'))>1;
 drop_names  = cellfun(filter_str,handles.dir_contents);
 if sum(drop_names)>0
