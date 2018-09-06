@@ -43,6 +43,8 @@ else
     end % [end (xy) loop]
 end
 
+% MEASUREMENT COLLATION
+
 % Before pool shutdown, pull number of workers (will be used to scale measurement combine)
 p = gcp('nocreate'); % If no pool, do not create new one.
 if isempty(p)
@@ -63,8 +65,7 @@ while ~exist('CellData','var')
 end
 tot_cells = numel(parameters.XYRange)*size(CellData.FrameIn,1);
 
-
-% Option 1: smaller experiment (50K cells) -> load ALL data and combine
+% Option 1: smaller experiment (<50K cells) -> load ALL data and combine
 if (poolsize==0) || (tot_cells<5e4)
     AllMeasurements = struct;
     AllMeasurements.parameters = orig_params;
@@ -90,6 +91,8 @@ else
     savedir = namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements']);
     mkdir(savedir);
     for j = 1:(length(boundary_pts)-1)
+        disp(['Collating measurements for sites ',...
+            num2str(parameters.XYRange(boundary_pts(j))), ' to ', num2str(parameters.XYRange(boundary_pts(j+1)-1))])
         AllMeasurements = struct;
         % Part 1: combine data from (parpool size) sites
         for i = parameters.XYRange(boundary_pts(j):(boundary_pts(j+1)-1))
@@ -120,7 +123,6 @@ else
                 save([savedir, filesep, names{i}, '.mat'],names{i},'-v7.3')
                 clear(names{i});
 
-
             else % after 1st go-round, we need to append.
                 load([savedir, filesep, names{i}, '.mat']);
                 if isnumeric(AllMeasurements.(names{i}))
@@ -138,33 +140,3 @@ else
     save([savedir,filesep,'parameters.mat'],'parameters')
     
 end
-            
-            
-  
-           
-            
-            
-
-
-% Cycle through XY directories and combine their measurements
-
-
-
-% Save AllMeasurements in condition directory. If we have trajectories for > 100K cells, save each field separately.
-if size(AllMeasurements.CellData,1) < 1e5
-    save(namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements.mat']),'AllMeasurements','-v7.3')
-else
-    names = fieldnames(AllMeasurements);
-    savedir = namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements']);
-    mkdir(savedir)
-    for i =1:length(names)
-        if isnumeric(AllMeasurements.(names{i}))
-            eval([names{i}, '= single(AllMeasurements.(names{i}));'])
-        else
-            eval([names{i}, '= AllMeasurements.(names{i});'])
-        end
-        save([savedir, filesep, names{i}, '.mat'],names{i},'-v7.3')
-        clear(names{i});
-    end
-end
-
