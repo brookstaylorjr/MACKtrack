@@ -22,9 +22,7 @@ slash_idx = strfind(home_folder,filesep);
 load([home_folder(1:slash_idx(end-1)), 'locations.mat'],'-mat')
 parameters.locations = locations;
 parameters.TotalImages = length(parameters.TimeRange);
-% Record parameters before flatfield imgs are modified
-AllMeasurements= struct;
-AllMeasurements.parameters = parameters;
+
 
 % Convert any parameter flatfield images to functions; add background image
 if isfield(parameters,'Flatfield')
@@ -90,7 +88,7 @@ else
     savedir = namecheck([locations.data, filesep, parameters.SaveDirectory,filesep,'AllMeasurements']);
     mkdir(savedir);
     for j = 1:(length(boundary_pts)-1)
-        
+        AllMeasurements = struct;
         % Part 1: combine data from (parpool size) sites
         for i = parameters.XYRange(boundary_pts(j):(boundary_pts(j+1)-1))
             parameters.XYDir = namecheck([locations.data,filesep,parameters.SaveDirectory,filesep,'xy',num2str(i),filesep]);
