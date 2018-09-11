@@ -97,7 +97,7 @@ for i = 1:length(wells)
         parameters.TotalCells = length(unique(NuclearLabel(NuclearLabel>0)));
         parameters.TotalImages = 1;
         ModuleData.save_subdir = save_subdir; % in case it's required for additional diagnostic output
-        ModuleData.i = wells{i};
+        ModuleData.i = [wells{i},'_',numseq(j,2)];
         ModuleData.BitDepth = parameters.BitDepth;
         ModuleData.iter = 1;
         if isfield(parameters,'Flatfield')
