@@ -72,7 +72,7 @@ if ModuleData.iter == parameters.TotalImages
     % Make measurements (make sure to trigger whole-cell measurements as appropriate)
     tmp_measurements = struct; 
     tmp_params = parameters; tmp_params.TotalImages = 1; tmp_params.ImageType = 'fluorescence';
-    tmp_data = ModuleData; tmp_data.iter = 1; tmp_data.save_dir = save_dir;
+    tmp_data = ModuleData; tmp_data.iter = 1; tmp_data.actin_dir = save_dir;
     tmp_measurements = actinModule(tmp_measurements,tmp_params, labels_new, AuxImages, tmp_data);  
     names = fieldnames(tmp_measurements); 
     

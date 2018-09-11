@@ -69,7 +69,7 @@ for i = 1:length(wells)
             save(save_name,'CellLabel')
         end
         save_name = [save_subdir,filesep,'SegmentedImages',filesep,'Segmentation-',wells{i},'_',numseq(j,2),'.jpg'];
-
+        
         tmp_img = cell_orig;
         tmp_img = (tmp_img - prctile(tmp_img(:),3))/diff(prctile(tmp_img(:),[3 99.2]));
         tmp_img(tmp_img<0) = 0; tmp_img(tmp_img>1) = 1;
@@ -96,6 +96,8 @@ for i = 1:length(wells)
         labels.Cell = CellLabel;
         parameters.TotalCells = length(unique(NuclearLabel(NuclearLabel>0)));
         parameters.TotalImages = 1;
+        ModuleData.save_subdir = save_subdir; % in case it's required for additional diagnostic output
+        ModuleData.i = wells{i};
         ModuleData.BitDepth = parameters.BitDepth;
         ModuleData.iter = 1;
         if isfield(parameters,'Flatfield')

@@ -253,8 +253,8 @@ handles.vals(idx1) = round(get(handles.slider1,'Value'));
 % Set image name, slider and status texts
 handles.img = form_img(handles.string, handles.vals, handles.lengths);
 set(handles.slider1,'Max',max1,'Min',min1, 'Value',handles.vals(idx1), 'SliderStep',[1/(max1-min1) 10/(max1-min1)])
-set(handles.text1,'String', ['time:',num2str(handles.vals(2)),' | XY pos:', num2str(handles.vals(1))...
-    ' | channel:', num2str(handles.vals(3))])
+set(handles.text1,'String', [handles.img,'       [ time:',num2str(handles.vals(2)),' | XY pos:', num2str(handles.vals(1))...
+    ' | channel:', num2str(handles.vals(3)),' ]'])
 set(handles.text2,'String',[numseq(handles.vals(idx1),handles.lengths(idx1)),'/',numseq(max1,handles.lengths(idx1))])
 
 % Load/draw image
@@ -289,8 +289,8 @@ min1 = handles.(['min_',ltr']);
 % Set image name, slider and status texts
 handles.img = form_img(handles.string, handles.vals, handles.lengths);
 set(handles.slider1,'Max',max1,'Min',min1, 'Value',handles.vals(idx1), 'SliderStep',[1/(max1-min1) 10/(max1-min1)])
-set(handles.text1,'String', ['time:',num2str(handles.vals(2)),' | XY pos:', num2str(handles.vals(1))...
-    ' | channel:', handles.vals(3)])
+set(handles.text1,'String', [handles.img,'       [ time:',num2str(handles.vals(2)),' | XY pos:', num2str(handles.vals(1))...
+    ' | channel:', num2str(handles.vals(3)),' ]'])
 set(handles.text2,'String',[numseq(handles.vals(idx1),handles.lengths(idx1)),'/',numseq(max1,handles.lengths(idx1))])
 
 guidata(handles.figure1, handles)

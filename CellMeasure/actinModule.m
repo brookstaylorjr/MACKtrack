@@ -90,10 +90,15 @@ end
 
 
 
-% (if a save directory is defined, e.g. by end_actinModule)
+% (if a save directory is defined, e.g. by end_actinModule - i.e. don't output this in a live-cell context)
+if isfield(ModuleData,'save_subdir')
+    ModuleData.actin_dir = [save_subdir,filesep,'ActinModule',filesep];
+    if ~exist(ModuleData.actin_dir,'dir');  mkdir(ModuleData.actin_dir); end
+end
+
 
 % Save a diagnostic image: show identified fiber angles overlaid on original
-if isfield(ModuleData,'save_dir')
+if isfield(ModuleData,'actin_dir')
     colormaps = loadcolormaps;
     tmp1 = actin_img;
     tmp1(tmp1==min(tmp1(:))) = []; tmp1(tmp1==max(tmp1(:))) = [];
@@ -119,5 +124,7 @@ if isfield(ModuleData,'save_dir')
     R = img*alpha + (1-alpha)*255*reshape(cmap(1+img_overlay(:),1),size(img)); 
     G = img*alpha + (1-alpha)*255*reshape(cmap(1+img_overlay(:),2),size(img)); 
     B = img*alpha + (1-alpha)*255*reshape(cmap(1+img_overlay(:),3),size(img)); 
-    imwrite(uint8(cat(3,R,G,B)),[ModuleData.save_dir,'ActinAngles-pos_',numseq(ModuleData.i,3),'.jpg'])
+    imwrite(uint8(cat(3,R,G,B)),[ModuleData.actin_dir,'ActinAngles-pos_',numseq(ModuleData.i,3),'.jpg'])
+    
+    
 end
