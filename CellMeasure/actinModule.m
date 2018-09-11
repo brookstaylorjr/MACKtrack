@@ -92,7 +92,7 @@ end
 
 % (if a save directory is defined, e.g. by end_actinModule - i.e. don't output this in a live-cell context)
 if isfield(ModuleData,'save_subdir')
-    ModuleData.actin_dir = [save_subdir,filesep,'ActinModule',filesep];
+    ModuleData.actin_dir = [ModuleData.save_subdir,filesep,'ActinModule',filesep];
     if ~exist(ModuleData.actin_dir,'dir');  mkdir(ModuleData.actin_dir); end
 end
 
