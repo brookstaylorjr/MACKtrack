@@ -19,5 +19,10 @@ function [numstring] = numseq(num_in, len)
 % numstring  output string made from num1
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 
-base_len = length(num2str(floor(num_in)));
-numstring = [repmat('0',[1,len-base_len]),num2str(num_in)];
+if isnumeric(num_in)
+    base_len = length(num2str(floor(num_in)));
+    numstring = [repmat('0',[1,len-base_len]),num2str(num_in)];
+else
+    base_len = length(num_in);
+    numstring = [repmat('0',[1,len-base_len]),num_in];
+end
