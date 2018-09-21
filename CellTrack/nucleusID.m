@@ -105,20 +105,21 @@ perim_ratio = zeros(size(nuc_idx));
 for n = 1:length(nuc_idx)
     perim_ratio(n) = sum(touch_mask(cc1.PixelIdxList{n})) / sum(border_mask(cc1.PixelIdxList{n}));
 end
-% Get subset of objects that are mostly-surrounded (perim_ratio>0.5)
-new_ids = nuc_idx(perim_ratio>0.4);
-cc2 = cc1; cc2.NumObjects = max(new_ids);
-cc2.PixelIdxList = cell(max(new_ids),1);
-cc2.PixelIdxList(new_ids) = cc1.PixelIdxList(new_ids);
+% Get subset of objects that are mostly-surrounded (perim_ratio>0.5) to check further
+check_ids = nuc_idx(perim_ratio>0.4);
+if ~isempty(check_ids)
+    cc2 = cc1; cc2.NumObjects = max(check_ids);
+    cc2.PixelIdxList = cell(max(check_ids),1);
+    cc2.PixelIdxList(check_ids) = cc1.PixelIdxList(check_ids);
 
-% Also examine distribution of (discretized, log-transformed) edge_mag - try to identify background level.
-tmp1 = (diagnos.edge_mag);
-[n1,bins] = histcounts(tmp1,linspace(prctile(tmp1(:),0.1),prctile(tmp1(:),99.9),256));
-low_edge = tmp1<(bins(find(n1==max(n1),1,'first')+1));
-low_edge = bwareaopen(low_edge,2); % Remove speckle noise
-cc3 = removemarked(cc2,low_edge,'keep'); % Drop objects w/mostly-occupied perimeter & patches of b.g. edge content
-diagnos.label1a(labelmatrix(cc3)>0) = 0;
-
+    % Also examine distribution of (discretized, log-transformed) edge_mag - try to identify background level.
+    tmp1 = (diagnos.edge_mag);
+    [n1,bins] = histcounts(tmp1,linspace(prctile(tmp1(:),0.1),prctile(tmp1(:),99.9),256));
+    low_edge = tmp1<(bins(find(n1==max(n1),1,'first')+1));
+    low_edge = bwareaopen(low_edge,2); % Remove speckle noise
+    cc3 = removemarked(cc2,low_edge,'keep'); % Drop objects w/mostly-occupied perimeter & patches of b.g. edge content
+    diagnos.label1a(labelmatrix(cc3)>0) = 0;
+end
 
 
 %% 2) Label1b: subdivide objects using concave points on perimeter (~ >225 degrees)
