@@ -318,6 +318,7 @@ end
     
    
 % Check nuclear expression/ existence of sample nuclear image in parent directory
+%%
 try 
     filestring = get(handles.edit2A,'String');
     sampleDirec = [handles.locations.scope, handles.parameters.ImagePath];
@@ -328,7 +329,8 @@ try
     if ~exist([handles.locations.scope,handles.parameters.ImagePath,sampleFile],'file')
         id = find(~cellfun(@isempty,strfind(handles.file_names,sampleFile)),1,'first');
         if ~isempty(id)
-            namelist = wellmatch(handles.file_names,'',sampleFile);       
+            namelist = wellmatch(handles.file_names,'',sampleFile);
+            
             id = find(~cellfun(@isempty,strfind(namelist,sampleFile)));
             if (length(id)>=1) && ~strcmp(namelist{id(1)},sampleFile)
                 partial_match = 1;
@@ -363,10 +365,16 @@ try
     
 
 catch ME
+     switch ME.identifier
+         case '' %self-thrown message - repeat it in GUI
+              set(handles.text2G,'String',ME.message,'ForegroundColor','r');
+              handles.Locked = 1;
+         otherwise % Otherwise assume we got a bad string
      set(handles.text2G,'String','Invalid MATLAB string used for nuclear image expression','ForegroundColor','r');
      handles.Locked = 1;
+     end
 end
-
+%%
 % Check cell expression/ existence of sample cell file in parent directory (if applicable)
 if ~strcmpi(handles.parameters.ImageType,'none')
     try 

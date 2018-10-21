@@ -22,14 +22,15 @@ function [names_out, scope_type] = wellmatch(contents, well_in, channel_in, scop
 %   A) .tif only
 %   B) wells are specified by (non-zero-padded) numbers @ the beginning - e.g. 5_03_01_DAPI.tif is E03, site 5.
 %
-% (4): Nikon NIS elements 
+% (4): Nikon NIS elements HCA pipeline ('nikon')
 %   A) tif only
-%   B) wells are zero-padded
+%   B) wells are zero-padded (e.g. 'H04')
+%   C) contains term (e.g.) 'WellA01'
 %
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -
 
-
-% 1) Determine what kind of images we're dealing with
+%%
+% 1) Determine what kind of images we're dealing with (if not provided)
 if nargin < 4
     imglist  = contents(~cellfun(@isempty,strfind(contents,'.tif')));
     imglist  = imglist(cellfun(@isempty,strfind(imglist,'.xml')));
@@ -47,7 +48,7 @@ if nargin < 4
     elseif ~isempty(regexp(imglist{1}(1:3), '[1-8]_[1-9]','ONCE'))
         scope_type = 'cappell';
     % d) NIS elements: image name should begin with 'Well'
-    elseif  strcmp(imglist{1}(1:4),'Well')
+    elseif  ~isempty(regexp(imglist{1}, 'Well[A-H][0-1]','ONCE'))
         scope_type = 'nikon';
     else
         error('No valid image names found in your specified directory')

@@ -88,14 +88,17 @@ cc_all.Connectivity = 4;
 diagnos.label1a = labelmatrix(cc_all); % Edge-based division lines
 
 % Quality check #1: ensure that mostly-surrounded objects aren't just background
-% Start by getting each cell's perimeter pixels
-cc1 = label2cc(diagnos.label1a,0);
-nuc_idx = unique(diagnos.label1a); nuc_idx(nuc_idx==0) = [];
-erode1 = imerode(diagnos.label1a,ones(3));
-dilate1 = imdilate(diagnos.label1a,ones(3));
-dilate1(diagnos.label1a==0) = 0;
-borders1 = diagnos.label1a - erode1;
-borders2 = dilate1 - diagnos.label1a;
+% Start by filling small holes, then getting each nucleus's perimeter pixels
+label_tmp = diagnos.label1a;
+mask_tmp = ~bwareaopen(label_tmp==0,round(sqrt(p.NoiseSize)));
+label_tmp = IdentifySecPropagateSubfunction(double(label_tmp),double(mask_tmp),mask_tmp,0.02);
+cc1 = label2cc(label_tmp,0);
+nuc_idx = unique(label_tmp); nuc_idx(nuc_idx==0) = [];
+erode1 = imerode(label_tmp,ones(3));
+dilate1 = imdilate(label_tmp,ones(3));
+dilate1(label_tmp==0) = 0;
+borders1 = label_tmp - erode1;
+borders2 = dilate1 - label_tmp;
 border_mask =  (borders1~=0) | (borders2~=0);
 % Drop perimeter pixels that border background
 touch_mask = border_mask;

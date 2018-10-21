@@ -30,17 +30,17 @@ disp('- - - - - - - - ')
 % AllData = dropImages(AllData,'_H05_s4');
 
 % (Optional) filter out poor quality data (here, dim nuclei - likely false positives)
-thresh_func = @(dapi) (dapi >4.5e6)|(dapi<1e6); % (you can pick a value by inspecting histograms from "summarizeMeasurement")
+thresh_func = @(dapi) (dapi <6.5e5); % (you can pick a value by inspecting histograms from "summarizeMeasurement")
 AllData = filterAllData(AllData,'IntegratedNuc1', thresh_func);
 
-% Some issues with poor fluorescence on far-away cells - filter them out.
-threshold_radius = @(x,y) (sqrt((1080 - x).^2 + (1080 - y).^2))>1100;
-AllData = filterAllData2(AllData,'CentroidX','CentroidY', threshold_radius);
+% % Some issues with poor fluorescence on far-away cells - filter them out.
+% threshold_radius = @(x,y) (sqrt((1080 - x).^2 + (1080 - y).^2))>1100;
+% AllData = filterAllData2(AllData,'CentroidX','CentroidY', threshold_radius);
 
     
 % Peel off/restructure 2 data fields of interest (e.g. PPARg and CEBPb intensity)
-[pparg_by_condition, pparg_by_well] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare/use
-[cebpb_by_condition, cebpb_by_well] = restructuredata(AllData,'MeanNuc3'); % A 2nd measurement we want to compare/use
+[cebpb_by_condition, cebpb_by_well] = restructuredata(AllData,'MeanNuc2'); % 1st measurment we want to compare/use
+[cas9_by_condition, cas9_by_well] = restructuredata(AllData,'MeanNuc3'); % A 2nd measurement we want to compare/use
 
 summarizeMeasurement(AllData,'IntegratedNuc1') % Summary 1: look at distributions of a particular measurement across all conditions
 

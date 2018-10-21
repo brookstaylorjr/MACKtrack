@@ -23,7 +23,7 @@ for i = 1:length(parameters.XYRange)
 
 end
 
-disp(['measuring ',num2str(length(site_list)),'sites (out of ',num2str(length(parameters.XYRange)), ' originally attempted)'])
+disp(['measuring ',num2str(length(site_list)),' sites (out of ',num2str(length(parameters.XYRange)), ' originally attempted)'])
 
 parameters.XYRange = site_list;
 
