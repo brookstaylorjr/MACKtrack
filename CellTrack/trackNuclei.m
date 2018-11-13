@@ -115,11 +115,6 @@ end
 blocks(isnan(blocks(:,1)),:) = [];
 blocks = blocks(:,2:end); % Drop the old frame
 
-
-% if curr_frame==50
-%     disp('stop')
-% end
-
 % Error checking, stage 1: look for paired false positive/false negative events
 [blocks_pre, blocks, CellData] = robberhandling(blocks_pre, blocks, labeldata, CellData,p);
 

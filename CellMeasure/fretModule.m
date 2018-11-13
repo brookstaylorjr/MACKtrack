@@ -3,8 +3,8 @@ function [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameter
 % [CellMeasurements, ModuleData] = fretModule(CellMeasurements, parameters, labels, AuxImages, ModuleData)
 %- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % FRETMODULE performs ratiometric FRET measurement in cell nuclei/cytoplasmic regions.
-% (FRET image just be in slot #1, CFP image should be in slot #2)
-% Flatfields #1 and #2 will be used to correct the FRET/CFP image, respectively
+% (FRET image just be in slot #1, CFP or YFP image should be in slot #2)
+% Flatfields #1 and #2 will be used to correct the FRET/ratio image, respectively
 %
 % CellMeasurements    structure with fields corresponding to cell measurements
 %

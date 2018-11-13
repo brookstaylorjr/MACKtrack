@@ -169,7 +169,16 @@ if strcmp(get(handles.figure1,'SelectionType'),'open')
     newfolder = namecheck([get(handles.edit1A,'String'),filename,filesep]);
     if exist([handles.locations.scope,filesep,newfolder],'dir')
         load_listbox(newfolder,handles)
+    % One other functionality: if it's a .tif image, pop it up in a new window.
+    elseif exist([handles.locations.scope,filesep,newfolder(1:end-1)],'file') &&...
+            strcmp(newfolder(end-4:end-1),'.tif')
+        a = imread([handles.locations.scope,filesep,newfolder(1:end-1)]);
+        figure,imagesc(a),axis image, colormap gray
+
     end
+    
+    
+    
 end
 % ========================================================================================
 
