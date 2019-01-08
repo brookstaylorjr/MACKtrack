@@ -1,6 +1,6 @@
 function varargout = cohortplot(data, rank_criteria, varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
-% cohortaxes = cohortplot(data, varargin)
+% diffaxes = cohortplot(data, varargin)
 % - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - 
 % COHORTPLOT takes single-individual trajectories (rows of data_in), ranks them along specified 
 % criteria (e.g. summed activity - provided as a vector), and outputs a line plot where trajectories
@@ -16,7 +16,6 @@ function varargout = cohortplot(data, rank_criteria, varargin)
 % 'Color'         [N x 3] matrix specifying line colors - cycles if N < number of cohorts
 % 'NumCohorts'     Number of cohorts - e.g. 4 would group 0th-25th, 25th-50th, 50th-75th, and 75th-100th
 %                  percentile data. Default is 8.
-% 'SortDirection'  Direction to sort ranking - either 'ascend' or 'descend'. NaN values will be omitted.
 % 'XVector'        Alternate x (time) vector to use
 % 'LineWidth'      Plot line width
 % 'Legend'         Specifies legend location (or 'none', if no legend is desired)
@@ -42,8 +41,6 @@ addRequired(p,'rank_criteria',valid_rank);
 valid_color = @(x) assert(isempty(x)||(ismatrix(x)&&size(x,2)==3), 'Specify colors with a matrix of RGB triplets (similar to colormap)');
 addParameter(p,'Color', [],valid_color);
 addParameter(p,'NumCohorts',8,@isnumeric)
-valid_dir = @(x) assert(strcmp(x,'ascend')||strcmp(x,'descend'),'Sort order must be either ''ascend'' or ''descend''');
-addParameter(p,'SortDirection','ascend',valid_dir) 
 valid_vect = @(x) assert(isnumeric(x) && numel(x)==size(data,2),'X vector must be same size as # of cols in input data');
 addParameter(p,'XVector',1:size(data,2),valid_vect) 
 addParameter(p,'LineWidth', 1, @isnumeric);
@@ -107,7 +104,7 @@ end
 
 hold(cohort_axes,'on')
 set(cohort_axes,'ColorOrder',clr)
-plot(t(:), cohort_trajectories', 'LineWidth', p.Results.LineWidth)
+plot(t(:), cohort_trajectories', 'LineWidth', p.Results.LineWidth,'Parent',cohort_axes)
 hold(cohort_axes,'off')
 
 if ~strcmp(p.Results.Legend,'none')

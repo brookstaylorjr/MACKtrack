@@ -20,7 +20,7 @@ function [names_out, scope_type] = wellmatch(contents, well_in, channel_in, scop
 %
 % (3): Steve Cappell's naming script ('cappell')
 %   A) .tif only
-%   B) wells are specified by (non-zero-padded) numbers @ the beginning - e.g. 5_03_01_DAPI.tif is E03, site 5.
+%   B) wells are specified by (non-zero-padded) numbers @ the beginning - e.g. 5_3_1_DAPI.tif is E03, site 5.
 %
 % (4): Nikon NIS elements HCA pipeline ('nikon')
 %   A) tif only

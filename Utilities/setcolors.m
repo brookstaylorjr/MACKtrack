@@ -61,6 +61,13 @@ colors.peacock{2} = [0 140 116]/255;
 colors.peacock{3} = [0 76 102]/255;
 colors.peacock{4} = [51 43 64]/255;
 
+% Phase-switch colors
+colors.phase{1} = [91 144 219]/255;
+colors.phase{2} = [231 105 80]/255;
+colors.phase{3} = [141 87 176]/255;
+colors.phase{4} = [21 138 88]/255;
+colors.phase{5} = [174 176 178]/255;
+
 
 
 if nargin>0
