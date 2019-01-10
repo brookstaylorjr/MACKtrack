@@ -14,7 +14,10 @@ server_name = '/Volumes/labdata2/brooks';
     
 stemlist = {['/Users/brooks/Desktop',filesep,foldername] %1st choice: check on desktop
     [external_name,filesep,'Tracked',filesep,foldername] % 2nd choice: look on external hard drive
-        [server_name,filesep,'Tracked',filesep,foldername]}; % 3rd choice: look on server
+        [server_name,filesep,'Tracked',filesep,foldername]
+        'Z:\brooks\Tracked'
+        'Y:\brooks\Tracked'
+        }; % 3rd choice: look on server
    
 
 %%
